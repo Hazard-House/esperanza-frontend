@@ -96,7 +96,12 @@ function rewriteCommon(html) {
     // token can read (islands override the style per map; this only covers leftover
     // oilib refs on non-island pages).
     .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN)
-    .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE);
+    .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE)
+    // R8: footer credit -> "Powered by Hazard House" (drop O'Neill/Homefiniti logo + links).
+    // Shared footer on every page; the attribution div has no nested <div> so the
+    // non-greedy match to the first </div> is safe.
+    .replace(/<div class="col-12 oneilinteractive-attribution[^>]*>[\s\S]*?<\/div>/,
+      '<div class="col-12 oneilinteractive-attribution text-center text-white fs-9 mb-2"><a href="https://hazard.house" rel="noopener" target="_blank" class="text-small text-white">Powered by Hazard House</a></div>');
 }
 
 // Live pages: disable oilib (so it doesn't fight our island for #oi-map /
@@ -161,6 +166,9 @@ function demo() {
     === 'srcset="//img.hazardhouse.ai/assets-media/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27.jpg 300w"', 'extensionless srcset -> real key');
   console.assert(s('href="../static.esperanzahomes.com/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"')
     === 'href="/static/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"', 'theme keeps ﹖ filename');
+  // footer credit -> Hazard House (logo + O'Neill links removed)
+  const foot = s('<div class="col-12 oneilinteractive-attribution text-center"><a href="https://oneilinteractive.com/x"><img class="oneil-icon" src="../static.esperanzahomes.com/x.avif"> Powered by Homefiniti</a>. Designed by <a href="https://oneilinteractive.com">ONeil Interactive</a>.</div>');
+  console.assert(foot.includes('Powered by Hazard House') && !foot.includes('oneilinteractive.com') && !foot.includes('oneil-icon'), 'footer -> Hazard House');
   console.assert(s('action="https://www.esperanzahomes.com/xhr/request-information/"')
     .includes(`https://${OPS_PLACEHOLDER}/xhr/request-information/`), 'xhr repoint');
   console.assert(s('"map_key":"pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA"')
