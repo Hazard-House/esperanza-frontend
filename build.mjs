@@ -22,10 +22,11 @@ const OUT = join(import.meta.dirname, 'public');
 // + map_pin sprite resolve 1:1. Ours 401'd on their styles. Interim for the initial
 // Railway deploy; see ~/Dropbox/Claude Projects/Esperanza Mapbox Rebuild/mapbox.env.
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA';
-// The available island's map uses the "Esperanza-Common" style (same as the live
-// QMI map). The homepage keeps its own "Esperanza-Counties" style (we no longer
-// rewrite style URLs — under O'Neill's token each page's real style just works).
-const PUBLIC_STYLE = 'mapbox://styles/oneilinteractive/cl3kl7udj001014peasiv7lip';
+// The live O'Neill styles (unlocked by O'Neill's token). Counties drives the
+// homepage "Find Your Home" map; Common drives QMI + community detail maps.
+const STYLE_COMMON = 'mapbox://styles/oneilinteractive/cl3kl7udj001014peasiv7lip';
+const STYLE_COUNTIES = 'mapbox://styles/oneilinteractive/cm1ttxrjk008n01qnedjxcq5b';
+const PUBLIC_STYLE = STYLE_COMMON; // available-live.js reads this as MAPBOX_STYLE
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
 const OPS_PLACEHOLDER = 'esperanza-ops-not-yet-wired.invalid'; // forms deferred (HubSpot later)
 
@@ -33,7 +34,15 @@ const OPS_PLACEHOLDER = 'esperanza-ops-not-yet-wired.invalid'; // forms deferred
 // grown per phase. Always include the homepage. Pages get rewriteCommon; the ones
 // in LIVE_PAGES additionally get their island injected.
 const ALWAYS = ['index.html'];
+// Pages get their island by explicit path (LIVE_PAGES) or by which map container
+// their HTML contains (CONTAINER_ISLANDS) — the latter auto-covers every homepage /
+// community-detail map without listing all 30+ paths. available-live.js stays explicit
+// (it renders QMI cards + filters, not just a map, so it can't be container-inferred).
 const LIVE_PAGES = { 'new-homes/available/index.html': 'available-live.js' };
+const CONTAINER_ISLANDS = [
+  { id: 'id="home-map"', island: 'community-maps-live.js' }, // homepage Find-Your-Home (Counties)
+  { id: 'id="map"', island: 'community-maps-live.js' },      // community detail single-location (Common)
+];
 function shipList() {
   const manifest = join(import.meta.dirname, 'ship.txt');
   const extra = existsSync(manifest)
@@ -97,7 +106,8 @@ function injectIsland(html, islandFile) {
   html = html.replace(/<script[^>]*\/static\/assets\/js\/oilib[^>]*><\/script>/g, '<!-- oilib map/filter init removed for the live island -->');
   const marker = `src="/${islandFile}"`;
   if (!html.includes(marker)) {
-    const tag = `\n<script>window.__ESPERANZA={API_BASE:${JSON.stringify(API_BASE)},MAPBOX_TOKEN:${JSON.stringify(MAPBOX_TOKEN)},MAPBOX_STYLE:${JSON.stringify(PUBLIC_STYLE)}};</script>\n<script src="/${islandFile}" defer></script>\n`;
+    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: PUBLIC_STYLE, MAPBOX_STYLE_COMMON: STYLE_COMMON, MAPBOX_STYLE_COUNTIES: STYLE_COUNTIES };
+    const tag = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};</script>\n<script src="/${islandFile}" defer></script>\n`;
     const i = html.lastIndexOf('</body>');
     html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
   }
@@ -117,7 +127,12 @@ function build() {
     const src = join(WWW, rel);
     if (!existsSync(src)) { console.warn(`skip missing: ${rel}`); continue; }
     let html = rewriteCommon(readFileSync(src, 'utf8'));
-    if (LIVE_PAGES[rel]) html = injectIsland(html, LIVE_PAGES[rel]);
+    if (LIVE_PAGES[rel]) {
+      html = injectIsland(html, LIVE_PAGES[rel]);
+    } else {
+      const hit = CONTAINER_ISLANDS.find(c => html.includes(c.id));
+      if (hit) html = injectIsland(html, hit.island);
+    }
     const dst = join(OUT, rel);
     mkdirSync(dirname(dst), { recursive: true });
     writeFileSync(dst, html);
@@ -125,8 +140,9 @@ function build() {
   }
   console.log(`rewrote ${n} pages`);
 
-  // 3. Islands.
-  for (const island of new Set(Object.values(LIVE_PAGES))) {
+  // 3. Islands (from both explicit LIVE_PAGES and container-inferred CONTAINER_ISLANDS).
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island)]);
+  for (const island of islands) {
     cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   }
   console.log(`public/ assembled at ${OUT}`);
