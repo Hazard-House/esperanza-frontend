@@ -18,15 +18,15 @@ const THEME = join(SCRAPE, 'static.esperanzahomes.com');
 const OUT = join(import.meta.dirname, 'public');
 
 // --- config that gets baked into the flagship pages -------------------------
-// O'Neill's own token (account: oneilinteractive) — required so the custom styles
-// + map_pin sprite resolve 1:1. Ours 401'd on their styles. Interim for the initial
-// Railway deploy; see ~/Dropbox/Claude Projects/Esperanza Mapbox Rebuild/mapbox.env.
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA';
-// The live O'Neill styles (unlocked by O'Neill's token). Counties drives the
-// homepage "Find Your Home" map; Common drives QMI + community detail maps.
-const STYLE_COMMON = 'mapbox://styles/oneilinteractive/cl3kl7udj001014peasiv7lip';
-const STYLE_COUNTIES = 'mapbox://styles/oneilinteractive/cm1ttxrjk008n01qnedjxcq5b';
-const PUBLIC_STYLE = STYLE_COMMON; // available-live.js reads this as MAPBOX_STYLE
+// Our own Mapbox token. O'Neill's token is URL-locked to esperanzahomes.com, so it
+// 403s every tile read off-domain (blank base maps on Railway). Our token reads tiles
+// fine; it can't read O'Neill's *private* styles, so we use our own styles instead.
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGF6YXJkaG91c2UiLCJhIjoiY21kdG1xMWwwMTFvbDJqb2h1bXgxYmw3ZyJ9.ER4JhSJ2bl89WJ-3Xv5erA';
+// Homepage "Find Your Home" uses our recreated counties style ("Texas Counties Map").
+const STYLE_HOME = 'mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg';
+// QMI + community-detail maps roll back to generic streets for now (custom styles for
+// those in our account are a follow-up). available-live.js reads PUBLIC_STYLE as MAPBOX_STYLE.
+const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11';
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
 const OPS_PLACEHOLDER = 'esperanza-ops-not-yet-wired.invalid'; // forms deferred (HubSpot later)
 
@@ -92,11 +92,11 @@ function rewriteCommon(html) {
       (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, 'homefiniti/', HF_KEYS)}`)
     // R4: mapbox-gl lib CDN (relativized by HTTrack) -> restore https.
     .replace(/(?:\.\.\/)*api\.mapbox\.com\//g, 'https://api.mapbox.com/')
-    // R7: normalize the O'Neill Mapbox token to our configured one (no-op while we
-    // reuse O'Neill's token, but keeps the pipeline correct if the scrape ever differs).
-    // Style URLs are intentionally NOT rewritten: each page keeps its real O'Neill
-    // style (Counties on the homepage, Common elsewhere), which the token unlocks 1:1.
-    .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN);
+    // R7: swap O'Neill's token -> ours, and their private styles -> a public style our
+    // token can read (islands override the style per map; this only covers leftover
+    // oilib refs on non-island pages).
+    .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN)
+    .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE);
 }
 
 // Live pages: disable oilib (so it doesn't fight our island for #oi-map /
@@ -106,10 +106,22 @@ function injectIsland(html, islandFile) {
   html = html.replace(/<script[^>]*\/static\/assets\/js\/oilib[^>]*><\/script>/g, '<!-- oilib map/filter init removed for the live island -->');
   const marker = `src="/${islandFile}"`;
   if (!html.includes(marker)) {
-    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: PUBLIC_STYLE, MAPBOX_STYLE_COMMON: STYLE_COMMON, MAPBOX_STYLE_COUNTIES: STYLE_COUNTIES };
+    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: PUBLIC_STYLE, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_DETAIL: PUBLIC_STYLE };
     const tag = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};</script>\n<script src="/${islandFile}" defer></script>\n`;
     const i = html.lastIndexOf('</body>');
     html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
+  }
+  return html;
+}
+
+// Per-page design tweaks layered on the scrape markup (from review feedback).
+function applyTweaks(rel, html) {
+  if (rel === 'new-homes/available/index.html') {
+    // Move "Download Quick Move-Ins List" to the right of the filter row:
+    // ms-lg-auto on its (last) flex column pushes it to the far right on lg+.
+    html = html.replace(
+      /(<div class="col-12 col-lg-3)("\>\s*<a class="oi-brochure-download)/,
+      '$1 ms-lg-auto$2');
   }
   return html;
 }
@@ -133,6 +145,7 @@ function build() {
       const hit = CONTAINER_ISLANDS.find(c => html.includes(c.id));
       if (hit) html = injectIsland(html, hit.island);
     }
+    html = applyTweaks(rel, html);
     const dst = join(OUT, rel);
     mkdirSync(dirname(dst), { recursive: true });
     writeFileSync(dst, html);
@@ -145,6 +158,9 @@ function build() {
   for (const island of islands) {
     cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   }
+  // Marker sprite for the community maps (streets/counties styles have no map_pin),
+  // loaded at runtime via addImage. The exact O'Neill green teardrop (90x120 @2x).
+  cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
   console.log(`public/ assembled at ${OUT}`);
 }
 
@@ -158,6 +174,9 @@ function demo() {
     === 'srcset="//img.hazardhouse.ai/assets-media/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27.jpg 300w"', 'extensionless srcset -> real key');
   console.assert(s('href="../static.esperanzahomes.com/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"')
     === 'href="/static/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"', 'theme keeps ﹖ filename');
+  // download-button reposition: ms-lg-auto must land INSIDE the class attribute
+  console.assert(applyTweaks('new-homes/available/index.html', '<div class="col-12 col-lg-3">\n  <a class="oi-brochure-download btn">')
+    === '<div class="col-12 col-lg-3 ms-lg-auto">\n  <a class="oi-brochure-download btn">', 'download button moved right');
   console.assert(s('action="https://www.esperanzahomes.com/xhr/request-information/"')
     .includes(`https://${OPS_PLACEHOLDER}/xhr/request-information/`), 'xhr repoint');
   console.assert(s('"map_key":"pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA"')
