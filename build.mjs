@@ -114,18 +114,6 @@ function injectIsland(html, islandFile) {
   return html;
 }
 
-// Per-page design tweaks layered on the scrape markup (from review feedback).
-function applyTweaks(rel, html) {
-  if (rel === 'new-homes/available/index.html') {
-    // Move "Download Quick Move-Ins List" to the right of the filter row:
-    // ms-lg-auto on its (last) flex column pushes it to the far right on lg+.
-    html = html.replace(
-      /(<div class="col-12 col-lg-3)("\>\s*<a class="oi-brochure-download)/,
-      '$1 ms-lg-auto$2');
-  }
-  return html;
-}
-
 function build() {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
@@ -145,7 +133,6 @@ function build() {
       const hit = CONTAINER_ISLANDS.find(c => html.includes(c.id));
       if (hit) html = injectIsland(html, hit.island);
     }
-    html = applyTweaks(rel, html);
     const dst = join(OUT, rel);
     mkdirSync(dirname(dst), { recursive: true });
     writeFileSync(dst, html);
@@ -174,9 +161,6 @@ function demo() {
     === 'srcset="//img.hazardhouse.ai/assets-media/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27.jpg 300w"', 'extensionless srcset -> real key');
   console.assert(s('href="../static.esperanzahomes.com/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"')
     === 'href="/static/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"', 'theme keeps ﹖ filename');
-  // download-button reposition: ms-lg-auto must land INSIDE the class attribute
-  console.assert(applyTweaks('new-homes/available/index.html', '<div class="col-12 col-lg-3">\n  <a class="oi-brochure-download btn">')
-    === '<div class="col-12 col-lg-3 ms-lg-auto">\n  <a class="oi-brochure-download btn">', 'download button moved right');
   console.assert(s('action="https://www.esperanzahomes.com/xhr/request-information/"')
     .includes(`https://${OPS_PLACEHOLDER}/xhr/request-information/`), 'xhr repoint');
   console.assert(s('"map_key":"pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA"')
