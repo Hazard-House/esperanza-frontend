@@ -11,6 +11,7 @@
 
 import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -43,6 +44,9 @@ const CONTAINER_ISLANDS = [
   { id: 'id="home-map"', island: 'community-maps-live.js' }, // homepage Find-Your-Home (Counties)
   { id: 'id="map"', island: 'community-maps-live.js' },      // community detail single-location (Common)
 ];
+// Extra scripts appended to a page (before </body>) without disabling oilib — layered
+// on top of any island. Homepage Search -> /new-homes/available/ with filter params.
+const EXTRA_SCRIPTS = { 'index.html': ['homepage-filter.js'] };
 function shipList() {
   const manifest = join(import.meta.dirname, 'ship.txt');
   const extra = existsSync(manifest)
@@ -119,6 +123,23 @@ function injectIsland(html, islandFile) {
   return html;
 }
 
+// Map live API homes -> shipped detail pages (for the available island's card links).
+// Key QMI by <communitySlug>/<addressSlug> (near-unique); community pages by <communitySlug>
+// as a fallback for homes newer than the scrape. Written to public/qmi-links.json.
+function writeLinksMap() {
+  const find = a => execSync(`find ${a}`, { cwd: WWW }).toString().trim().split('\n').filter(Boolean);
+  const qmi = {};
+  for (const p of find('new-homes/tx -mindepth 6 -name index.html')) {
+    const s = p.split('/'); qmi[`${s[3]}/${s[5]}`] = '/' + s.slice(0, 7).join('/') + '/';
+  }
+  const community = {};
+  for (const p of find('new-homes/tx -mindepth 4 -maxdepth 4 -name index.html')) {
+    const s = p.split('/'); community[s[3]] = '/' + s.slice(0, 5).join('/') + '/';
+  }
+  writeFileSync(join(OUT, 'qmi-links.json'), JSON.stringify({ qmi, community }));
+  console.log(`qmi-links.json: ${Object.keys(qmi).length} detail + ${Object.keys(community).length} community`);
+}
+
 function build() {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
@@ -138,6 +159,13 @@ function build() {
       const hit = CONTAINER_ISLANDS.find(c => html.includes(c.id));
       if (hit) html = injectIsland(html, hit.island);
     }
+    for (const f of EXTRA_SCRIPTS[rel] || []) {
+      if (!html.includes(`src="/${f}"`)) {
+        const i = html.lastIndexOf('</body>');
+        const tag = `\n<script src="/${f}" defer></script>\n`;
+        html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
+      }
+    }
     const dst = join(OUT, rel);
     mkdirSync(dirname(dst), { recursive: true });
     writeFileSync(dst, html);
@@ -146,13 +174,14 @@ function build() {
   console.log(`rewrote ${n} pages`);
 
   // 3. Islands (from both explicit LIVE_PAGES and container-inferred CONTAINER_ISLANDS).
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island)]);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat()]);
   for (const island of islands) {
     cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   }
   // Marker sprite for the community maps (streets/counties styles have no map_pin),
   // loaded at runtime via addImage. The exact O'Neill green teardrop (90x120 @2x).
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
+  writeLinksMap();
   console.log(`public/ assembled at ${OUT}`);
 }
 

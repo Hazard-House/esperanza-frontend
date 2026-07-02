@@ -21,6 +21,16 @@
   };
   var money = function (n) { return '$' + Number(n || 0).toLocaleString('en-US'); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var slugify = function (s) { return String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+
+  // qmi-links.json (built from the shipped pages) maps a home to its detail page.
+  // Card -> the home-for-sale page (detail), where the "Download PDF" button lives.
+  // Homes newer than the scrape fall back to their community page, then the PDF.
+  var LINKS = { qmi: {}, community: {} };
+  function homeUrl(h) {
+    var cs = slugify(h.community);
+    return LINKS.qmi[cs + '/' + (h.slug || '')] || LINKS.community[cs] || h.pdfUrl || '#';
+  }
 
   function normalizeHome(h) {
     var f = h.fields || h;
@@ -37,6 +47,7 @@
       community: f.Community,
       communityId: un(f['Community (Link)']),
       collection: un(f['FP: Collection']),
+      slug: f.slug,
       city: f.City,
       address: f.address,
       image: fixHost(f.image_url),
@@ -52,7 +63,7 @@
   }
 
   function cardHTML(h) {
-    var url = h.pdfUrl || '#';
+    var url = homeUrl(h);
     var img = h.image || '';
     var banners = '';
     if (h.promo) banners += '<div class="banner overlay-promo green">' + esc(h.promo) + '</div>';
@@ -148,7 +159,7 @@
     return {
       type: 'FeatureCollection',
       features: homes.filter(function (h) { return h.lat && h.lng; }).map(function (h) {
-        return { type: 'Feature', geometry: { type: 'Point', coordinates: [h.lng, h.lat] }, properties: { id: h.id, address: h.address || '', city: h.city || '', price: money(h.price), img: h.image || '', url: h.pdfUrl || '#' } };
+        return { type: 'Feature', geometry: { type: 'Point', coordinates: [h.lng, h.lat] }, properties: { id: h.id, address: h.address || '', city: h.city || '', price: money(h.price), img: h.image || '', url: homeUrl(h) } };
       }),
     };
   }
@@ -208,8 +219,27 @@
       updateMap(homes);
     }
     document.querySelectorAll('.oi-filter-change').forEach(function (el) { el.addEventListener('change', refresh); });
+    applyUrlFilters(); // pre-apply filters passed from the homepage search (?city=… etc.)
     refresh();
     initMap(all);
+  }
+
+  // Pre-select filter controls from URL params (bare values), matching the oilib
+  // prefix grammar on each control. Keeps the UI in sync so activeFilters() picks them up.
+  function applyUrlFilters() {
+    var p = new URLSearchParams(location.search);
+    document.querySelectorAll('input.oi-filter-change[type=checkbox]').forEach(function (cb) {
+      var want = p.getAll(cb.name); if (!want.length) return;
+      var bare = String(cb.value).replace(/^[=%@~]/, '');
+      if (want.indexOf(bare) !== -1 || want.indexOf(cb.value) !== -1) cb.checked = true;
+    });
+    document.querySelectorAll('select.oi-filter-change').forEach(function (sel) {
+      var want = p.getAll(sel.name); if (!want.length) return;
+      Array.prototype.forEach.call(sel.options, function (o) {
+        var bare = String(o.value).replace(/^[=%@~]/, '');
+        if (o.value && (want.indexOf(bare) !== -1 || want.indexOf(o.value) !== -1)) sel.value = o.value;
+      });
+    });
   }
 
   function boot() {
@@ -218,7 +248,9 @@
     Promise.all([
       fetch(API + '/qmi').then(function (r) { return r.json(); }),
       fetch(API + '/communities').then(function (r) { return r.json(); }).catch(function () { return { communities: [] }; }),
+      fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
     ]).then(function (res) {
+      if (res[2]) LINKS = res[2];
       var homes = (res[0].homes || []).map(normalizeHome);
       // community centroid fallback for homes with no coords
       var cc = {};
