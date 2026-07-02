@@ -23,11 +23,18 @@ const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11'; // O'Neill custom sty
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
 const OPS_PLACEHOLDER = 'esperanza-ops-not-yet-wired.invalid'; // forms deferred (HubSpot later)
 
-const PAGES = {
-  home: 'index.html',
-  available: 'new-homes/available/index.html',
-  community: 'new-homes/tx/mcallen/tres-lagos-master-planned-community/12091/index.html',
-};
+// Pages to ship are listed in ship.txt (one rel path per line, relative to WWW),
+// grown per phase. Always include the homepage. Pages get rewriteCommon; the ones
+// in LIVE_PAGES additionally get their island injected.
+const ALWAYS = ['index.html'];
+const LIVE_PAGES = { 'new-homes/available/index.html': 'available-live.js' };
+function shipList() {
+  const manifest = join(import.meta.dirname, 'ship.txt');
+  const extra = existsSync(manifest)
+    ? readFileSync(manifest, 'utf8').split('\n').map(s => s.trim()).filter(Boolean)
+    : [];
+  return [...new Set([...ALWAYS, ...extra])];
+}
 
 // Resolved R2 object keys (real extensions). The scrape references each image in
 // two forms — with extension (src) and extensionless (responsive srcset) — but the
@@ -48,8 +55,8 @@ function loadKeyMap(file, prefix) {
 const ESP_KEYS = loadKeyMap('media-keys-esperanza.txt', '');
 const HF_KEYS = loadKeyMap('media-keys-homefiniti.txt', 'homefiniti/');
 function resolveMedia(rawPath, prefix, map) {
-  const base = stripExt(rawPath.split('%EF%B9%96')[0]);   // drop resize query + ext
-  return map.get(prefix + base) || (prefix + rawPath.split('%EF%B9%96')[0]);
+  const clean = rawPath.split('%EF%B9%96')[0].split('?')[0]; // drop resize query (encoded or literal ?)
+  return map.get(prefix + stripExt(clean)) || (prefix + clean);
 }
 
 // --- rewrite rules ----------------------------------------------------------
@@ -75,16 +82,14 @@ function rewriteCommon(html) {
     .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE);
 }
 
-// The flagship available page: disable oilib (so it doesn't fight our island for
-// #oi-map / #oi-filter-results), then inject the live QMI+Mapbox island.
-function rewriteAvailable(html) {
-  html = rewriteCommon(html);
-  // Neutralize oilib: drop its <script src>. Its map/filter init listeners fire on
-  // the 'oilib_loaded' event, which never dispatches once the lib isn't loaded.
+// Live pages: disable oilib (so it doesn't fight our island for #oi-map /
+// #oi-filter-results) and inject the page's island + config before the LAST </body>
+// (inline JS can contain a literal "</body>").
+function injectIsland(html, islandFile) {
   html = html.replace(/<script[^>]*\/static\/assets\/js\/oilib[^>]*><\/script>/g, '<!-- oilib map/filter init removed for the live island -->');
-  if (!/src="\/available-live\.js"/.test(html)) {
-    const tag = `\n<script>window.__ESPERANZA={API_BASE:${JSON.stringify(API_BASE)},MAPBOX_TOKEN:${JSON.stringify(MAPBOX_TOKEN)},MAPBOX_STYLE:${JSON.stringify(PUBLIC_STYLE)}};</script>\n<script src="/available-live.js" defer></script>\n`;
-    // inject before the LAST </body> (inline JS can contain a literal "</body>")
+  const marker = `src="/${islandFile}"`;
+  if (!html.includes(marker)) {
+    const tag = `\n<script>window.__ESPERANZA={API_BASE:${JSON.stringify(API_BASE)},MAPBOX_TOKEN:${JSON.stringify(MAPBOX_TOKEN)},MAPBOX_STYLE:${JSON.stringify(PUBLIC_STYLE)}};</script>\n<script src="/${islandFile}" defer></script>\n`;
     const i = html.lastIndexOf('</body>');
     html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
   }
@@ -98,21 +103,25 @@ function build() {
   // 1. Theme bundle -> /static (preserve the ﹖v=hash filenames verbatim).
   cpSync(THEME, join(OUT, 'static'), { recursive: true });
 
-  // 2. Flagship pages, rewritten.
-  for (const [key, rel] of Object.entries(PAGES)) {
+  // 2. Ship every page in the manifest; islands for the LIVE_PAGES.
+  let n = 0;
+  for (const rel of shipList()) {
     const src = join(WWW, rel);
-    if (!existsSync(src)) throw new Error(`missing scrape page: ${src}`);
-    let html = readFileSync(src, 'utf8');
-    html = key === 'available' ? rewriteAvailable(html) : rewriteCommon(html);
+    if (!existsSync(src)) { console.warn(`skip missing: ${rel}`); continue; }
+    let html = rewriteCommon(readFileSync(src, 'utf8'));
+    if (LIVE_PAGES[rel]) html = injectIsland(html, LIVE_PAGES[rel]);
     const dst = join(OUT, rel);
     mkdirSync(dirname(dst), { recursive: true });
     writeFileSync(dst, html);
-    console.log(`built ${rel}  (${(html.length / 1024).toFixed(0)}kb)`);
+    n++;
   }
+  console.log(`rewrote ${n} pages`);
 
-  // 3. The live island.
-  cpSync(join(import.meta.dirname, 'islands', 'available-live.js'), join(OUT, 'available-live.js'));
-  console.log(`\npublic/ assembled at ${OUT}`);
+  // 3. Islands.
+  for (const island of new Set(Object.values(LIVE_PAGES))) {
+    cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
+  }
+  console.log(`public/ assembled at ${OUT}`);
 }
 
 // ponytail self-check: the rewrites are the load-bearing logic; assert their shape.
