@@ -29,7 +29,6 @@ const STYLE_HOME = 'mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg';
 // those in our account are a follow-up). available-live.js reads PUBLIC_STYLE as MAPBOX_STYLE.
 const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11';
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
-const OPS_PLACEHOLDER = 'esperanza-ops-not-yet-wired.invalid'; // forms deferred (HubSpot later)
 
 // Pages to ship are listed in ship.txt (one rel path per line, relative to WWW),
 // grown per phase. Always include the homepage. Pages get rewriteCommon; the ones
@@ -83,8 +82,10 @@ function resolveMedia(rawPath, prefix, map) {
 function rewriteCommon(html) {
   return html
     // R1: XHR form/lead endpoints -> placeholder (deferred). Absolute + root-relative.
-    .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, `https://${OPS_PLACEHOLDER}/xhr/`)
-    .replace(/(["'])\/xhr\//g, `$1https://${OPS_PLACEHOLDER}/xhr/`)
+    // xhr endpoints -> same-origin /xhr/ (Caddy answers with benign JSON so the
+    // frozen snapshot's recommend/oicheck/form calls resolve quietly instead of
+    // erroring against the dead live domain). Root-relative /xhr/ already correct.
+    .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
     // R3: theme host -> /static/ (bundled). Absorb the variable ../ chain.
     .replace(/(?:\.\.\/)*static\.esperanzahomes\.com\//g, '/static/')
     // R2: images -> R2 CDN. Capture the whole path token, drop the resize query
@@ -113,6 +114,13 @@ function rewriteCommon(html) {
 // (inline JS can contain a literal "</body>").
 function injectIsland(html, islandFile) {
   html = html.replace(/<script[^>]*\/static\/assets\/js\/oilib[^>]*><\/script>/g, '<!-- oilib map/filter init removed for the live island -->');
+  // oilib is gone but the page still has inline oilib map code (oi.map.multi, fitToBounds
+  // reading oi.loaded.map, resize handlers) -> "oi is not defined". Stub `oi` in <head>
+  // with a chainable no-op proxy so those orphaned calls are silent.
+  if (!html.includes('window.oi=')) {
+    const stub = '<script>window.oi=new Proxy(function(){},{get:function(){return window.oi},apply:function(){return window.oi}});</script>';
+    html = html.replace(/<head([^>]*)>/i, `<head$1>\n${stub}`);
+  }
   const marker = `src="/${islandFile}"`;
   if (!html.includes(marker)) {
     const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: PUBLIC_STYLE, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_DETAIL: PUBLIC_STYLE };
@@ -181,6 +189,9 @@ function build() {
   // Marker sprite for the community maps (streets/counties styles have no map_pin),
   // loaded at runtime via addImage. The exact O'Neill green teardrop (90x120 @2x).
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
+  // Frozen site-search index (oilib fetches /sitesearch.json) — served same-origin so
+  // header search works and doesn't CORS-fail against the dead live domain.
+  cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
   writeLinksMap();
   console.log(`public/ assembled at ${OUT}`);
 }
@@ -199,7 +210,7 @@ function demo() {
   const foot = s('<div class="col-12 oneilinteractive-attribution text-center"><a href="https://oneilinteractive.com/x"><img class="oneil-icon" src="../static.esperanzahomes.com/x.avif"> Powered by Homefiniti</a>. Designed by <a href="https://oneilinteractive.com">ONeil Interactive</a>.</div>');
   console.assert(foot.includes('Powered by Hazard House') && !foot.includes('oneilinteractive.com') && !foot.includes('oneil-icon'), 'footer -> Hazard House');
   console.assert(s('action="https://www.esperanzahomes.com/xhr/request-information/"')
-    .includes(`https://${OPS_PLACEHOLDER}/xhr/request-information/`), 'xhr repoint');
+    === 'action="/xhr/request-information/"', 'xhr -> same-origin');
   console.assert(s('"map_key":"pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA"')
     === `"map_key":"${MAPBOX_TOKEN}"`, 'token swap');
   console.assert(s('src="../../../api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"')
