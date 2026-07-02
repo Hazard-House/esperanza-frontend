@@ -18,8 +18,14 @@ const THEME = join(SCRAPE, 'static.esperanzahomes.com');
 const OUT = join(import.meta.dirname, 'public');
 
 // --- config that gets baked into the flagship pages -------------------------
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGF6YXJkaG91c2UiLCJhIjoiY21kdG1xMWwwMTFvbDJqb2h1bXgxYmw3ZyJ9.ER4JhSJ2bl89WJ-3Xv5erA';
-const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11'; // O'Neill custom styles 401 under our token
+// O'Neill's own token (account: oneilinteractive) — required so the custom styles
+// + map_pin sprite resolve 1:1. Ours 401'd on their styles. Interim for the initial
+// Railway deploy; see ~/Dropbox/Claude Projects/Esperanza Mapbox Rebuild/mapbox.env.
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA';
+// The available island's map uses the "Esperanza-Common" style (same as the live
+// QMI map). The homepage keeps its own "Esperanza-Counties" style (we no longer
+// rewrite style URLs — under O'Neill's token each page's real style just works).
+const PUBLIC_STYLE = 'mapbox://styles/oneilinteractive/cl3kl7udj001014peasiv7lip';
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
 const OPS_PLACEHOLDER = 'esperanza-ops-not-yet-wired.invalid'; // forms deferred (HubSpot later)
 
@@ -77,9 +83,11 @@ function rewriteCommon(html) {
       (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, 'homefiniti/', HF_KEYS)}`)
     // R4: mapbox-gl lib CDN (relativized by HTTrack) -> restore https.
     .replace(/(?:\.\.\/)*api\.mapbox\.com\//g, 'https://api.mapbox.com/')
-    // R7: swap O'Neill Mapbox token + custom styles (custom styles 401 under our token).
-    .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN)
-    .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE);
+    // R7: normalize the O'Neill Mapbox token to our configured one (no-op while we
+    // reuse O'Neill's token, but keeps the pipeline correct if the scrape ever differs).
+    // Style URLs are intentionally NOT rewritten: each page keeps its real O'Neill
+    // style (Counties on the homepage, Common elsewhere), which the token unlocks 1:1.
+    .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN);
 }
 
 // Live pages: disable oilib (so it doesn't fight our island for #oi-map /
