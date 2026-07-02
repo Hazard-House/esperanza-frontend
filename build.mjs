@@ -101,7 +101,7 @@ function rewriteCommon(html) {
     // Shared footer on every page; the attribution div has no nested <div> so the
     // non-greedy match to the first </div> is safe.
     .replace(/<div class="col-12 oneilinteractive-attribution[^>]*>[\s\S]*?<\/div>/,
-      '<div class="col-12 oneilinteractive-attribution text-center text-white fs-9 mb-2"><a href="https://hazard.house" rel="noopener" target="_blank" class="text-small text-white">Powered by Hazard House</a></div>');
+      '<div class="col-12 oneilinteractive-attribution text-center text-white fs-9 mb-2"><a href="https://hazardhouse.ai" rel="noopener" target="_blank" class="text-small text-white">Powered by Hazard House</a></div>');
 }
 
 // Live pages: disable oilib (so it doesn't fight our island for #oi-map /
