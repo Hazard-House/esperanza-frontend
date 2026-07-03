@@ -12,6 +12,7 @@ export function qmiContent(h) {
     h.stories != null && statItem(ICON.story, esc(h.stories) + (h.stories == 1 ? ' Story' : ' Stories')),
     h.totalSqft != null && statItem(ICON.total, num(h.totalSqft) + ' Total Sq. Ft.'),
     h.livingSqft != null && statItem(ICON.living, num(h.livingSqft) + ' Living Sq. Ft.'),
+    h.lot != null && statItem(ICON.lot || ICON.pin || ICON.total, 'Lot #' + esc(h.lot)),
   ].filter(Boolean).join('');
   const ctas = [
     h.pdfUrl && `<a href="${esc(h.pdfUrl)}" target="_blank" rel="noopener" class="btn btn-green oi-brochure-download me-2 mb-2">Download Brochure</a>`,
@@ -47,10 +48,12 @@ export function renderQmi(h, shell) {
 
 function demo() {
   const c = { id: 'recC', name: 'El Eden', slug: 'el-eden', city: 'Laredo', lat: 27.43, lng: -99.45, description: '<p>Nice</p>', image: '/c.jpg', officePhone: '956-395-1516', officeHours: 'Mon-Sat 9-6' };
-  const h = { id: 'recH', address: '5131 Carambola Ln', community: 'El Eden', city: 'Laredo', slug: '5131-carambola-ln', price: 236990, beds: 3, baths: 2, garage: 2, stories: 1, livingSqft: 1106, totalSqft: 1471, description: 'Highlights:\n- Big yard', gallery: [{ url: '/1.jpg', alt: '' }], image: '/1.jpg', virtualTourUrl: 'https://my.matterport.com/show/?m=x', planViewerUrl: 'https://idapro.cloud/flr_pln/presidio', fpImage: '/fp.jpg', elevation: 'Presidio - Tuscan', pdfUrl: 'https://pdf/x', availability: 'Available Now', promo: '', communityObj: c };
+  const h = { id: 'recH', address: '5131 Carambola Ln', community: 'El Eden', city: 'Laredo', slug: '5131-carambola-ln', price: 236990, beds: 3, baths: 2, garage: 2, stories: 2, lot: '334', hersScore: 47, livingSqft: 1106, totalSqft: 1471, description: 'Highlights:\n- Big yard', gallery: [{ url: '/1.jpg', alt: '' }], image: '/1.jpg', virtualTourUrl: 'https://my.matterport.com/show/?m=x', planViewerUrl: 'https://idapro.cloud/flr_pln/presidio', fpImage: '/fp.jpg', elevation: 'Presidio - Tuscan', pdfUrl: 'https://pdf/x', availability: 'Available Now', promo: '', communityObj: c };
   const out = qmiContent(h);
   for (const id of ['id="detail-gallery"', 'id="overview"', 'id="virtualtour"', 'id="plans"', 'id="community"', 'id="sales"', 'id="request-a-tour"']) console.assert(out.includes(id), 'has ' + id);
   console.assert(out.includes('data-live="price"') && out.includes('$236,990'), 'price');
+  console.assert(out.includes('Lot #334'), 'lot number stat');
+  console.assert(out.includes('2 Stories'), 'stories stat');
   console.assert(out.includes('<ul>') && out.includes('Big yard'), 'desc bullets');
   console.assert(out.includes('matterport.com') && out.includes('idapro.cloud'), 'tour+plan');
   console.assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'no leftover markers/undefined');

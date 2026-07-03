@@ -18,10 +18,13 @@ function normQmi(h) {
   let gallery = [];
   const g = f.photo_gallery; // exposed by the esperanza-cf PR (Task 13); absent until then
   if (Array.isArray(g)) gallery = g.map(x => ({ url: fixHost(x.url || x), alt: x.alt || '' }));
+  const hn = f.housenumber != null ? String(f.housenumber).trim() : '';
+  const lot = hn ? (/^\d+$/.test(hn) ? String(Number(hn)) : hn) : undefined;
   return {
     id: h.id, price: f.Price,
     beds: f.bedroom_count, baths: f.bathroom_count, halfBaths: f.half_bathroom_count,
-    stories: f.stories_count, garage: un(f['FP: Garage']),
+    stories: f.stories != null ? f.stories : f.stories_count, garage: un(f['FP: Garage']),
+    lot, hersScore: f.hers_score,
     livingSqft: f.living_square_footage, totalSqft: f.total_square_footage,
     community: f.Community, communityId: un(f['Community (Link)']),
     floorPlan: f['Floor Plan'], floorPlanId: un(f['Floor Plan (Link)']),
@@ -98,6 +101,12 @@ async function demo() {
   console.assert(d.floorplans.length > 20, 'floorplans loaded');
   const withComm = d.qmis.find(h => h.communityObj);
   console.assert(withComm, 'at least one QMI cross-links to a community');
+  const withStories = d.qmis.find(h => h.stories != null);
+  console.assert(withStories, 'at least one QMI has stories');
+  const withLot = d.qmis.find(h => h.lot != null);
+  console.assert(withLot, 'at least one QMI has a lot number');
+  const withHers = d.qmis.find(h => h.hersScore != null);
+  console.assert(withHers, 'at least one QMI has a HERS score');
   const withPlans = d.communities.find(c => c.plans.length);
   console.assert(withPlans, 'at least one community cross-links to floor plans');
   console.assert(typeof slugify('El Edén!') === 'string' && slugify('El Eden') === 'el-eden', 'slugify');
