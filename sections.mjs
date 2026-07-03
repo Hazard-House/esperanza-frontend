@@ -46,20 +46,28 @@ export function bannerHtml(availability, promo) {
 export function galleryHtml(gallery, fallback, address) {
   const imgs = (gallery && gallery.length) ? gallery : (fallback ? [{ url: fallback, alt: address }] : []);
   if (!imgs.length) return '';
-  const alt = esc(address || ''), hero = imgs[0];
+  const alt = esc(address || '');
+  // 1:1 with O'Neill: hero (col-lg-8) + a side column (col-lg-4) of up to two
+  // sixteen-nine thumbs in h-50 rows; the LAST thumb carries the .photo-overlay
+  // ("Photo Gallery" + white-bar + View N Photos). Overlay lives inside a
+  // position-relative cell so it never escapes to cover the page.
   const heroCol = imgs.length > 1 ? 'col-12 col-lg-8' : 'col-12';
-  // .photo-overlay is theme CSS `position:absolute;height:100%;width:100%;z-index:2` —
-  // it MUST live inside the position:relative .oi-aspect box or it covers the whole page
-  // and eats every click. Only render it when there's a real (multi-image) gallery to open.
-  const overlay = imgs.length > 1
-    ? `<div class="photo-overlay"><a href="#" class="open-gallery btn btn-green small-btn mt-5" data-fancybox-trigger="photos">View ${imgs.length} Photos</a></div>`
-    : '';
-  const mosaic = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(hero.url)}" class="oi-aspect-img" loading="eager" alt="${alt}">${overlay}</div></div>`;
-  const side = imgs.length > 1 ? `<div class="col-12 col-lg-4 d-none d-lg-flex flex-column p-0">`
-    + imgs.slice(1, 3).map(g => `<div class="oi-aspect sixteen-nine mb-2"><img src="${esc(g.url)}" class="oi-aspect-img" loading="lazy" alt="${alt}"></div>`).join('')
-    + `</div>` : '';
-  const hidden = `<div class="d-none">` + imgs.map(g => `<a href="${esc(g.url)}" data-fancybox="photos" data-caption="${esc(g.alt || '')}"><img src="${esc(g.url)}" alt="${esc(g.alt || alt)}"></a>`).join('') + `</div>`;
-  return `<div id="detail-gallery" class="container-fluid p-0"><div class="row m-0">${mosaic}${side}</div>${hidden}</div>`;
+  const hero = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(imgs[0].url)}" class="oi-aspect-img" loading="eager" alt="${alt}"></div></div>`;
+  let side = '';
+  if (imgs.length > 1) {
+    const thumbs = imgs.slice(1, 3);
+    const rows = thumbs.map((g, i) => {
+      const last = i === thumbs.length - 1;
+      const overlay = last
+        ? `<div class="photo-overlay d-flex"><div class="m-auto text-center"><div class="bodoni ls-sm fs-2 lh-2 text-white">Photo Gallery</div><div class="white-bar mt-2 mx-auto"></div><a class="open-gallery btn btn-green small-btn mt-5" data-fancybox-trigger="photos">View ${imgs.length} Photos</a></div></div>`
+        : '';
+      const cell = last ? 'col px-0 position-relative d-flex align-items-stretch' : 'col px-0 d-flex align-items-stretch';
+      return `<div class="row h-50${i > 0 ? ' pt-lg-1' : ''}"><div class="${cell}">${overlay}<div class="oi-aspect sixteen-nine"><img src="${esc(g.url)}" class="oi-aspect-img" loading="eager" alt="${alt}"></div></div></div>`;
+    }).join('');
+    side = `<div class="col-md-6 col-lg-4 ps-lg-1 d-none d-lg-block">${rows}</div>`;
+  }
+  const hidden = `<div class="d-none">` + imgs.map(g => `<img src="${esc(g.url)}" loading="lazy" data-fancybox="photos" data-caption="${esc(g.alt || '')}" alt="${esc(g.alt || alt)}">`).join('') + `</div>`;
+  return `<div id="detail-gallery" class="container-fluid p-0"><div class="row m-0">${hero}${side}</div>${hidden}</div>`;
 }
 
 // Real theme section-heading pattern (verified against a live QMI detail page's
@@ -89,18 +97,28 @@ export function elevationHtml(label, image) {
   return `<section id="elevations" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container">${sectionHeading('Elevations')}<div class="row oi-listings justify-content-center"><div class="col-12 col-md-6"><a data-fancybox="elevations" data-caption="${esc(label || '')}" href="${esc(image)}"><div class="oi-aspect three-two">${label ? `<div class="banner dark-green">${esc(label)}</div>` : ''}<img src="${esc(image)}" class="oi-aspect-img" alt="${esc(label || 'elevation')}"></div></a></div></div></div></section>`;
 }
 
-export function idaproPlanHtml(url, image, name, desc) {
-  const body = url
-    ? `<div class="text-center mb-3"><a class="btn btn-primary" href="${esc(url)}" target="_blank" rel="noopener">Launch Interactive Floor Plan</a></div><iframe src="${esc(url)}" name="modelframe" frameborder="0" style="width:100%;height:600px"></iframe>`
-    : (image ? `<div class="oi-aspect three-two"><img src="${esc(image)}" class="oi-aspect-img" alt="${esc(name || '')} floor plan"></div>` : '');
-  if (!body) return '';
-  return `<section id="plans" class="pagejump floor-plan py-4 py-lg-5"><div class="container">${sectionHeading('Floor Plan')}${body}${desc ? `<div class="wysiwyg mt-4">${esc(desc)}</div>` : ''}</div></section>`;
+export function idaproPlanHtml(url, image, name) {
+  if (!url && !image) return '';
+  // O'Neill embeds a static _FP.png in a jQuery iviewer; we don't have that image,
+  // only the idapro interactive URL (which O'Neill itself iframes on its floor-plan
+  // pages). Reproduce the viewer-wrap LAYOUT (col-md-9 viewer + col-md-3 side rail)
+  // with the idapro iframe as the viewer — no bare "Launch" button, no floating text.
+  const viewer = url
+    ? `<iframe src="${esc(url)}" name="modelframe" title="${esc(name || '')} interactive floor plan" frameborder="0" class="w-100" style="height:100%;min-height:560px" loading="lazy"></iframe>`
+    : `<div class="oi-aspect one-one"><img src="${esc(image)}" class="oi-aspect-img" alt="${esc(name || '')} floor plan"></div>`;
+  return `<div class="bg-tan-white"><section id="plans" class="py-lg-5 pagejump floor-plan"><div class="container-lg map-list-section position-relative">${sectionHeading('Floor Plan')}<div class="row m-0 d-flex align-items-stretch viewer-wrap"><div class="col-12 col-md-9 p-0">${viewer}</div><div class="col-12 col-md-3 align-self-stretch bg-tan-100 p-0"><span class="p-3 text-center d-block"><p class="fs-5 text-gray overpass regular mb-0">${esc(name || 'Floor Plan')}</p></span></div></div></div></section></div>`;
 }
 
 export function communityBlurbHtml(c) {
   if (!(c && (c.description || c.image))) return '';
-  const bg = c.image ? ` style="background-image:url(${esc(c.image)})"` : '';
-  return `<section id="community" class="pagejump bg-photo-block"${bg}><div class="container"><div class="photo-block-info"><h2 class="bodoni text-white fs-2">About the Community</h2>${c.description ? `<div class="mt-4 text-white fs-7 lh-lg wysiwyg">${c.description}</div>` : ''}<a class="btn btn-white mt-3" href="${communityPath(c)}">Learn More About ${esc(c.name)}</a></div></div></section>`;
+  // 1:1 with O'Neill: a real responsive <img class="oi-aspect-img"> inside a sized
+  // .oi-aspect + a .gray-gradient overlay + .photo-block-info (theme CSS positions the
+  // text over the image). The previous inline background-image collapsed to no height.
+  const img = c.image
+    ? `<div class="oi-aspect three-four four-three-md sixteen-nine-lg"><img src="${esc(c.image)}" class="oi-aspect-img" loading="lazy" alt="${esc(c.name || '')}"></div>`
+    : '';
+  const desc = c.description ? `<div class="mt-4 text-white fs-7 lh-lg wysiwyg">${c.description}</div>` : '';
+  return `<section id="community" class="bg-photo-block position-relative pagejump"><div class="container-fluid"><div class="row"><div class="col p-0"><div class="gray-gradient"></div>${img}<div class="photo-block-info"><div class="container"><div class="col-12 col-md-10 col-xl-7"><div class="bodoni ls-sm fs-2 text-white">About the Community</div>${desc}<a href="${communityPath(c)}" class="btn btn-white btn-auto mt-4 d-inline-block me-md-2">Learn More About ${esc(c.name)}</a></div></div></div></div></div></div></section>`;
 }
 
 export function mapSalesHtml(c) {
@@ -201,6 +219,12 @@ function demo() {
 
   const gallery = galleryHtml([{ url: '/a.jpg', alt: 'A' }, { url: '/b.jpg', alt: 'B' }], null, 'Home');
   assert(gallery.includes('btn btn-green small-btn mt-5') && !gallery.includes('card-button'), 'galleryHtml CTA class');
+  // fidelity: real O'Neill mosaic — hero + side col with h-50 rows, overlay ("Photo Gallery") on last thumb
+  assert(gallery.includes('col-md-6 col-lg-4') && gallery.includes('photo-overlay d-flex') && gallery.includes('Photo Gallery') && gallery.includes('h-50'), 'galleryHtml mosaic structure');
+  const planUrl = idaproPlanHtml('https://idapro.cloud/flr_pln/x', null, 'Presidio');
+  assert(planUrl.includes('viewer-wrap') && planUrl.includes('name="modelframe"') && planUrl.includes('col-md-9') && planUrl.includes('col-md-3') && !planUrl.includes('Launch Interactive'), 'idaproPlanHtml viewer-wrap layout');
+  const comm = communityBlurbHtml({ name: 'El Eden', slug: 'el-eden', city: 'Laredo', image: '/c.jpg', description: '<p>x</p>' });
+  assert(comm.includes('gray-gradient') && comm.includes('oi-aspect-img') && comm.includes('About the Community') && comm.includes('photo-block-info') && !comm.includes('background-image'), 'communityBlurbHtml real-img structure');
 
   // subnav: mobile "Go To..." dropdown + desktop row with `on-scroll` links (active on first item)
   const nav = subnavHtml([['overview', 'Overview'], ['photos', 'Photo Gallery'], ['sales', 'Contact']]);
