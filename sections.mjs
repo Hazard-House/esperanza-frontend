@@ -99,14 +99,15 @@ export function elevationHtml(label, image) {
 
 export function idaproPlanHtml(url, image, name) {
   if (!url && !image) return '';
-  // O'Neill embeds a static _FP.png in a jQuery iviewer; we don't have that image,
-  // only the idapro interactive URL (which O'Neill itself iframes on its floor-plan
-  // pages). Reproduce the viewer-wrap LAYOUT (col-md-9 viewer + col-md-3 side rail)
-  // with the idapro iframe as the viewer — no bare "Launch" button, no floating text.
-  const viewer = url
-    ? `<iframe src="${esc(url)}" name="modelframe" title="${esc(name || '')} interactive floor plan" frameborder="0" class="w-100" style="height:100%;min-height:560px" loading="lazy"></iframe>`
-    : `<div class="oi-aspect one-one"><img src="${esc(image)}" class="oi-aspect-img" alt="${esc(name || '')} floor plan"></div>`;
-  return `<div class="bg-tan-white"><section id="plans" class="py-lg-5 pagejump floor-plan"><div class="container-lg map-list-section position-relative">${sectionHeading('Floor Plan')}<div class="row m-0 d-flex align-items-stretch viewer-wrap"><div class="col-12 col-md-9 p-0">${viewer}</div><div class="col-12 col-md-3 align-self-stretch bg-tan-100 p-0"><span class="p-3 text-center d-block"><p class="fs-5 text-gray overpass regular mb-0">${esc(name || 'Floor Plan')}</p></span></div></div></div></section></div>`;
+  // O'Neill shows the plan DRAWING inline (jQuery iviewer on a static _FP.png). We
+  // have neither that image nor a working embed — idapro renders blank off its own
+  // domain (origin-locked, like O'Neill's Mapbox token). So: if a plan-drawing image
+  // is ever backfilled, show it inline; otherwise a clean CTA to the interactive plan
+  // (new tab) — never a blank iframe box.
+  const body = image
+    ? `<div class="oi-aspect one-one"><img src="${esc(image)}" class="oi-aspect-img" alt="${esc(name || '')} floor plan"></div>`
+    : `<div class="bg-tan-100 border-15 text-center p-4 p-lg-6"><div class="fs-4 bodoni ls-sm text-gray mb-3">${esc(name || 'Floor Plan')}</div><a href="${esc(url)}" target="_blank" rel="noopener" class="btn btn-green">View Interactive Floor Plan</a></div>`;
+  return `<div class="bg-tan-white"><section id="plans" class="py-lg-5 pagejump floor-plan"><div class="container-lg map-list-section position-relative">${sectionHeading('Floor Plan')}${body}</div></section></div>`;
 }
 
 export function communityBlurbHtml(c) {
@@ -222,7 +223,7 @@ function demo() {
   // fidelity: real O'Neill mosaic — hero + side col with h-50 rows, overlay ("Photo Gallery") on last thumb
   assert(gallery.includes('col-md-6 col-lg-4') && gallery.includes('photo-overlay d-flex') && gallery.includes('Photo Gallery') && gallery.includes('h-50'), 'galleryHtml mosaic structure');
   const planUrl = idaproPlanHtml('https://idapro.cloud/flr_pln/x', null, 'Presidio');
-  assert(planUrl.includes('viewer-wrap') && planUrl.includes('name="modelframe"') && planUrl.includes('col-md-9') && planUrl.includes('col-md-3') && !planUrl.includes('Launch Interactive'), 'idaproPlanHtml viewer-wrap layout');
+  assert(planUrl.includes('id="plans"') && planUrl.includes('View Interactive Floor Plan') && planUrl.includes('href="https://idapro.cloud/flr_pln/x"') && !planUrl.includes('name="modelframe"'), 'idaproPlanHtml CTA (no blank iframe)');
   const comm = communityBlurbHtml({ name: 'El Eden', slug: 'el-eden', city: 'Laredo', image: '/c.jpg', description: '<p>x</p>' });
   assert(comm.includes('gray-gradient') && comm.includes('oi-aspect-img') && comm.includes('About the Community') && comm.includes('photo-block-info') && !comm.includes('background-image'), 'communityBlurbHtml real-img structure');
 

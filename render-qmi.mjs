@@ -6,7 +6,7 @@ import { qmiPath } from './paths.mjs';
 
 export function qmiContent(h) {
   const c = h.communityObj || {};
-  const has = { tour: !!h.virtualTourUrl, plans: !!(h.planViewerUrl || h.fpImage), elev: !!h.fpImage, comm: !!(c.description || c.image), sales: !!(c.lat && c.lng) };
+  const has = { tour: !!h.virtualTourUrl, plans: !!h.planViewerUrl, elev: !!h.fpImage, comm: !!(c.description || c.image), sales: !!(c.lat && c.lng) };
   const stats = [
     h.beds != null && statItem(ICON.bed, esc(h.beds) + ' Bed'),
     h.garage != null && statItem(ICON.garage, esc(h.garage) + ' Car Garage'),
@@ -32,7 +32,7 @@ export function qmiContent(h) {
     `<section id="overview" class="pagejump pt-4 pt-lg-5 bg-tan-white reverse pb-4"><div class="container-lg pt-3"><div class="row mb-3"><div class="col-12 col-md-7">${descHtml(h.description)}<div class="row mt-4"><div class="col-12">${ctas}</div></div></div><div class="col-12 col-md-5 col-lg-4 offset-lg-1 mt-4 mt-md-2 mt-lg-3"><div class="row stat-group border-gray mt-4 py-2">${stats}</div><div class="my-3 my-lg-4"><div class="osc-callout py-3 px-2 px-lg-3 text-center"><p class="bodoni text-white fs-4 ls-sm lh-2 fw-bold">Learn More About<br>${esc(h.address)}</p><button class="btn mb-2" data-bs-toggle="modal" data-bs-target="#osc-form">Get Answers</button></div></div></div></div></div></section>`,
     has.tour && tourHtml(h.virtualTourUrl),
     has.elev && elevationHtml(h.elevation, h.fpImage),
-    has.plans && idaproPlanHtml(h.planViewerUrl, h.fpImage, h.floorPlan),
+    has.plans && idaproPlanHtml(h.planViewerUrl, null, h.floorPlan),
     has.comm && communityBlurbHtml(c),
     has.sales && mapSalesHtml(c),
     recommendedHtml(),
