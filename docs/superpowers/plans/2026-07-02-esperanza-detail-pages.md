@@ -21,6 +21,7 @@
   - Community: `/new-homes/tx/<citySlug>/<communitySlug>/`
   - Floor plan: confirmed in the floor-plan template task.
 - Tests follow the existing pattern: assert-based `demo()` run via `node <file> --check` (no test framework). Commit after each green task.
+- **Active checkout:** `staging` is being edited in parallel (e.g. commit 770a125 switched QMI/community maps to the bundled `STYLE_COMMON_URL = '/esperanza-common.json'`, added `communities-live.js`, and copies `esperanza-common.json` into `public/`). Detail maps therefore use `STYLE_COMMON_URL`, and `community-maps-live.js` reads it via `CFG.MAPBOX_STYLE_COMMON`. Before editing `build.mjs`/islands, `git pull`/re-read the current file — match against real content, not the line numbers quoted here.
 - Footer/branding, media rewrites, oi-stub, robots gating in `rewriteCommon`/`injectIsland` are already correct — do not regress them (the `build.mjs --check` demo guards them).
 
 ---
@@ -370,7 +371,8 @@ import { join } from 'node:path';
 
 export const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGF6YXJkaG91c2UiLCJhIjoiY21kdG1xMWwwMTFvbDJqb2h1bXgxYmw3ZyJ9.ER4JhSJ2bl89WJ-3Xv5erA';
 export const STYLE_HOME = 'mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg';
-export const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11';
+export const STYLE_COMMON_URL = '/esperanza-common.json'; // bundled Esperanza-Common style — QMI + community detail maps (matches build.mjs after commit 770a125)
+export const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11'; // fallback only
 export const API_BASE = '/api/public';
 export const NOINDEX = true;
 
@@ -430,7 +432,7 @@ export function injectIsland(html, islandFile) {
   html = disableOilib(html);
   const marker = `src="/${islandFile}"`;
   if (!html.includes(marker)) {
-    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: PUBLIC_STYLE, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_DETAIL: PUBLIC_STYLE };
+    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: STYLE_COMMON_URL, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: STYLE_COMMON_URL };
     const tag = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};</script>\n<script src="/${islandFile}" defer></script>\n`;
     const i = html.lastIndexOf('</body>');
     html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
@@ -464,10 +466,10 @@ if (process.argv.includes('--check') && import.meta.url === `file://${process.ar
 Add near the top of `build.mjs` (after the existing `node:` imports):
 
 ```js
-import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
+import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
 ```
 
-Then DELETE from `build.mjs` (now living in rewrite.mjs): the config-const block (lines ~21–33: `MAPBOX_TOKEN`, `STYLE_HOME`, `PUBLIC_STYLE`, `API_BASE`, `NOINDEX`) and the whole block lines ~68–156 (`IMG_EXT`, `stripExt`, `loadKeyMap`, `ESP_KEYS`, `HF_KEYS`, `resolveMedia`, `rewriteCommon`, `injectIsland`). KEEP everything in between (`ALWAYS`/`LIVE_PAGES`/`SHELL`/`CONTAINER_ISLANDS`/`EXTRA_SCRIPTS`/`shipList`) and after (`buildShellHtml`, `writeLinksMap`, `build`, `demo`). `buildShellHtml`/`build`/`demo` keep working because `rewriteCommon`/`injectIsland` are now imported.
+Then DELETE from `build.mjs` (now living in rewrite.mjs): the config-const block (the `MAPBOX_TOKEN`, `STYLE_HOME`, `STYLE_COMMON_URL`, `PUBLIC_STYLE`, `API_BASE`, `NOINDEX` declarations near the top) and the block containing `IMG_EXT`, `stripExt`, `loadKeyMap`, `ESP_KEYS`, `HF_KEYS`, `resolveMedia`, `rewriteCommon`, `injectIsland`. KEEP everything in between (`ALWAYS`/`LIVE_PAGES`/`SHELL`/`CONTAINER_ISLANDS`/`EXTRA_SCRIPTS`/`shipList`) and after (`buildShellHtml`, `writeLinksMap`, `build`, `demo`). NOTE: `build.mjs` was edited concurrently (commit 770a125 added `STYLE_COMMON_URL`, a `communities-live.js` island, and copies `esperanza-common.json` to `public/`) — match against the CURRENT file, not fixed line numbers. `buildShellHtml`/`build`/`demo` keep working because `rewriteCommon`/`injectIsland` are imported; the `esperanza-common.json` copy step in `build.mjs` stays.
 
 - [ ] **Step 3: Verify both check**
 
@@ -573,7 +575,7 @@ Expected: FAIL — `esc is not defined`.
 ```js
 // sections.mjs — shared HTML section builders for the detail-page renderers.
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
-import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, PUBLIC_STYLE, disableOilib } from './rewrite.mjs';
+import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, disableOilib } from './rewrite.mjs';
 
 export const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 export const money = n => '$' + Number(n || 0).toLocaleString('en-US');
@@ -715,7 +717,7 @@ export function finalizePage(shell, { content, head, page, islands }) {
   let html = setHead(shell, head);
   html = html.replace('<!--CONTENT-->', content);
   html = disableOilib(html);
-  const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: PUBLIC_STYLE, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: PUBLIC_STYLE, MAPBOX_STYLE_DETAIL: PUBLIC_STYLE };
+  const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: STYLE_COMMON_URL, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: STYLE_COMMON_URL };
   const scripts = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};window.__ESPERANZA_PAGE=${JSON.stringify(page)};</script>\n`
     + islands.map(f => `<script src="/${f}" defer></script>`).join('\n') + '\n';
   const i = html.lastIndexOf('</body>');
