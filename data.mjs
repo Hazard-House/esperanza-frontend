@@ -2,11 +2,18 @@
 // Reads only the API (no scrape dependency) so it can also run in CI for freshness.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
 
 const un = v => (Array.isArray(v) ? v[0] : v);
 const fixHost = u => (u ? String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u);
 export const slugify = s => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+// Interim bridge: floor-plan slug -> _FP.png drawing (already in R2). Used only until
+// floor_plans.floor_plan_image is backfilled in D1 (then the API field wins). Remove
+// this file + the FP_MAP fallback below once R1 is populated. See handoff context doc.
+const FP_MAP = (() => { try { const p = join(import.meta.dirname, 'fp-image-map.json'); return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {}; } catch { return {}; } })();
 
 async function getJSON(path) {
   const r = await fetch(API + path);
@@ -64,7 +71,7 @@ function normFloorplan(fp) {
     garage: fp.carGarageCount, stories: fp.storiesCount,
     livingSqft: fp.livingSquareFootage, totalSqft: fp.totalSquareFootage,
     masterBed: fp.masterBedLocation, hersScore: fp.hersScore, communities: fp.communities,
-    image: fp.image, description: fp.description,
+    image: fp.image, description: fp.description, floorPlanImage: fixHost(fp.floorPlanImage),
     planViewerUrl: fp.planViewerUrl, virtualTourUrl: fp.virtualTourUrl, brochurePdfUrl: fp.brochurePdfUrl,
     promo: fp.promoBannerText,
   };
@@ -84,7 +91,18 @@ export async function loadData() {
   const commById = new Map(communities.map(x => [x.id, x]));
   const commByName = new Map(communities.map(x => [String(x.name).toLowerCase(), x]));
   const fpById = new Map(floorplans.map(x => [x.id, x]));
-  for (const h of qmis) { h.communityObj = commById.get(h.communityId) || null; h.floorplanObj = fpById.get(h.floorPlanId) || null; }
+  for (const h of qmis) {
+    h.communityObj = commById.get(h.communityId) || null;
+    h.floorplanObj = fpById.get(h.floorPlanId) || null;
+    // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
+    // backfilled) else the committed _FP.png map (interim). null -> CTA fallback.
+    h.planImage = (h.floorplanObj && h.floorplanObj.floorPlanImage) || FP_MAP[(h.floorplanObj && h.floorplanObj.slug) || slugify(h.floorPlan)] || null;
+    // Galleryless homes (e.g. under construction): fall back to the community's model
+    // photos (already in R2) until real photo_gallery_json lands in D1.
+    if (!h.gallery.length && h.communityObj) {
+      h.gallery = [h.communityObj.image, h.communityObj.secondaryImage].filter(Boolean).map(u => ({ url: fixHost(u), alt: h.community }));
+    }
+  }
   for (const cm of communities) {
     cm.homes = qmis.filter(h => h.communityId === cm.id);
     cm.plans = floorplans.filter(fp => fp.communityPrices[cm.name] != null || String(fp.communities || '').toLowerCase().includes(String(cm.name).toLowerCase()));
