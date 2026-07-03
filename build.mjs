@@ -12,27 +12,12 @@
 import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { execSync } from 'node:child_process';
+import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
 const THEME = join(SCRAPE, 'static.esperanzahomes.com');
 const OUT = join(import.meta.dirname, 'public');
-
-// --- config that gets baked into the flagship pages -------------------------
-// Our own Mapbox token. O'Neill's token is URL-locked to esperanzahomes.com, so it
-// 403s every tile read off-domain (blank base maps on Railway). Our token reads tiles
-// fine; it can't read O'Neill's *private* styles, so we use our own styles instead.
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGF6YXJkaG91c2UiLCJhIjoiY21kdG1xMWwwMTFvbDJqb2h1bXgxYmw3ZyJ9.ER4JhSJ2bl89WJ-3Xv5erA';
-// Homepage "Find Your Home" uses our recreated counties style ("Texas Counties Map").
-const STYLE_HOME = 'mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg';
-// QMI + Communities + detail maps use the captured "Esperanza-Common" style JSON,
-// served as a static file and passed to mapbox-gl as a style object. Its data is the
-// public mapbox-streets-v8 tileset, so our token renders it 1:1 (no account style needed).
-const STYLE_COMMON_URL = '/esperanza-common.json';
-const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11'; // fallback only (unused now)
-const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
-// pre-launch: flip to false at domain cutover. Gates robots.txt Disallow + per-page noindex meta.
-const NOINDEX = true;
 
 // Pages to ship are listed in ship.txt (one rel path per line, relative to WWW),
 // grown per phase. Always include the homepage. Pages get rewriteCommon; the ones
@@ -68,96 +53,6 @@ function shipList() {
     ? readFileSync(manifest, 'utf8').split('\n').map(s => s.trim()).filter(Boolean)
     : [];
   return [...new Set([...ALWAYS, ...extra])];
-}
-
-// Resolved R2 object keys (real extensions). The scrape references each image in
-// two forms — with extension (src) and extensionless (responsive srcset) — but the
-// R2 object only exists at its real extension. Map base-path -> real key so BOTH
-// forms resolve. Lists produced by the R2-upload pass (verified serving 200).
-const IMG_EXT = /\.(jpg|jpeg|png|avif|webp)$/i;
-const stripExt = (p) => p.replace(IMG_EXT, '');
-function loadKeyMap(file, prefix) {
-  const m = new Map();
-  const p = join(import.meta.dirname, file);
-  if (!existsSync(p)) return m;
-  for (const line of readFileSync(p, 'utf8').split('\n')) {
-    const key = line.trim(); if (!key) continue;
-    m.set(prefix + stripExt(key), prefix + key);
-  }
-  return m;
-}
-const ESP_KEYS = loadKeyMap('media-keys-esperanza.txt', '');
-const HF_KEYS = loadKeyMap('media-keys-homefiniti.txt', 'homefiniti/');
-function resolveMedia(rawPath, prefix, map) {
-  const clean = rawPath.split('%EF%B9%96')[0].split('?')[0]; // drop resize query (encoded or literal ?)
-  return map.get(prefix + stripExt(clean)) || (prefix + clean);
-}
-
-// --- rewrite rules ----------------------------------------------------------
-// Applied to every flagship page. Order matters: xhr before the broad host rules.
-function rewriteCommon(html) {
-  html = html
-    // R1: XHR form/lead endpoints -> placeholder (deferred). Absolute + root-relative.
-    // xhr endpoints -> same-origin /xhr/ (Caddy answers with benign JSON so the
-    // frozen snapshot's recommend/oicheck/form calls resolve quietly instead of
-    // erroring against the dead live domain). Root-relative /xhr/ already correct.
-    .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
-    // R3: theme host -> /static/ (bundled). Absorb the variable ../ chain.
-    .replace(/(?:\.\.\/)*static\.esperanzahomes\.com\//g, '/static/')
-    // R2: images -> R2 CDN. Capture the whole path token, drop the resize query
-    // (img.hazardhouse.ai ignores it and serves the original), strip the .avif
-    // mirror artifact by splitting on the encoded '?' (%EF%B9%96).
-    // (?:https?:\/\/)? also absorbs the ABSOLUTE form used in og:image/twitter:image
-    // (`https://media…`); without it the untouched scheme + our `//img…` stacked to
-    // `https:////img…` on 560 pages. Consuming the full `://` (not just `https:`) is
-    // required — the `//` won't match the `(?:\.\.\/)*` chain.
-    .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.esperanzahomes\.com\/([^"'\s)]*)/g,
-      (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, '', ESP_KEYS)}`)
-    .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.homefiniti\.com\/([^"'\s)]*)/g,
-      (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, 'homefiniti/', HF_KEYS)}`)
-    // R4: mapbox-gl lib CDN (relativized by HTTrack) -> restore https.
-    .replace(/(?:\.\.\/)*api\.mapbox\.com\//g, 'https://api.mapbox.com/')
-    // R7: swap O'Neill's token -> ours, and their private styles -> a public style our
-    // token can read (islands override the style per map; this only covers leftover
-    // oilib refs on non-island pages).
-    .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN)
-    .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE)
-    // R8: footer credit -> "Powered by Hazard House" (drop O'Neill/Homefiniti logo + links).
-    // Shared footer on every page; the attribution div has no nested <div> so the
-    // non-greedy match to the first </div> is safe.
-    .replace(/<div class="col-12 oneilinteractive-attribution[^>]*>[\s\S]*?<\/div>/,
-      '<div class="col-12 oneilinteractive-attribution text-center text-white fs-9 mb-2"><a href="https://hazardhouse.ai" rel="noopener" target="_blank" class="text-small text-white">Powered by Hazard House</a></div>');
-  // pre-launch crawl block (NOINDEX): swap the scrape's robots meta for noindex,nofollow;
-  // inject after <head> on any page that lacks one. One switch flips the whole POC public.
-  if (NOINDEX) {
-    const meta = '<meta name="robots" content="noindex,nofollow">';
-    html = /<meta name="robots"[^>]*>/i.test(html)
-      ? html.replace(/<meta name="robots"[^>]*>/gi, meta) // /g: one page ships two robots metas
-      : html.replace(/<head([^>]*)>/i, `<head$1>\n${meta}`);
-  }
-  return html;
-}
-
-// Live pages: disable oilib (so it doesn't fight our island for #oi-map /
-// #oi-filter-results) and inject the page's island + config before the LAST </body>
-// (inline JS can contain a literal "</body>").
-function injectIsland(html, islandFile) {
-  html = html.replace(/<script[^>]*\/static\/assets\/js\/oilib[^>]*><\/script>/g, '<!-- oilib map/filter init removed for the live island -->');
-  // oilib is gone but the page still has inline oilib map code (oi.map.multi, fitToBounds
-  // reading oi.loaded.map, resize handlers) -> "oi is not defined". Stub `oi` in <head>
-  // with a chainable no-op proxy so those orphaned calls are silent.
-  if (!html.includes('window.oi=')) {
-    const stub = '<script>window.oi=new Proxy(function(){},{get:function(){return window.oi},apply:function(){return window.oi}});</script>';
-    html = html.replace(/<head([^>]*)>/i, `<head$1>\n${stub}`);
-  }
-  const marker = `src="/${islandFile}"`;
-  if (!html.includes(marker)) {
-    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: STYLE_COMMON_URL, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: STYLE_COMMON_URL };
-    const tag = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};</script>\n<script src="/${islandFile}" defer></script>\n`;
-    const i = html.lastIndexOf('</body>');
-    html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
-  }
-  return html;
 }
 
 // Build the QMI-detail shell: take a real scraped detail page, apply the common
