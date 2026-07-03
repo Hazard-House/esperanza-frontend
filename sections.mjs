@@ -17,10 +17,11 @@ export const ICON = {
   living: STAT + 'livingsqft%EF%B9%96v=fc46974.svg',
   total: STAT + 'sqft%EF%B9%96v=64b8d65.svg',
   garage: STAT + 'garage%EF%B9%96v=f234cc0.svg',
+  lot: STAT + 'lot%EF%B9%96v=7c7a6d9.svg',
 };
 
 export function statItem(icon, txt) {
-  return `<div class="item detail pb-4 col-12 col-lg-6"><img class="me-2" src="${icon}" aria-hidden="true" width="24">${txt}</div>`;
+  return `<div class="item detail pb-4 col-12 col-lg-6"><img class="me-2" src="${icon}" aria-hidden="true" loading="lazy" width="24">${txt}</div>`;
 }
 
 export function descHtml(raw) {
@@ -66,8 +67,10 @@ export function galleryHtml(gallery, fallback, address) {
     }).join('');
     side = `<div class="col-md-6 col-lg-4 ps-lg-1 d-none d-lg-block">${rows}</div>`;
   }
-  const hidden = `<div class="d-none">` + imgs.map(g => `<img src="${esc(g.url)}" loading="lazy" data-fancybox="photos" data-caption="${esc(g.alt || '')}" alt="${esc(g.alt || alt)}">`).join('') + `</div>`;
-  return `<div id="detail-gallery" class="container-fluid p-0"><div class="row m-0">${hero}${side}</div>${hidden}</div>`;
+  const hidden = `<div class="d-none">` + imgs.map(g => `<img src="${esc(g.url)}" loading="lazy" data-fancybox="photos" data-caption="" data-oi-event-name="oi-image-click" alt="${esc(g.alt || alt)}">`).join('') + `</div>`;
+  // O'Neill's legacy trigger: the overlay CTA clicks the first hidden fancybox thumb.
+  const script = (imgs.length > 1) ? `<script>$('.open-gallery').click(function(){$('.fancybox-thumb:eq(0)').click();});</script>` : '';
+  return `<div id="detail-gallery" class="container-fluid p-0"><div class="row m-0">${hero}${side}</div></div>${hidden}${script}`;
 }
 
 // Real theme section-heading pattern (verified against a live QMI detail page's
@@ -79,35 +82,44 @@ export function sectionHeading(title, barClass = 'green-bar-light my-2 my-lg-3')
 
 export function subnavHtml(anchors) {
   if (!anchors.length) return '';
-  const items = anchors.map((a, i) => ({ href: a[0] === 'photos' ? '#' : `#${a[0]}`, label: esc(a[1]), photos: a[0] === 'photos', active: i === 0 }));
-  const dropdown = items.map(it => `<li><a href="${it.href}"${it.photos ? ' data-fancybox-trigger="photos"' : ''} class="dropdown-item">${it.label}</a></li>`).join('');
+  const items = anchors.map((a, i) => ({ href: `#${a[0]}`, label: esc(a[1]), photos: a[0] === 'photos', active: i === 0 }));
+  // Mobile "Go To..." dropdown: real anchors only (O'Neill omits Photo Gallery here).
+  const dropdown = items.filter(it => !it.photos)
+    .map(it => `<li><a href="${it.href}" class="dropdown-item">${it.label}</a></li>`).join('');
+  // Desktop row: every item; photos = fancybox trigger w/o href/on-scroll.
   const desktop = items.map(it => it.photos
     ? `<a class="col" data-fancybox-trigger="photos" role="button">${it.label}</a>`
     : `<a href="${it.href}" class="col on-scroll${it.active ? ' active' : ''}">${it.label}</a>`).join('');
   return `<div class="subnav"><div class="dropdown d-block d-lg-none"><button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Go To...</button><ul class="dropdown-menu">${dropdown}</ul></div><div id="desktop-menu" class="row subnav text-center d-none d-lg-flex">${desktop}</div></div>`;
 }
 
-export function tourHtml(url) {
+export function tourHtml(url, home = {}) {
   if (!url) return '';
-  return `<section id="virtualtour" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container">${sectionHeading('Virtual Tour')}<div class="oi-aspect sixteen-nine oi-matterport"><iframe class="oi-video-iframe" src="${esc(url)}" frameborder="0" allowfullscreen allow="xr-spatial-tracking" style="width:100%;height:100%"></iframe></div></div></section>`;
+  const mid = (String(url).match(/[?&]m=([^&]+)/) || [])[1] || '';
+  const fid = 'oi' + (mid ? mid.replace(/[^\w-]/g, '') : 'tour');
+  const title = home.address ? `${home.address}${home.city ? `, ${home.city}, TX` : ''} Virtual Tour` : 'Virtual Tour';
+  return `<section id="virtualtour" class="py-lg-5 pagejump"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Virtual Tour')}</div></div><div class="row mt-3"><div class="col-12 mb-3"><div class="oi-aspect oi-matterport one-one four-three-md sixteen-nine-lg" id="${fid}-container"><div class="oi-aspect-spacer"></div><iframe id="${fid}" class="oi-video-iframe embed-responsive-item oi-fit-fill" src="${esc(url)}" width="640" height="338" loading="lazy" title="${esc(title)}" allow="autoplay;fullscreen;" frameborder="0" allowfullscreen></iframe></div></div></div></div></section>`;
 }
 
 export function elevationHtml(label, image) {
   if (!image) return '';
-  return `<section id="elevations" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container">${sectionHeading('Elevations')}<div class="row oi-listings justify-content-center"><div class="col-12 col-md-6"><a data-fancybox="elevations" data-caption="${esc(label || '')}" href="${esc(image)}"><div class="oi-aspect three-two">${label ? `<div class="banner dark-green">${esc(label)}</div>` : ''}<img src="${esc(image)}" class="oi-aspect-img" alt="${esc(label || 'elevation')}"></div></a></div></div></div></section>`;
+  return `<section id="elevations" class="py-lg-5 pagejump"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Elevations')}</div></div><div class="row oi-listings mt-3"><div class="col-12 col-md-6 mb-4"><a href="${esc(image)}" data-fancybox="elevations" data-caption="${esc(label || '')}" data-oi-event-name="oi-image-click"><div class="oi-aspect sixteen-nine">${label ? `<div class="banner dark-green">${esc(label)}</div>` : ''}<img src="${esc(image)}" class="oi-aspect-img" loading="lazy" alt="${esc(label || 'elevation')}"></div></a></div></div></div></section>`;
 }
 
-export function idaproPlanHtml(url, image, name) {
-  if (!url && !image) return '';
-  // O'Neill shows the plan DRAWING inline (jQuery iviewer on a static _FP.png). We
-  // have neither that image nor a working embed — idapro renders blank off its own
-  // domain (origin-locked, like O'Neill's Mapbox token). So: if a plan-drawing image
-  // is ever backfilled, show it inline; otherwise a clean CTA to the interactive plan
-  // (new tab) — never a blank iframe box.
-  const body = image
-    ? `<div class="oi-aspect one-one"><img src="${esc(image)}" class="oi-aspect-img" alt="${esc(name || '')} floor plan"></div>`
-    : `<div class="bg-tan-100 border-15 text-center p-4 p-lg-6"><div class="fs-4 bodoni ls-sm text-gray mb-3">${esc(name || 'Floor Plan')}</div><a href="${esc(url)}" target="_blank" rel="noopener" class="btn btn-green">View Interactive Floor Plan</a></div>`;
-  return `<div class="bg-tan-white"><section id="plans" class="py-lg-5 pagejump floor-plan"><div class="container-lg map-list-section position-relative">${sectionHeading('Floor Plan')}${body}</div></section></div>`;
+// planImage = the `{planCode}_FP.png` plan-DRAWING url (R1 backfill; see notes).
+// When present -> O'Neill's exact jQuery-iviewer inline viewer (1:1). Until it's
+// backfilled, fall back to a clean CTA to the interactive plan (idapro renders blank
+// embedded off-domain, so no iframe). name = plan name; viewerUrl = idapro URL.
+export function idaproPlanHtml(planImage, name, viewerUrl) {
+  const heading = sectionHeading('Floor Plan');
+  if (planImage) {
+    const src = esc(planImage);
+    return `<div class="bg-tan-white"><section id="plans" class="py-lg-5 pagejump floor-plan"><div class="container-lg map-list-section position-relative"><div class="row mb-4"><div class="col">${heading}</div></div><div class="row m-0 d-flex align-items-stretch viewer-wrap"><div class="col-12 col-md-9 p-0"><div class="oi-aspect one-one"><div id="viewer" class="viewer iviewer_cursor" style="overflow: hidden;"></div><div class="viewer-controls interactive-controls"><a id="in" class="iviewer_zoom_in iviewer-control"><i class="far fa-plus text-gray fs-6"></i></a><a id="out" class="iviewer_zoom_out iviewer-control"><i class="far fa-minus text-gray fs-6"></i></a><a id="fit" class="iviewer_zoom_fit iviewer-control"><i class="fal fa-sync text-brown fs-6"></i></a></div></div></div><div class="col-12 col-md-3 align-self-stretch bg-tan-100 p-0"><span class="p-3 text-center"><p class="fs-5 text-gray overpass regular mb-0">${esc(name || '')}</p></span><ul class="plan-list"><li class="plan-img fs-8 overpass regular text-uppercase ls-sm plan-img-1 active">Floorplan 1<img src="${src}" loading="lazy" class="d-none" alt="${esc(name || '')} Floor Plans"></li></ul></div></div></div></section><script>$(document).ready(function(){var load_first=$('.plan-img-1 img').attr('src');var iv1=$('#viewer').iviewer({src:load_first,ui_disabled:true,update_on_resize:true,mousewheel:false});$('#in').click(function(){iv1.iviewer('zoom_by',1);});$('#out').click(function(){iv1.iviewer('zoom_by',-1);});$('#fit').click(function(){iv1.iviewer('fit');});$('.iviewer-control').click(function(){iv1.iviewer('info','zoom');});$('.plan-img').click(function(){$('.plan-img').removeClass('active');var plan_img=$('img',this).attr('src');iv1.iviewer('loadImage',plan_img);$(this).addClass('active');return false;});});</script></div>`;
+  }
+  if (viewerUrl) {
+    return `<div class="bg-tan-white"><section id="plans" class="py-lg-5 pagejump floor-plan"><div class="container-lg map-list-section position-relative"><div class="row mb-4"><div class="col">${heading}</div></div><div class="bg-tan-100 border-15 text-center p-4 p-lg-6"><div class="fs-4 bodoni ls-sm text-gray mb-3">${esc(name || 'Floor Plan')}</div><a href="${esc(viewerUrl)}" target="_blank" rel="noopener" class="btn btn-green">View Interactive Floor Plan</a></div></div></section></div>`;
+  }
+  return '';
 }
 
 export function communityBlurbHtml(c) {
@@ -116,25 +128,80 @@ export function communityBlurbHtml(c) {
   // .oi-aspect + a .gray-gradient overlay + .photo-block-info (theme CSS positions the
   // text over the image). The previous inline background-image collapsed to no height.
   const img = c.image
-    ? `<div class="oi-aspect three-four four-three-md sixteen-nine-lg"><img src="${esc(c.image)}" class="oi-aspect-img" loading="lazy" alt="${esc(c.name || '')}"></div>`
+    ? `<div class="oi-aspect three-four four-three-md sixteen-nine-lg"><img src="${esc(c.image)}" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img" alt="${esc(c.name || '')}"></div>`
     : '';
-  const desc = c.description ? `<div class="mt-4 text-white fs-7 lh-lg wysiwyg">${c.description}</div>` : '';
-  return `<section id="community" class="bg-photo-block position-relative pagejump"><div class="container-fluid"><div class="row"><div class="col p-0"><div class="gray-gradient"></div>${img}<div class="photo-block-info"><div class="container"><div class="col-12 col-md-10 col-xl-7"><div class="bodoni ls-sm fs-2 text-white">About the Community</div>${desc}<a href="${communityPath(c)}" class="btn btn-white btn-auto mt-4 d-inline-block me-md-2">Learn More About ${esc(c.name)}</a></div></div></div></div></div></div></section>`;
+  const desc = c.description ? `<div class="mt-4 text-white fs-7 lh-lg">${c.description}</div>` : '';
+  return `<section id="community" class="bg-photo-block position-relative pagejump"><div class="container-fluid"><div class="row"><div class="col p-0"><div class="gray-gradient"></div>${img}<div class="photo-block-info aos-init" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="500" data-aos-once="true"><div class="container"><div class="col-12 col-md-10 col-xl-7"><div class="bodoni ls-sm fs-2 text-white">About the Community</div>${desc}<a href="${communityPath(c)}" class="btn btn-white btn-auto mt-4 d-inline-block me-md-2">Learn More About ${esc(c.name)}</a></div></div></div></div></div></div></section>`;
 }
 
 export function mapSalesHtml(c) {
   if (!(c && c.lat && c.lng)) return '';
-  const tel = c.officePhone ? `<a class="oi-click-to-call d-block text-green" href="tel:${esc(String(c.officePhone).replace(/[^0-9+]/g, ''))}">${esc(c.officePhone)}</a>` : '';
-  const hours = c.officeHours ? `<div class="fs-9 text-gray mt-1">${esc(c.officeHours)}</div>` : '';
-  return `<section id="sales" class="pagejump py-4 py-lg-5"><div class="container"><div class="row"><div class="col-12 col-lg-7 mb-3"><div id="map" style="height:420px" data-latitude="${c.lat}" data-longitude="${c.lng}" data-zoom="13" data-vendor="mapbox"></div></div><div class="col-12 col-lg-5">${sectionHeading('Sales Office', 'brown-bar short my-3')}${c.address ? `<address class="mt-3">${esc(c.address)}<br>${esc(c.city)}, TX</address>` : ''}${tel}${hours}<a href="https://maps.google.com/maps?q=${c.lat},${c.lng}" target="_blank" rel="noopener" class="btn btn-gray mt-3 oi-directions-click">Get Directions</a></div></div></div></section>`;
+  const zip = c.zip || c.postalCode || c.postal_code || '';
+  const phoneDigits = c.officePhone ? String(c.officePhone).replace(/[^0-9+]/g, '') : '';
+  const tel = c.officePhone
+    ? `<div class="my-3 overpass bold fs-7"><a class="oi-click-to-call" href="tel:${esc(phoneDigits)}"><i class="fas fa-phone-alt"></i> ${esc(c.officePhone)}</a></div>`
+    : '';
+  const hours = c.officeHours
+    ? `<div>HOURS:</div><div class="lh-base mt-1">${esc(c.officeHours)}</div>`
+    : '';
+  const addr = c.address
+    ? `<address>${esc(c.address)}<br>${esc(c.city)}, TX${zip ? ' ' + esc(zip) : ''}</address>`
+    : '';
+  // ponytail: id="map" (not O'Neill's "oi-map") so community-maps-live.js binds it.
+  return `<section id="sales" class="py-5 py-lg-7 bg-tan-white reverse pagejump px-3 px-md-0">`
+    + `<div class="container bg-white shadow border-15"><div class="row">`
+    + `<div class="col-12 col-md-6 col-lg-7 px-0">`
+    + `<div id="map" class="gmap h-100 border-15-left" data-oi-map-autoload="single" data-marker-icon-wh="40,50" data-marker-icon-id="map_pin" data-zoom="8" data-zoom-control-position="top-left" data-latitude="${c.lat}" data-longitude="${c.lng}" data-vendor="mapbox"></div>`
+    + `</div>`
+    + `<div class="col px-md-5 px-lg-6 py-2 py-md-4 py-lg-5 mx-auto">`
+    + sectionHeading('Sales Office', 'brown-bar short my-3')
+    + `<div class="py-3 text-uppercase fs-8 overpass">`
+    + addr + tel + hours
+    + `<a href="https://maps.google.com/maps?q=${c.lat},${c.lng}" target="_blank" rel="noopener" class="btn btn-gray mt-3 mt-lg-5 oi-directions-click">GET DIRECTIONS</a>`
+    + `</div></div></div></div></section>`;
 }
 
 export function formSlotHtml(kind, ctx) {
-  return `<section id="request-a-tour" class="pagejump py-4 py-lg-5"><div class="container"><div class="row justify-content-center"><div class="col-12 col-lg-8 text-center">${sectionHeading('Schedule An Exploratory Visit', 'green-bar-light my-3')}<div class="hs-form-slot" data-form="${esc(kind)}" data-context="${esc(ctx || '')}"><p class="text-gray">Contact us or <a href="#offcanvas-contact" data-bs-toggle="offcanvas">request information</a>.</p></div></div></div></div></section>`;
+  // ctx = address string (legacy) or {address, image}. The .hs-form-slot contents are
+  // an INERT visual placeholder matching O'Neill's field grid 1:1; the HubSpot task
+  // replaces the inner form later. Field ids/classes are load-bearing (O'Neill's form
+  // CSS is scoped to #detailpagescheduletourform).
+  const c = (ctx && typeof ctx === 'object') ? ctx : { address: ctx };
+  const address = c.address || '';
+  const introImg = esc(c.introImage || c.image || '');
+  const sideImg = esc(c.image || '');
+  const sideAlt = esc(address || 'New Home');
+  const form = `<form id="detailpagescheduletourform" class="oi-form detailpagescheduletourform" novalidate onsubmit="return false">
+    <div class="row g-3">
+        <div class="form-group charfield textinput first_name required"><label for="dpst__first_name">First Name</label><input type="text" name="first_name" placeholder="First Name*" class="form-control first_name required" id="dpst__first_name" aria-label="First Name"><span class="form-group-message"></span></div>
+        <div class="form-group charfield textinput last_name required"><label for="dpst__last_name">Last Name</label><input type="text" name="last_name" placeholder="Last Name*" class="form-control last_name required" id="dpst__last_name" aria-label="Last Name"><span class="form-group-message"></span></div>
+        <div class="form-group oiemailfield textinput email required"><label for="dpst__email">Email</label><input type="text" name="email" placeholder="Email*" class="form-control email required" id="dpst__email" aria-label="Email"><span class="form-group-message"></span></div>
+        <div class="form-group choicefield select country_code required"><label for="dpst__country_code">Country Code</label><select name="country_code" class="form-control custom-select country_code required" id="dpst__country_code" aria-label="Country Code"><option value="+1">US</option><option value="+52">MX</option></select><span class="form-group-message"></span></div>
+        <div class="form-group charfield textinput primary_phone"><label for="dpst__primary_phone">Primary Phone</label><input type="text" name="primary_phone" placeholder="Phone*" class="form-control primary_phone" id="dpst__primary_phone" aria-label="Primary Phone"><span class="form-group-message"></span></div>
+        <div class="form-group datefield dateinput preferred_date required"><label for="dpst__preferred_date">Date*</label><input type="date" name="preferred_date" class="form-control preferred_date required" id="dpst__preferred_date" aria-label="Date*"><span class="form-group-message"></span></div>
+        <div class="form-group timefield timeinput preferred_time required"><label for="dpst__preferred_time">Time*</label><input type="time" name="preferred_time" class="form-control preferred_time required" id="dpst__preferred_time" aria-label="Time*"><span class="form-group-message"></span></div>
+        <div class="form-group custom-control form-checkbox booleanfield checkboxinput opt_in "><input type="checkbox" name="opt_in" class="form-check-input opt_in" id="dpst__opt_in" checked><label for="dpst__opt_in" class="custom-control-label"> &nbsp; Opt-in to receive text messages</label><span class="form-group-message"></span></div>
+        <div class="form-row opt-in-text"><p>I agree to receive communications by text message regarding informational (appointment details, account notifications, marketing, etc. ) from Esperanza Homes.</p><p>You may opt out by replying STOP or ask for more information by replying HELP. Message frequency varies. Message and data rates may apply.</p><p>You may review our <a href="/privacy-policy/">Privacy Policy</a> to learn how your data is used.</p></div>
+    </div>
+    <div class="row g-3"><div class="form-group"><button type="submit" class="btn btn-primary mt-4 xsmall-btn overpass">Submit</button></div></div>
+</form>`;
+  return `<section id="request-a-tour" class="pagejump"><div class="container-fluid bg-green-100"><div class="row"><div class="col-12 col-md-11 col-lg-6 col-xl-5 m-auto py-4 py-xl-6"><div class="row"><div class="col">${sectionHeading('Schedule An Exploratory Visit', 'green-bar-light my-3')}<div class="row my-3 mt-lg-4">${introImg ? `<div class="col-5 col-md-3"><div class="oi-aspect one-one"><img src="${introImg}" loading="lazy" class="oi-aspect-img rounded-2" alt="Schedule an Exploratory Visit"></div></div>` : ''}<div class="col${introImg ? '-7 col-lg-9' : ''} wysiwyg my-auto">Please fill out this quick and easy form and let us know what date and time works best for you.</div></div></div></div><div class="hs-form-slot" data-form="${esc(kind)}" data-context="${esc(address)}">${form}</div></div>${sideImg ? `<div class="col-lg-5 pe-0 position-relative d-none d-lg-block"><div class="oi-aspect two-three-lg seven-eight-xl h-100"><div class="gray-overlay dark"></div><img src="${sideImg}" loading="lazy" class="oi-aspect-img" alt="${sideAlt}"></div></div>` : ''}</div></div></section>`;
 }
 
 export function recommendedHtml() {
-  return `<section class="py-4 py-lg-5 bg-tan-white"><div class="container">${sectionHeading('Recommended For You')}<div class="recommended-content row oi-listings" id="recommended"></div></div></section>`;
+  return `<section class="py-4 py-lg-5"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Recommended For You')}</div></div><div class="recommended-content row oi-listings g-2 mt-3" id="recommended"></div></div></section>`;
+}
+
+// #energy_cost — Energy Cost Comparison / HERS. Requires per-home MONTHLY energy $
+// (newCost = Esperanza, oldCost = pre-owned); self-hides until both are present (R1
+// backfill). jQuery-UI slider scales by 1/12/120/360 months; bars are decorative CSS.
+export function energyHtml({ newCost, oldCost, hers } = {}) {
+  const toNum = v => (v == null || v === '') ? NaN : Number(v);
+  const nc = toNum(newCost), oc = toNum(oldCost);
+  if (!Number.isFinite(nc) || !Number.isFinite(oc)) return '';
+  const saving = (oc - nc).toFixed(2);
+  const hersCell = (hers == null || hers === '') ? '' : esc(hers);
+  return `<section id="energy_cost" class="py-4 pt-lg-6 pb-lg-5"><div class="container-lg"><div class="row"><div class="col"><div class="text-gray bodoni ls-sm fs-2 ps-0">Energy Cost Comparison</div><div class="green-bar-light my-2 my-lg-3"></div></div></div><div class="row mt-3 mt-lg-5 mx-0"><div class="col-12 col-lg-8"><div class="row"><div class="col-lg-6 col-md-6 col-sm-12 text-center mt-auto"><div class="height-one d-flex"><div class="ecp-num-results m-auto">$<span id="annualnew">${nc.toFixed(2)}</span></div></div><div class="d-block my-3 text-uppercase fs-9 text-dark-brown ls-sm overpass bold">Estimated Esperanza Cost</div><hr class="white m-0"></div><div class="col-lg-6 col-md-6 col-sm-12 text-center mt-auto"><div class="height-two d-flex"><div class="ecp-num-results m-auto">$<span id="annualold">${oc.toFixed(2)}</span></div></div><span class="d-block my-3 text-uppercase fs-9 text-dark-brown ls-sm overpass bold">Estimated Pre-Owned Cost</span><hr class="white m-0"></div></div><div class="row mt-4"><div class="number-slider"><div id="numslider" class="sld"></div><div class="numslider-label text-left d-flex justify-content-between fs-9 ls-sm text-uppercase overpass bold mt-3 text-dark-green"><div>1 Month</div><div>1 Year</div><div>10 Year</div><div>30 Year</div></div></div></div></div><div class="col-12 col-lg-3 offset-lg-1 text-center d-flex"><div class="bg-white border-15 p-4 w-100 mt-auto mb-4 d-flex"><div class="m-auto"><div class="text-uppercase overpass bold text-gray fs-8 ls-sm"><span id="time-period">Monthly</span> Cost Savings</div><div class="fs-5 overpass bold text-green mt-1 ls-sm">$<span id="annualsaving">${saving}</span></div><hr class="brown my-3"><h3 class="text-bold text-secondary"><div class="text-uppercase overpass bold text-gray fs-8 ls-sm">HERS SCORE</div><div class="fs-5 overpass bold text-green mt-1 ls-sm">${hersCell}</div></h3></div></div></div></div></div><script>$(document).ready(function(){var newCost=${nc},oldCost=${oc};var tOld=$('#annualold'),tNew=$('#annualnew'),tSave=$('#annualsaving');tSave.text((oldCost-newCost).toFixed(2));$.fn.digits=function(){return this.each(function(){$(this).text($(this).text().replace(/(\\d)(?=(\\d\\d\\d)+(?!\\d))/g,"$1,"));});};var amts=[0,1,2,3,4,5,6,7,8,9,12,11,12,13,14,15,16,17,18,120,20,21,22,23,24,25,26,27,360];$('#numslider').slider({min:1,max:28,step:9,value:1,change:s,slide:s});function s(){var month=amts[$('#numslider').slider("value")],tp=$('#time-period');var aOld=(month*oldCost).toFixed(2),aNew=(month*newCost).toFixed(2);tOld.text(aOld).digits();tNew.text(aNew).digits();tSave.text((aOld-aNew).toFixed(2)).digits();tp.text(month==1?'Monthly':month==12?'Annual':month==120?'10 Years':month==360?'30 Years':'Monthly');}});</script></section>`;
 }
 
 function banners(availability, promo) {
@@ -206,14 +273,14 @@ function demo() {
   const elev = elevationHtml('Farmhouse', '/e.jpg');
   assert(noFakeH2(elev) && elev.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Elevations</div>'), 'elevationHtml heading');
 
-  const plan = idaproPlanHtml(null, '/fp.jpg', 'Plan A', 'desc');
-  assert(noFakeH2(plan) && plan.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Floor Plan</div>'), 'idaproPlanHtml heading');
+  const plan = idaproPlanHtml('/fp.png', 'Marigold');
+  assert(noFakeH2(plan) && plan.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Floor Plan</div>') && plan.includes('id="viewer"') && plan.includes('viewer-wrap') && plan.includes('plan-list'), 'idaproPlanHtml iviewer');
 
   const rec = recommendedHtml();
   assert(noFakeH2(rec) && rec.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Recommended For You</div>'), 'recommendedHtml heading');
 
   const sales = mapSalesHtml({ lat: 1, lng: 2, address: '1 Main St', city: 'Brownsville', officePhone: '956-000-0000' });
-  assert(noFakeH2(sales) && sales.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Sales Office</div>') && sales.includes('brown-bar short my-3') && sales.includes('btn btn-gray mt-3 oi-directions-click') && !sales.includes('btn btn-green mt-3 oi-directions-click'), 'mapSalesHtml Sales Office + brown-bar + btn-gray');
+  assert(noFakeH2(sales) && sales.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Sales Office</div>') && sales.includes('brown-bar short my-3') && sales.includes('btn btn-gray') && sales.includes('oi-directions-click') && !sales.includes('btn btn-green'), 'mapSalesHtml Sales Office + brown-bar + btn-gray');
 
   const form = formSlotHtml('qmi', 'ctx1');
   assert(noFakeH2(form) && form.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Schedule An Exploratory Visit</div>') && form.includes('green-bar-light my-3'), 'formSlotHtml Schedule An Exploratory Visit');
@@ -222,8 +289,11 @@ function demo() {
   assert(gallery.includes('btn btn-green small-btn mt-5') && !gallery.includes('card-button'), 'galleryHtml CTA class');
   // fidelity: real O'Neill mosaic — hero + side col with h-50 rows, overlay ("Photo Gallery") on last thumb
   assert(gallery.includes('col-md-6 col-lg-4') && gallery.includes('photo-overlay d-flex') && gallery.includes('Photo Gallery') && gallery.includes('h-50'), 'galleryHtml mosaic structure');
-  const planUrl = idaproPlanHtml('https://idapro.cloud/flr_pln/x', null, 'Presidio');
-  assert(planUrl.includes('id="plans"') && planUrl.includes('View Interactive Floor Plan') && planUrl.includes('href="https://idapro.cloud/flr_pln/x"') && !planUrl.includes('name="modelframe"'), 'idaproPlanHtml CTA (no blank iframe)');
+  const planUrl = idaproPlanHtml(null, 'Presidio', 'https://idapro.cloud/flr_pln/x');
+  assert(planUrl.includes('id="plans"') && planUrl.includes('View Interactive Floor Plan') && planUrl.includes('href="https://idapro.cloud/flr_pln/x"') && !planUrl.includes('name="modelframe"'), 'idaproPlanHtml CTA fallback');
+  const en = energyHtml({ newCost: 116.67, oldCost: 207.17, hers: 44 });
+  assert(en.includes('id="energy_cost"') && en.includes('id="annualnew"') && en.includes('116.67') && en.includes('id="numslider"'), 'energyHtml renders with data');
+  assert(energyHtml({}) === '' && energyHtml({ newCost: 100 }) === '', 'energyHtml self-hides without both costs');
   const comm = communityBlurbHtml({ name: 'El Eden', slug: 'el-eden', city: 'Laredo', image: '/c.jpg', description: '<p>x</p>' });
   assert(comm.includes('gray-gradient') && comm.includes('oi-aspect-img') && comm.includes('About the Community') && comm.includes('photo-block-info') && !comm.includes('background-image'), 'communityBlurbHtml real-img structure');
 

@@ -95,13 +95,42 @@ if (typeof window === 'undefined') {
       }).catch(function () {});
     }
     function fix(u) { return u ? String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u; }
+    var num = function (n) { return Number(n || 0).toLocaleString('en-US'); };
+    var CSTAT = '/static/esperanza_homes/images/stats/';
+    var CICON = { bed: CSTAT + 'bedroom%EF%B9%96v=7516482.svg', garage: CSTAT + 'garage%EF%B9%96v=f234cc0.svg', bath: CSTAT + 'bathroom%EF%B9%96v=f390d85.svg', story: CSTAT + 'stairs%EF%B9%96v=348b88c.svg', living: CSTAT + 'livingsqft%EF%B9%96v=fc46974.svg', total: CSTAT + 'sqft%EF%B9%96v=64b8d65.svg' };
+    // 1:1 O'Neill spec-card (browse-page markup) from a raw /qmi record.
     function card(h) {
+      var N = Number;
       var url = '/new-homes/tx/' + slugify(h.City) + '/' + slugify(h.Community) + '/' + slugify(h.slug || h.address) + '/';
       var img = fix(h.image_url);
-      return '<div class="col-12 col-md-6 col-lg-3 mb-3"><div class="card spec-card border border-gray p-2">' +
-        (img ? '<a href="' + esc(url) + '"><div class="oi-aspect sixteen-nine"><img src="' + esc(img) + '" class="oi-aspect-img" loading="lazy" alt="' + esc(h.address) + '"></div></a>' : '') +
-        '<div class="card-body"><a href="' + esc(url) + '"><div class="card-title mt-2">' + esc(h.address) + '</div></a>' +
-        '<div class="card-location text-green">' + esc(h.City) + ', TX</div><div class="spec-price">' + money(h.Price) + '</div></div></div></div>';
+      var coll = h['FP: Collection'] ? String(h['FP: Collection']).replace(/\s*collection\s*$/i, '') + ' Collection' : '';
+      var bn = '';
+      if (h.promo_text) bn += '<div class="banner overlay-promo green">' + esc(h.promo_text) + '</div>';
+      if (h.availability_text) bn += '<div class="banner gray"' + (h.promo_text ? ' style="top:2.5rem"' : '') + '>' + esc(h.availability_text) + '</div>';
+      function commRow(vis) {
+        return '<div class="row community-row m-0 p-2 w-100 ' + vis + '">' +
+          '<div class="col text-center text-lg-start py-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">COMMUNITY</div><div class="text-gray fs-9">' + esc(h.Community) + '</div></div>' +
+          '<div class="col text-center text-lg-start py-1 border-start"><div class="row"><div class="col-auto mx-auto"><div class="text-brown overpass bold fs-9 text-decoration-underline">FLOOR PLAN</div><div class="text-gray fs-9">' + esc(h['Floor Plan']) + '</div>' + (coll ? '<div class="text-brown fs-9">' + esc(coll) + '</div>' : '') + '</div></div></div>' +
+        '</div>';
+      }
+      function stat(icon, txt) { return '<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="' + icon + '" aria-hidden="true" loading="lazy" width="18">' + txt + '</div>'; }
+      var stats = '';
+      if (h.bedroom_count != null) stats += stat(CICON.bed, esc(h.bedroom_count) + ' Bedroom' + (N(h.bedroom_count) === 1 ? '' : 's'));
+      if (h['FP: Garage'] != null) stats += stat(CICON.garage, esc(h['FP: Garage']) + ' Car Garage');
+      if (h.bathroom_count != null) stats += stat(CICON.bath, esc(h.bathroom_count) + ' Bathroom' + (N(h.bathroom_count) === 1 ? '' : 's'));
+      if (h.stories_count != null) stats += stat(CICON.story, esc(h.stories_count) + ' Stor' + (N(h.stories_count) === 1 ? 'y' : 'ies'));
+      if (h.living_square_footage != null) stats += stat(CICON.living, num(h.living_square_footage) + ' <span class="overpass bold ms-1">Living</span>&nbsp;Sq. Ft.');
+      if (h.total_square_footage != null) stats += stat(CICON.total, num(h.total_square_footage) + ' <span class="overpass bold ms-1">Total</span>&nbsp;Sq. Ft.');
+      var est = h.Price ? '<a href="' + esc(url) + '#payment-calculator" class="lh-1"><span class="fs-9 overpass text-gray">ESTIMATED MONTHLY</span><br><span class="fs-9 overpass text-gray">PRICE: </span><span class="fs-9 overpass bold text-green">' + money(monthlyPayment(N(h.Price))) + '/mo*</span></a>' : '';
+      var imageCol = '<div class="col-12 col-xl-7 px-0 pe-xl-3 d-flex align-content-stretch flex-wrap"><div class="oi-aspect sixteen-nine four-three-xl three-two-xxl">' + bn +
+        (img ? '<a href="' + esc(url) + '"><img src="' + esc(img) + '" class="oi-aspect-img" loading="lazy" alt="' + esc(h.address) + '"></a>' : '') +
+        '<div class="hover-button d-none d-lg-flex"><div class="m-auto"><a href="' + esc(url) + '"><div class="btn card-button d-block my-3">VIEW HOME</div></a><a href="' + esc(url) + '#request-a-tour"><div class="btn card-button green d-block my-3">REQUEST A TOUR</div></a></div></div>' +
+        '</div>' + commRow('d-none d-xl-flex') + '</div>';
+      var bodyCol = '<div class="col-12 col-xl px-0 px-xl-1"><div class="card-body d-flex flex-column lh-2 h-100 px-xl-0 py-xl-1">' +
+        '<div class="row"><a href="' + esc(url) + '"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">' + esc(h.address) + '</div></a><div class="card-location text-green mb-2">' + esc(h.City) + ', TX' + (h.postal_code ? ' ' + esc(h.postal_code) : '') + '</div></div>' +
+        '<div class="row h-100"><div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">' + money(h.Price) + '</div>' + est + '</div></div><div class="col-auto col-xl-12 stat-group mt-xl-2 stat-flex d-flex flex-column mx-auto">' + stats + '</div></div>' +
+        '</div></div>';
+      return '<div class="col-12 col-md-6 mb-2"><div class="card spec-card spec-card-detail mb-0 border border-gray p-2 h-100"><div class="row m-0 h-100">' + imageCol + bodyCol + commRow('d-flex d-xl-none') + '</div></div></div>';
     }
   })();
 }
