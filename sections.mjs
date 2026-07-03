@@ -131,7 +131,7 @@ export function communityBlurbHtml(c) {
     ? `<div class="oi-aspect three-four four-three-md sixteen-nine-lg"><img src="${esc(c.image)}" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img" alt="${esc(c.name || '')}"></div>`
     : '';
   const desc = c.description ? `<div class="mt-4 text-white fs-7 lh-lg">${c.description}</div>` : '';
-  return `<section id="community" class="bg-photo-block position-relative pagejump"><div class="container-fluid"><div class="row"><div class="col p-0"><div class="gray-gradient"></div>${img}<div class="photo-block-info aos-init" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="500" data-aos-once="true"><div class="container"><div class="col-12 col-md-10 col-xl-7"><div class="bodoni ls-sm fs-2 text-white">About the Community</div>${desc}<a href="${communityPath(c)}" class="btn btn-white btn-auto mt-4 d-inline-block me-md-2">Learn More About ${esc(c.name)}</a></div></div></div></div></div></div></section>`;
+  return `<section id="community" class="bg-photo-block position-relative pagejump"><div class="container-fluid"><div class="row"><div class="col p-0"><div class="gray-gradient"></div>${img}<div class="photo-block-info"><div class="container"><div class="col-12 col-md-10 col-xl-7"><div class="bodoni ls-sm fs-2 text-white">About the Community</div>${desc}<a href="${communityPath(c)}" class="btn btn-white btn-auto mt-4 d-inline-block me-md-2">Learn More About ${esc(c.name)}</a></div></div></div></div></div></div></section>`;
 }
 
 export function mapSalesHtml(c) {
