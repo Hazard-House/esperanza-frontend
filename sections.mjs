@@ -48,8 +48,13 @@ export function galleryHtml(gallery, fallback, address) {
   if (!imgs.length) return '';
   const alt = esc(address || ''), hero = imgs[0];
   const heroCol = imgs.length > 1 ? 'col-12 col-lg-8' : 'col-12';
-  const mosaic = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(hero.url)}" class="oi-aspect-img" loading="eager" alt="${alt}"></div>`
-    + `<div class="photo-overlay"><a href="#" class="open-gallery btn btn-green small-btn mt-5" data-fancybox-trigger="photos">View ${imgs.length} Photos</a></div></div>`;
+  // .photo-overlay is theme CSS `position:absolute;height:100%;width:100%;z-index:2` —
+  // it MUST live inside the position:relative .oi-aspect box or it covers the whole page
+  // and eats every click. Only render it when there's a real (multi-image) gallery to open.
+  const overlay = imgs.length > 1
+    ? `<div class="photo-overlay"><a href="#" class="open-gallery btn btn-green small-btn mt-5" data-fancybox-trigger="photos">View ${imgs.length} Photos</a></div>`
+    : '';
+  const mosaic = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(hero.url)}" class="oi-aspect-img" loading="eager" alt="${alt}">${overlay}</div></div>`;
   const side = imgs.length > 1 ? `<div class="col-12 col-lg-4 d-none d-lg-flex flex-column p-0">`
     + imgs.slice(1, 3).map(g => `<div class="oi-aspect sixteen-nine mb-2"><img src="${esc(g.url)}" class="oi-aspect-img" loading="lazy" alt="${alt}"></div>`).join('')
     + `</div>` : '';
