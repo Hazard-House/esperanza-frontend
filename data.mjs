@@ -1,0 +1,106 @@
+// data.mjs — fetch the public API once, normalize, cross-link. Build-time only.
+// Reads only the API (no scrape dependency) so it can also run in CI for freshness.
+const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
+
+const un = v => (Array.isArray(v) ? v[0] : v);
+const fixHost = u => (u ? String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u);
+export const slugify = s => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+async function getJSON(path) {
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
+  return r.json();
+}
+
+function normQmi(h) {
+  const f = h.fields || h;
+  const fp = un(f['FP: Image']);
+  let gallery = [];
+  const g = f.photo_gallery; // exposed by the esperanza-cf PR (Task 13); absent until then
+  if (Array.isArray(g)) gallery = g.map(x => ({ url: fixHost(x.url || x), alt: x.alt || '' }));
+  return {
+    id: h.id, price: f.Price,
+    beds: f.bedroom_count, baths: f.bathroom_count, halfBaths: f.half_bathroom_count,
+    stories: f.stories_count, garage: un(f['FP: Garage']),
+    livingSqft: f.living_square_footage, totalSqft: f.total_square_footage,
+    community: f.Community, communityId: un(f['Community (Link)']),
+    floorPlan: f['Floor Plan'], floorPlanId: un(f['Floor Plan (Link)']),
+    collection: un(f['FP: Collection']),
+    slug: f.slug, city: f.City, address: f.address,
+    image: fixHost(f.image_url), gallery,
+    fpImage: fp ? fixHost(fp.url || fp) : null, fpDescription: f['FP: Description'],
+    planViewerUrl: f['FP: Plan Viewer'], virtualTourUrl: f['FP: Virtual Tour'],
+    elevation: f.elevation,
+    availability: f.availability_text, availableNow: f['Available Now'], moveInDate: f['Move-In Date'],
+    description: f.Description, promo: f.promo_text, pdfUrl: f['Dynamic PDF'],
+    lat: f.latitude != null ? Number(f.latitude) : (f.geo_latitude != null ? Number(f.geo_latitude) : null),
+    lng: f.longitude != null ? Number(f.longitude) : (f.geo_longitude != null ? Number(f.geo_longitude) : null),
+  };
+}
+
+function normCommunity(c) {
+  const p = c.coordinates ? String(c.coordinates).split(',') : [];
+  return {
+    id: c.id, name: c.name, slug: c.slug, city: c.town,
+    lat: p[0] != null && p[0] !== '' ? Number(p[0]) : null,
+    lng: p[1] != null && p[1] !== '' ? Number(p[1]) : null,
+    address: c.address, image: c.image, secondaryImage: c.secondaryImage,
+    priceFrom: c.priceFrom, sqft: c.sqft, beds: c.beds, baths: c.baths,
+    description: c.description, amenities: c.amenities, promo: c.promoBannerText,
+    officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
+  };
+}
+
+function normFloorplan(fp) {
+  return {
+    id: fp.id, name: fp.name, slug: fp.slug, collection: fp.collection,
+    startingPrice: fp.startingPrice, communityPrices: fp.communityPrices || {},
+    bedroomMin: fp.bedroomMin, bedroomMax: fp.bedroomMax, bathroomMin: fp.bathroomMin, bathroomMax: fp.bathroomMax,
+    garage: fp.carGarageCount, stories: fp.storiesCount,
+    livingSqft: fp.livingSquareFootage, totalSqft: fp.totalSquareFootage,
+    masterBed: fp.masterBedLocation, hersScore: fp.hersScore, communities: fp.communities,
+    image: fp.image, description: fp.description,
+    planViewerUrl: fp.planViewerUrl, virtualTourUrl: fp.virtualTourUrl, brochurePdfUrl: fp.brochurePdfUrl,
+    promo: fp.promoBannerText,
+  };
+}
+
+export async function loadData() {
+  const [q, c, f, s] = await Promise.all([
+    getJSON('/qmi'), getJSON('/communities'), getJSON('/floorplans'), getJSON('/settings').catch(() => ({})),
+  ]);
+  const qmis = (q.homes || []).map(normQmi);
+  const communities = (c.communities || []).map(normCommunity);
+  const fpRaw = f.floorplans || f.floor_plans || (Array.isArray(f) ? f : []);
+  const floorplans = fpRaw.map(normFloorplan);
+  if (!qmis.length || !communities.length || !floorplans.length) {
+    throw new Error(`empty API payload: qmi=${qmis.length} comm=${communities.length} fp=${floorplans.length} — refusing to build`);
+  }
+  const commById = new Map(communities.map(x => [x.id, x]));
+  const commByName = new Map(communities.map(x => [String(x.name).toLowerCase(), x]));
+  const fpById = new Map(floorplans.map(x => [x.id, x]));
+  for (const h of qmis) { h.communityObj = commById.get(h.communityId) || null; h.floorplanObj = fpById.get(h.floorPlanId) || null; }
+  for (const cm of communities) {
+    cm.homes = qmis.filter(h => h.communityId === cm.id);
+    cm.plans = floorplans.filter(fp => fp.communityPrices[cm.name] != null || String(fp.communities || '').toLowerCase().includes(String(cm.name).toLowerCase()));
+  }
+  for (const fp of floorplans) {
+    fp.homes = qmis.filter(h => h.floorPlanId === fp.id);
+    fp.communityList = Object.keys(fp.communityPrices).map(n => commByName.get(n.toLowerCase())).filter(Boolean);
+  }
+  return { qmis, communities, floorplans, settings: s, commById, commByName, fpById };
+}
+
+async function demo() {
+  const d = await loadData();
+  console.assert(d.qmis.length > 50, 'qmis loaded');
+  console.assert(d.communities.length > 10, 'communities loaded');
+  console.assert(d.floorplans.length > 20, 'floorplans loaded');
+  const withComm = d.qmis.find(h => h.communityObj);
+  console.assert(withComm, 'at least one QMI cross-links to a community');
+  const withPlans = d.communities.find(c => c.plans.length);
+  console.assert(withPlans, 'at least one community cross-links to floor plans');
+  console.assert(typeof slugify('El Edén!') === 'string' && slugify('El Eden') === 'el-eden', 'slugify');
+  console.log('data.mjs demo() passed:', d.qmis.length, 'qmi', d.communities.length, 'comm', d.floorplans.length, 'fp');
+}
+if (process.argv.includes('--check')) demo();
