@@ -25,11 +25,14 @@
 
   // qmi-links.json (built from the shipped pages) maps a home to its detail page.
   // Card -> the home-for-sale page (detail), where the "Download PDF" button lives.
-  // Homes newer than the scrape fall back to their community page, then the PDF.
+  // Homes newer than the scrape have no static page -> the runtime shell renders
+  // their detail from the live API at /new-homes/available/home/?slug=<slug>.
   var LINKS = { qmi: {}, community: {} };
   function homeUrl(h) {
     var cs = slugify(h.community);
-    return LINKS.qmi[cs + '/' + (h.slug || '')] || LINKS.community[cs] || h.pdfUrl || '#';
+    return LINKS.qmi[cs + '/' + (h.slug || '')] ||
+      (h.slug ? '/new-homes/available/home/?slug=' + encodeURIComponent(h.slug) : '') ||
+      h.pdfUrl || '#';
   }
 
   function normalizeHome(h) {

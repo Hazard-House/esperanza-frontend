@@ -39,6 +39,15 @@ const ALWAYS = ['index.html'];
 // community-detail map without listing all 30+ paths. available-live.js stays explicit
 // (it renders QMI cards + filters, not just a map, so it can't be container-inferred).
 const LIVE_PAGES = { 'new-homes/available/index.html': 'available-live.js' };
+// Generic runtime QMI-detail shell for homes newer than the scrape (no static page).
+// Built from an existing scraped detail page so it inherits the site chrome/theme;
+// its home-specific content is stripped and qmi-detail-live.js fills #qmi-live from
+// the live API. Served by Caddy try_files at /new-homes/available/home/ (?slug= passes through).
+const SHELL = {
+  out: 'new-homes/available/home/index.html',
+  island: 'qmi-detail-live.js',
+  template: 'new-homes/tx/brownsville/palo-alto-groves/7522/2144-sand-lane/1751815/index.html',
+};
 const CONTAINER_ISLANDS = [
   { id: 'id="home-map"', island: 'community-maps-live.js' }, // homepage Find-Your-Home (Counties)
   { id: 'id="map"', island: 'community-maps-live.js' },      // community detail single-location (Common)
@@ -131,6 +140,17 @@ function injectIsland(html, islandFile) {
   return html;
 }
 
+// Build the QMI-detail shell: take a real scraped detail page, apply the common
+// rewrites, replace the home-specific content span (the price header through the end
+// of the detail body, i.e. everything up to <footer>) with an empty #qmi-live mount,
+// and inject the runtime island. Pure function so demo() can assert its shape.
+function buildShellHtml(raw) {
+  let html = rewriteCommon(raw);
+  const mount = '\n<div id="qmi-live" class="qmi-detail-live"><div class="container py-5 text-center text-gray">Loading home details…</div></div>\n';
+  html = html.replace(/<section class="header[\s\S]*?(?=<footer)/, mount);
+  return injectIsland(html, SHELL.island);
+}
+
 // Map live API homes -> shipped detail pages (for the available island's card links).
 // Key QMI by <communitySlug>/<addressSlug> (near-unique); community pages by <communitySlug>
 // as a fallback for homes newer than the scrape. Written to public/qmi-links.json.
@@ -181,8 +201,20 @@ function build() {
   }
   console.log(`rewrote ${n} pages`);
 
+  // 2b. Generic QMI-detail shell (for homes newer than the scrape). Served by Caddy
+  // try_files at /new-homes/available/home/; qmi-detail-live.js fills it from the API.
+  const shellSrc = join(WWW, SHELL.template);
+  if (existsSync(shellSrc)) {
+    const shellDst = join(OUT, SHELL.out);
+    mkdirSync(dirname(shellDst), { recursive: true });
+    writeFileSync(shellDst, buildShellHtml(readFileSync(shellSrc, 'utf8')));
+    console.log(`shell: ${SHELL.out}`);
+  } else {
+    console.warn(`skip shell (template missing): ${SHELL.template}`);
+  }
+
   // 3. Islands (from both explicit LIVE_PAGES and container-inferred CONTAINER_ISLANDS).
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat()]);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island]);
   for (const island of islands) {
     cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   }
@@ -215,7 +247,15 @@ function demo() {
     === `"map_key":"${MAPBOX_TOKEN}"`, 'token swap');
   console.assert(s('src="../../../api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"')
     === 'src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"', 'mapbox lib https');
-  console.log('demo() rewrite checks passed');
+
+  // shell builder: home-specific content span replaced by #qmi-live, island injected.
+  const mini = '<head></head><body><nav>nav</nav></div><section class="header">PRICE $9<div id="detail-gallery">imgs</div></section><section id="overview">specs</section><footer>f</footer></body>';
+  const shell = buildShellHtml(mini);
+  console.assert(shell.includes('id="qmi-live"'), 'shell: #qmi-live mount injected');
+  console.assert(!shell.includes('id="detail-gallery"') && !shell.includes('PRICE $9'), 'shell: home content stripped');
+  console.assert(shell.includes('<footer>f</footer>'), 'shell: footer/chrome preserved');
+  console.assert(shell.includes('src="/qmi-detail-live.js"') && shell.includes('window.oi='), 'shell: island + oi stub injected');
+  console.log('demo() rewrite + shell checks passed');
 }
 
 if (process.argv.includes('--check')) demo();
