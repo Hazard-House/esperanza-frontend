@@ -29,6 +29,8 @@ const STYLE_HOME = 'mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg';
 // those in our account are a follow-up). available-live.js reads PUBLIC_STYLE as MAPBOX_STYLE.
 const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11';
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
+// pre-launch: flip to false at domain cutover. Gates robots.txt Disallow + per-page noindex meta.
+const NOINDEX = true;
 
 // Pages to ship are listed in ship.txt (one rel path per line, relative to WWW),
 // grown per phase. Always include the homepage. Pages get rewriteCommon; the ones
@@ -89,7 +91,7 @@ function resolveMedia(rawPath, prefix, map) {
 // --- rewrite rules ----------------------------------------------------------
 // Applied to every flagship page. Order matters: xhr before the broad host rules.
 function rewriteCommon(html) {
-  return html
+  html = html
     // R1: XHR form/lead endpoints -> placeholder (deferred). Absolute + root-relative.
     // xhr endpoints -> same-origin /xhr/ (Caddy answers with benign JSON so the
     // frozen snapshot's recommend/oicheck/form calls resolve quietly instead of
@@ -100,9 +102,13 @@ function rewriteCommon(html) {
     // R2: images -> R2 CDN. Capture the whole path token, drop the resize query
     // (img.hazardhouse.ai ignores it and serves the original), strip the .avif
     // mirror artifact by splitting on the encoded '?' (%EF%B9%96).
-    .replace(/(?:\.\.\/)*media\.esperanzahomes\.com\/([^"'\s)]*)/g,
+    // (?:https?:\/\/)? also absorbs the ABSOLUTE form used in og:image/twitter:image
+    // (`https://media…`); without it the untouched scheme + our `//img…` stacked to
+    // `https:////img…` on 560 pages. Consuming the full `://` (not just `https:`) is
+    // required — the `//` won't match the `(?:\.\.\/)*` chain.
+    .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.esperanzahomes\.com\/([^"'\s)]*)/g,
       (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, '', ESP_KEYS)}`)
-    .replace(/(?:\.\.\/)*media\.homefiniti\.com\/([^"'\s)]*)/g,
+    .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.homefiniti\.com\/([^"'\s)]*)/g,
       (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, 'homefiniti/', HF_KEYS)}`)
     // R4: mapbox-gl lib CDN (relativized by HTTrack) -> restore https.
     .replace(/(?:\.\.\/)*api\.mapbox\.com\//g, 'https://api.mapbox.com/')
@@ -116,6 +122,15 @@ function rewriteCommon(html) {
     // non-greedy match to the first </div> is safe.
     .replace(/<div class="col-12 oneilinteractive-attribution[^>]*>[\s\S]*?<\/div>/,
       '<div class="col-12 oneilinteractive-attribution text-center text-white fs-9 mb-2"><a href="https://hazardhouse.ai" rel="noopener" target="_blank" class="text-small text-white">Powered by Hazard House</a></div>');
+  // pre-launch crawl block (NOINDEX): swap the scrape's robots meta for noindex,nofollow;
+  // inject after <head> on any page that lacks one. One switch flips the whole POC public.
+  if (NOINDEX) {
+    const meta = '<meta name="robots" content="noindex,nofollow">';
+    html = /<meta name="robots"[^>]*>/i.test(html)
+      ? html.replace(/<meta name="robots"[^>]*>/gi, meta) // /g: one page ships two robots metas
+      : html.replace(/<head([^>]*)>/i, `<head$1>\n${meta}`);
+  }
+  return html;
 }
 
 // Live pages: disable oilib (so it doesn't fight our island for #oi-map /
@@ -181,6 +196,15 @@ function build() {
     const src = join(WWW, rel);
     if (!existsSync(src)) { console.warn(`skip missing: ${rel}`); continue; }
     let html = rewriteCommon(readFileSync(src, 'utf8'));
+    // QMI detail pages (new-homes/tx/<city>/<community>/<cid>/<slug>/<listing>/index.html,
+    // i.e. 8 path segments = find -mindepth 6): their hard-linked relative brochure PDF
+    // (pdf/tx/…​.pdf) 404s. Repoint every such href at the live PDF worker, keyed by the
+    // address-slug already in the rel path (segment 5). Global replace covers >1 link/page.
+    const seg = rel.split('/');
+    if (rel.startsWith('new-homes/tx/') && seg.length === 8 && seg[7] === 'index.html') {
+      html = html.replace(/href="[^"]*pdf\/tx\/[^"]*\.pdf"/g,
+        `href="https://esperanza-pdf.round-base-ed8c.workers.dev/pdf/qmi/${seg[5]}"`);
+    }
     if (LIVE_PAGES[rel]) {
       html = injectIsland(html, LIVE_PAGES[rel]);
     } else {
@@ -224,6 +248,8 @@ function build() {
   // Frozen site-search index (oilib fetches /sitesearch.json) — served same-origin so
   // header search works and doesn't CORS-fail against the dead live domain.
   cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
+  // pre-launch crawl block (NOINDEX): belt-and-suspenders with the per-page noindex meta.
+  if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   writeLinksMap();
   console.log(`public/ assembled at ${OUT}`);
 }
@@ -233,6 +259,9 @@ function demo() {
   const s = rewriteCommon;
   console.assert(s('src="../../../media.esperanzahomes.com/153/2026/5/22/LP047_Rendering.png%EF%B9%96width=848&amp;ois=8e9bec3.avif"')
     === 'src="//img.hazardhouse.ai/assets-media/153/2026/5/22/LP047_Rendering.png"', 'media rewrite/decode');
+  // absolute og:image/twitter:image form must not stack slashes (was https:////img…)
+  console.assert(s('content="https://media.homefiniti.com/153/2022/5/16/1-14.jpg"')
+    === 'content="//img.hazardhouse.ai/assets-media/homefiniti/153/2022/5/16/1-14.jpg"', 'absolute media -> protocol-relative CDN (no https:///)');
   // extensionless srcset ref must resolve to the real .jpg key (first line of the esp key list)
   console.assert(s('srcset="../media.esperanzahomes.com/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27%EF%B9%96width=300&amp;fit=bounds.png 300w"')
     === 'srcset="//img.hazardhouse.ai/assets-media/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27.jpg 300w"', 'extensionless srcset -> real key');
