@@ -1,4 +1,6 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
+import assert from 'node:assert';
+import { fileURLToPath } from 'node:url';
 import { esc, money, num, statItem, ICON, descHtml, bannerHtml, galleryHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage } from './sections.mjs';
 import { qmiPath } from './paths.mjs';
 
@@ -13,6 +15,7 @@ export function qmiContent(h) {
     h.totalSqft != null && statItem(ICON.total, num(h.totalSqft) + ' Total Sq. Ft.'),
     h.livingSqft != null && statItem(ICON.living, num(h.livingSqft) + ' Living Sq. Ft.'),
     h.lot != null && statItem(ICON.lot || ICON.pin || ICON.total, 'Lot #' + esc(h.lot)),
+    h.hersScore != null && statItem(ICON.hers || ICON.total, 'HERS Score ' + esc(h.hersScore)),
   ].filter(Boolean).join('');
   const ctas = [
     h.pdfUrl && `<a href="${esc(h.pdfUrl)}" target="_blank" rel="noopener" class="btn btn-green oi-brochure-download me-2 mb-2">Download Brochure</a>`,
@@ -50,15 +53,16 @@ function demo() {
   const c = { id: 'recC', name: 'El Eden', slug: 'el-eden', city: 'Laredo', lat: 27.43, lng: -99.45, description: '<p>Nice</p>', image: '/c.jpg', officePhone: '956-395-1516', officeHours: 'Mon-Sat 9-6' };
   const h = { id: 'recH', address: '5131 Carambola Ln', community: 'El Eden', city: 'Laredo', slug: '5131-carambola-ln', price: 236990, beds: 3, baths: 2, garage: 2, stories: 2, lot: '334', hersScore: 47, livingSqft: 1106, totalSqft: 1471, description: 'Highlights:\n- Big yard', gallery: [{ url: '/1.jpg', alt: '' }], image: '/1.jpg', virtualTourUrl: 'https://my.matterport.com/show/?m=x', planViewerUrl: 'https://idapro.cloud/flr_pln/presidio', fpImage: '/fp.jpg', elevation: 'Presidio - Tuscan', pdfUrl: 'https://pdf/x', availability: 'Available Now', promo: '', communityObj: c };
   const out = qmiContent(h);
-  for (const id of ['id="detail-gallery"', 'id="overview"', 'id="virtualtour"', 'id="plans"', 'id="community"', 'id="sales"', 'id="request-a-tour"']) console.assert(out.includes(id), 'has ' + id);
-  console.assert(out.includes('data-live="price"') && out.includes('$236,990'), 'price');
-  console.assert(out.includes('Lot #334'), 'lot number stat');
-  console.assert(out.includes('2 Stories'), 'stories stat');
-  console.assert(out.includes('<ul>') && out.includes('Big yard'), 'desc bullets');
-  console.assert(out.includes('matterport.com') && out.includes('idapro.cloud'), 'tour+plan');
-  console.assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'no leftover markers/undefined');
+  for (const id of ['id="detail-gallery"', 'id="overview"', 'id="virtualtour"', 'id="plans"', 'id="community"', 'id="sales"', 'id="request-a-tour"']) assert(out.includes(id), 'has ' + id);
+  assert(out.includes('data-live="price"') && out.includes('$236,990'), 'price');
+  assert(out.includes('Lot #334'), 'lot number stat');
+  assert(out.includes('2 Stories'), 'stories stat');
+  assert(out.includes('HERS Score 47'), 'HERS score stat');
+  assert(out.includes('<ul>') && out.includes('Big yard'), 'desc bullets');
+  assert(out.includes('matterport.com') && out.includes('idapro.cloud'), 'tour+plan');
+  assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'no leftover markers/undefined');
   const page = renderQmi(h, '<head><title>x</title></head><body><!--CONTENT--></body>');
-  console.assert(page.includes('hydrate-live.js') && page.includes('community-maps-live.js') && page.includes('__ESPERANZA_PAGE'), 'islands+config');
+  assert(page.includes('hydrate-live.js') && page.includes('community-maps-live.js') && page.includes('__ESPERANZA_PAGE'), 'islands+config');
   console.log('render-qmi.mjs demo() passed');
 }
-if (process.argv.includes('--check')) demo();
+if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

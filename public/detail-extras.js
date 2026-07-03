@@ -16,10 +16,16 @@ function monthlyPayment(price, opts) {
 }
 
 if (typeof window === 'undefined') {
+  // ponytail: this file also ships as a plain (non-module) browser <script>, so it
+  // can't use `import`/`import.meta` at top level (SyntaxError outside a module) —
+  // a throwing local check gives the same real-failure/non-zero-exit behavior as
+  // node:assert without adding module syntax. Never imported by another .mjs module,
+  // so there's no --check import cascade to guard against here (unlike the other demos).
   if (process.argv.includes('--check')) {
+    var check = function (cond, msg) { if (!cond) throw new Error(msg); };
     var m = monthlyPayment(300000, { rate: 6.15 });
-    console.assert(m > 2200 && m < 2900, 'monthlyPayment ~2600, got ' + m);
-    console.assert(monthlyPayment(0) === 30, 'zero price -> hoa only, got ' + monthlyPayment(0));
+    check(m > 2200 && m < 2900, 'monthlyPayment ~2600, got ' + m);
+    check(monthlyPayment(0) === 30, 'zero price -> hoa only, got ' + monthlyPayment(0));
     console.log('detail-extras.js demo() passed: $' + m + '/mo on $300k @6.15%');
   }
 } else {

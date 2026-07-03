@@ -1,7 +1,7 @@
 /* Live community-pin maps for the homepage ("Find Your Home", #home-map) and the
  * community detail pages (#map).
  *   - homepage: our "Texas Counties Map" style, every community as a non-clustered pin
- *   - detail:   streets base (temporary), the page's one community as a single pin
+ *   - detail:   Esperanza-Common base (STYLE_COMMON), the page's one community as a single pin
  * Uses our token (O'Neill's is domain-locked). The green map_pin isn't in these styles,
  * so it's loaded at runtime via addImage from /map_pin.png (the exact O'Neill sprite).
  * Coordinates come from the O'Neill live capture (authoritative — pins tuned so they

@@ -9,6 +9,7 @@
 // ponytail: string rewrites, not a DOM parser. The scrape is HTTrack output with
 // a stable shape; regex is enough and adding jsdom for 3 files is overkill.
 
+import assert from 'node:assert';
 import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
@@ -81,15 +82,6 @@ async function build() {
     // Detail pages are generated fresh from D1 (Task 12) — don't ship the frozen scrape copies.
     if (/^new-homes\/tx\/[^/]+\/[^/]+\/[^/]+\//.test(rel) || /^floorplans\/[^/]+\/[^/]+\//.test(rel)) continue;
     let html = rewriteCommon(readFileSync(src, 'utf8'));
-    // QMI detail pages (new-homes/tx/<city>/<community>/<cid>/<slug>/<listing>/index.html,
-    // i.e. 8 path segments = find -mindepth 6): their hard-linked relative brochure PDF
-    // (pdf/tx/…​.pdf) 404s. Repoint every such href at the live PDF worker, keyed by the
-    // address-slug already in the rel path (segment 5). Global replace covers >1 link/page.
-    const seg = rel.split('/');
-    if (rel.startsWith('new-homes/tx/') && seg.length === 8 && seg[7] === 'index.html') {
-      html = html.replace(/href="[^"]*pdf\/tx\/[^"]*\.pdf"/g,
-        `href="https://esperanza-pdf.round-base-ed8c.workers.dev/pdf/qmi/${seg[5]}"`);
-    }
     if (LIVE_PAGES[rel]) {
       html = injectIsland(html, LIVE_PAGES[rel]);
     } else {
@@ -145,33 +137,33 @@ async function build() {
 // ponytail self-check: the rewrites are the load-bearing logic; assert their shape.
 function demo() {
   const s = rewriteCommon;
-  console.assert(s('src="../../../media.esperanzahomes.com/153/2026/5/22/LP047_Rendering.png%EF%B9%96width=848&amp;ois=8e9bec3.avif"')
+  assert(s('src="../../../media.esperanzahomes.com/153/2026/5/22/LP047_Rendering.png%EF%B9%96width=848&amp;ois=8e9bec3.avif"')
     === 'src="//img.hazardhouse.ai/assets-media/153/2026/5/22/LP047_Rendering.png"', 'media rewrite/decode');
   // absolute og:image/twitter:image form must not stack slashes (was https:////img…)
-  console.assert(s('content="https://media.homefiniti.com/153/2022/5/16/1-14.jpg"')
+  assert(s('content="https://media.homefiniti.com/153/2022/5/16/1-14.jpg"')
     === 'content="//img.hazardhouse.ai/assets-media/homefiniti/153/2022/5/16/1-14.jpg"', 'absolute media -> protocol-relative CDN (no https:///)');
   // extensionless srcset ref must resolve to the real .jpg key (first line of the esp key list)
-  console.assert(s('srcset="../media.esperanzahomes.com/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27%EF%B9%96width=300&amp;fit=bounds.png 300w"')
+  assert(s('srcset="../media.esperanzahomes.com/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27%EF%B9%96width=300&amp;fit=bounds.png 300w"')
     === 'srcset="//img.hazardhouse.ai/assets-media/153/2019/6/29/Tres_Lagos_Community_Center_Full_WEB-27.jpg 300w"', 'extensionless srcset -> real key');
-  console.assert(s('href="../static.esperanzahomes.com/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"')
+  assert(s('href="../static.esperanzahomes.com/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"')
     === 'href="/static/esperanza_homes/css/style.min%EF%B9%96v=85c08ef.css"', 'theme keeps ﹖ filename');
   // footer credit -> Hazard House (logo + O'Neill links removed)
   const foot = s('<div class="col-12 oneilinteractive-attribution text-center"><a href="https://oneilinteractive.com/x"><img class="oneil-icon" src="../static.esperanzahomes.com/x.avif"> Powered by Homefiniti</a>. Designed by <a href="https://oneilinteractive.com">ONeil Interactive</a>.</div>');
-  console.assert(foot.includes('Powered by Hazard House') && !foot.includes('oneilinteractive.com') && !foot.includes('oneil-icon'), 'footer -> Hazard House');
-  console.assert(s('action="https://www.esperanzahomes.com/xhr/request-information/"')
+  assert(foot.includes('Powered by Hazard House') && !foot.includes('oneilinteractive.com') && !foot.includes('oneil-icon'), 'footer -> Hazard House');
+  assert(s('action="https://www.esperanzahomes.com/xhr/request-information/"')
     === 'action="/xhr/request-information/"', 'xhr -> same-origin');
-  console.assert(s('"map_key":"pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA"')
+  assert(s('"map_key":"pk.eyJ1Ijoib25laWxpbnRlcmFjdGl2ZSIsImEiOiJjbDFmYWZ1d24wc2ZyM2ZtdXU2ZjF2ejczIn0.1TnDjEQqUtXCeBvpP2ZSnA"')
     === `"map_key":"${MAPBOX_TOKEN}"`, 'token swap');
-  console.assert(s('src="../../../api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"')
+  assert(s('src="../../../api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"')
     === 'src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"', 'mapbox lib https');
 
   // shell builder: home-specific content span replaced by #qmi-live, island injected.
   const mini = '<head></head><body><nav>nav</nav></div><section class="header">PRICE $9<div id="detail-gallery">imgs</div></section><section id="overview">specs</section><footer>f</footer></body>';
   const shell = buildShellHtml(mini);
-  console.assert(shell.includes('id="qmi-live"'), 'shell: #qmi-live mount injected');
-  console.assert(!shell.includes('id="detail-gallery"') && !shell.includes('PRICE $9'), 'shell: home content stripped');
-  console.assert(shell.includes('<footer>f</footer>'), 'shell: footer/chrome preserved');
-  console.assert(shell.includes('src="/qmi-detail-live.js"') && shell.includes('window.oi='), 'shell: island + oi stub injected');
+  assert(shell.includes('id="qmi-live"'), 'shell: #qmi-live mount injected');
+  assert(!shell.includes('id="detail-gallery"') && !shell.includes('PRICE $9'), 'shell: home content stripped');
+  assert(shell.includes('<footer>f</footer>'), 'shell: footer/chrome preserved');
+  assert(shell.includes('src="/qmi-detail-live.js"') && shell.includes('window.oi='), 'shell: island + oi stub injected');
   console.log('demo() rewrite + shell checks passed');
 }
 

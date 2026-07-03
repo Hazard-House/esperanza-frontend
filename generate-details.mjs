@@ -2,6 +2,7 @@
 // Standalone (needs only committed templates + the API) OR called by build.mjs.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadData } from './data.mjs';
 import { linksMap, qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { renderQmi } from './render-qmi.mjs';
@@ -29,4 +30,4 @@ export async function generateDetails() {
   return { qmi: d.qmis.length, community: d.communities.length, floorplan: d.floorplans.length };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) generateDetails();
+if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();

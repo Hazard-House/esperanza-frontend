@@ -1,4 +1,6 @@
 // render-floorplan.mjs — full brand-wide floor-plan detail page (/floorplans/<slug>/).
+import assert from 'node:assert';
+import { fileURLToPath } from 'node:url';
 import { esc, money, num, galleryHtml, tourHtml, idaproPlanHtml, formSlotHtml, qmiCardHtml, finalizePage } from './sections.mjs';
 import { floorplanPath, communityPath } from './paths.mjs';
 
@@ -46,9 +48,9 @@ function demo() {
     communityList: [{ id: 'c1', name: 'Aqualina at Tres Lagos', slug: 'aqualina-at-tres-lagos', city: 'Edinburg' }],
     homes: [{ id: 'h1', address: '1 A St', community: 'Aqualina at Tres Lagos', city: 'Edinburg', slug: '1-a-st', price: 451990, beds: 4, baths: 3, livingSqft: 2786, image: '/h.jpg', communityObj: null }] };
   const out = floorplanContent(fp);
-  for (const id of ['id="overview"', 'id="virtualtour"', 'id="plans"', 'id="mp-locations"', 'id="specs"', 'id="request-a-tour"']) console.assert(out.includes(id), 'has ' + id);
-  console.assert(out.includes('Starting at $396,990') && out.includes('HERS Score: 43') && out.includes('Aqualina at Tres Lagos') && out.includes('$451,990'), 'content');
-  console.assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'clean');
+  for (const id of ['id="overview"', 'id="virtualtour"', 'id="plans"', 'id="mp-locations"', 'id="specs"', 'id="request-a-tour"']) assert(out.includes(id), 'has ' + id);
+  assert(out.includes('Starting at $396,990') && out.includes('HERS Score: 43') && out.includes('Aqualina at Tres Lagos') && out.includes('$451,990'), 'content');
+  assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'clean');
   console.log('render-floorplan.mjs demo() passed');
 }
-if (process.argv.includes('--check')) demo();
+if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

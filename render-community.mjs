@@ -1,4 +1,6 @@
 // render-community.mjs — full community detail page.
+import assert from 'node:assert';
+import { fileURLToPath } from 'node:url';
 import { esc, money, galleryHtml, mapSalesHtml, formSlotHtml, qmiCardHtml, planCardHtml, bannerHtml, finalizePage } from './sections.mjs';
 import { communityPath } from './paths.mjs';
 
@@ -31,9 +33,9 @@ function demo() {
     homes: [{ id: 'h1', address: '1 A St', community: 'El Eden', city: 'Laredo', slug: '1-a-st', price: 236990, beds: 3, baths: 2, livingSqft: 1106, image: '/h.jpg', communityObj: null }],
     plans: [{ id: 'p1', name: 'Presidio', slug: 'presidio', collection: 'Haven', startingPrice: 219990, bedroomMin: 3, bedroomMax: 4, bathroomMin: 2, bathroomMax: 3, garage: 2, livingSqft: 1400, image: '/p.jpg' }] };
   const out = communityContent(c);
-  for (const id of ['id="overview"', 'id="specs"', 'id="plans"', 'id="sales"', 'id="request-a-tour"']) console.assert(out.includes(id), 'has ' + id);
-  console.assert(out.includes('Starting at $209,990') && out.includes('Pool') && out.includes('1 A St') && out.includes('Presidio'), 'content');
-  console.assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'clean');
+  for (const id of ['id="overview"', 'id="specs"', 'id="plans"', 'id="sales"', 'id="request-a-tour"']) assert(out.includes(id), 'has ' + id);
+  assert(out.includes('Starting at $209,990') && out.includes('Pool') && out.includes('1 A St') && out.includes('Presidio'), 'content');
+  assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'clean');
   console.log('render-community.mjs demo() passed');
 }
-if (process.argv.includes('--check')) demo();
+if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

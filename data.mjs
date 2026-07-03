@@ -1,5 +1,7 @@
 // data.mjs — fetch the public API once, normalize, cross-link. Build-time only.
 // Reads only the API (no scrape dependency) so it can also run in CI for freshness.
+import assert from 'node:assert';
+import { fileURLToPath } from 'node:url';
 const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
 
 const un = v => (Array.isArray(v) ? v[0] : v);
@@ -96,20 +98,20 @@ export async function loadData() {
 
 async function demo() {
   const d = await loadData();
-  console.assert(d.qmis.length > 50, 'qmis loaded');
-  console.assert(d.communities.length > 10, 'communities loaded');
-  console.assert(d.floorplans.length > 20, 'floorplans loaded');
+  assert(d.qmis.length > 50, 'qmis loaded');
+  assert(d.communities.length > 10, 'communities loaded');
+  assert(d.floorplans.length > 20, 'floorplans loaded');
   const withComm = d.qmis.find(h => h.communityObj);
-  console.assert(withComm, 'at least one QMI cross-links to a community');
+  assert(withComm, 'at least one QMI cross-links to a community');
   const withStories = d.qmis.find(h => h.stories != null);
-  console.assert(withStories, 'at least one QMI has stories');
+  assert(withStories, 'at least one QMI has stories');
   const withLot = d.qmis.find(h => h.lot != null);
-  console.assert(withLot, 'at least one QMI has a lot number');
+  assert(withLot, 'at least one QMI has a lot number');
   const withHers = d.qmis.find(h => h.hersScore != null);
-  console.assert(withHers, 'at least one QMI has a HERS score');
+  assert(withHers, 'at least one QMI has a HERS score');
   const withPlans = d.communities.find(c => c.plans.length);
-  console.assert(withPlans, 'at least one community cross-links to floor plans');
-  console.assert(typeof slugify('El Edén!') === 'string' && slugify('El Eden') === 'el-eden', 'slugify');
+  assert(withPlans, 'at least one community cross-links to floor plans');
+  assert(typeof slugify('El Edén!') === 'string' && slugify('El Eden') === 'el-eden', 'slugify');
   console.log('data.mjs demo() passed:', d.qmis.length, 'qmi', d.communities.length, 'comm', d.floorplans.length, 'fp');
 }
-if (process.argv.includes('--check')) demo();
+if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

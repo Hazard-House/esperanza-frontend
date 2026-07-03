@@ -1,4 +1,6 @@
 // sections.mjs — shared HTML section builders for the detail-page renderers.
+import assert from 'node:assert';
+import { fileURLToPath } from 'node:url';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, disableOilib } from './rewrite.mjs';
 
@@ -159,49 +161,49 @@ export function finalizePage(shell, { content, head, page, islands }) {
 }
 
 function demo() {
-  console.assert(esc('a<b>&"') === 'a&lt;b&gt;&amp;&quot;', 'esc');
-  console.assert(money(236990) === '$236,990', 'money');
+  assert(esc('a<b>&"') === 'a&lt;b&gt;&amp;&quot;', 'esc');
+  assert(money(236990) === '$236,990', 'money');
   const g = galleryHtml([{ url: '/a.jpg', alt: 'A' }, { url: '/b.jpg', alt: 'B' }], null, 'Home');
-  console.assert(g.includes('id="detail-gallery"') && g.includes('data-fancybox="photos"') && g.includes('View 2 Photos'), 'gallery');
+  assert(g.includes('id="detail-gallery"') && g.includes('data-fancybox="photos"') && g.includes('View 2 Photos'), 'gallery');
   const d = descHtml('Highlights:\n- Big yard\n- New roof');
-  console.assert(d.includes('<ul>') && d.includes('<li>Big yard</li>'), 'desc bullets -> ul');
+  assert(d.includes('<ul>') && d.includes('<li>Big yard</li>'), 'desc bullets -> ul');
   const head = setHead('<head><title>x</title><link rel="canonical" href="y"></head>', { title: 'T', canonical: '/c/', url: '/c/', description: 'D' });
-  console.assert(head.includes('<title>T</title>') && head.includes('href="/c/"'), 'setHead');
+  assert(head.includes('<title>T</title>') && head.includes('href="/c/"'), 'setHead');
   const page = finalizePage('<head></head><body><!--CONTENT--></body>', { content: '<p>hi</p>', head: { title: 'T', canonical: '/c/', url: '/c/' }, page: { type: 'qmi', id: 'rec1' }, islands: ['detail-extras.js'] });
-  console.assert(page.includes('<p>hi</p>') && page.includes('__ESPERANZA_PAGE') && page.includes('detail-extras.js'), 'finalizePage');
+  assert(page.includes('<p>hi</p>') && page.includes('__ESPERANZA_PAGE') && page.includes('detail-extras.js'), 'finalizePage');
 
   // Fabricated heading pattern must never reappear; real theme pattern must be used
   // in all six section builders (verified against a live QMI detail page).
   const noFakeH2 = s => !/class="[^"]*fs-3 text-center[^"]*"/.test(s);
 
   const tour = tourHtml('https://my.matterport.com/show/?m=x');
-  console.assert(noFakeH2(tour) && tour.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Virtual Tour</div>') && tour.includes('green-bar-light my-2 my-lg-3'), 'tourHtml heading');
+  assert(noFakeH2(tour) && tour.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Virtual Tour</div>') && tour.includes('green-bar-light my-2 my-lg-3'), 'tourHtml heading');
 
   const elev = elevationHtml('Farmhouse', '/e.jpg');
-  console.assert(noFakeH2(elev) && elev.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Elevations</div>'), 'elevationHtml heading');
+  assert(noFakeH2(elev) && elev.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Elevations</div>'), 'elevationHtml heading');
 
   const plan = idaproPlanHtml(null, '/fp.jpg', 'Plan A', 'desc');
-  console.assert(noFakeH2(plan) && plan.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Floor Plan</div>'), 'idaproPlanHtml heading');
+  assert(noFakeH2(plan) && plan.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Floor Plan</div>'), 'idaproPlanHtml heading');
 
   const rec = recommendedHtml();
-  console.assert(noFakeH2(rec) && rec.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Recommended For You</div>'), 'recommendedHtml heading');
+  assert(noFakeH2(rec) && rec.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Recommended For You</div>'), 'recommendedHtml heading');
 
   const sales = mapSalesHtml({ lat: 1, lng: 2, address: '1 Main St', city: 'Brownsville', officePhone: '956-000-0000' });
-  console.assert(noFakeH2(sales) && sales.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Sales Office</div>') && sales.includes('brown-bar short my-3') && sales.includes('btn btn-gray mt-3 oi-directions-click') && !sales.includes('btn btn-green mt-3 oi-directions-click'), 'mapSalesHtml Sales Office + brown-bar + btn-gray');
+  assert(noFakeH2(sales) && sales.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Sales Office</div>') && sales.includes('brown-bar short my-3') && sales.includes('btn btn-gray mt-3 oi-directions-click') && !sales.includes('btn btn-green mt-3 oi-directions-click'), 'mapSalesHtml Sales Office + brown-bar + btn-gray');
 
   const form = formSlotHtml('qmi', 'ctx1');
-  console.assert(noFakeH2(form) && form.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Schedule An Exploratory Visit</div>') && form.includes('green-bar-light my-3'), 'formSlotHtml Schedule An Exploratory Visit');
+  assert(noFakeH2(form) && form.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Schedule An Exploratory Visit</div>') && form.includes('green-bar-light my-3'), 'formSlotHtml Schedule An Exploratory Visit');
 
   const gallery = galleryHtml([{ url: '/a.jpg', alt: 'A' }, { url: '/b.jpg', alt: 'B' }], null, 'Home');
-  console.assert(gallery.includes('btn btn-green small-btn mt-5') && !gallery.includes('card-button'), 'galleryHtml CTA class');
+  assert(gallery.includes('btn btn-green small-btn mt-5') && !gallery.includes('card-button'), 'galleryHtml CTA class');
 
   // subnav: mobile "Go To..." dropdown + desktop row with `on-scroll` links (active on first item)
   const nav = subnavHtml([['overview', 'Overview'], ['photos', 'Photo Gallery'], ['sales', 'Contact']]);
-  console.assert(nav.includes('Go To...') && nav.includes('dropdown-menu') && nav.includes('d-block d-lg-none'), 'subnav mobile dropdown');
-  console.assert(nav.includes('id="desktop-menu"') && nav.includes('class="row subnav text-center d-none d-lg-flex"'), 'subnav desktop row classes');
-  console.assert(nav.includes('class="col on-scroll active"') && nav.includes('class="col on-scroll">Contact</a>'), 'subnav on-scroll + active');
-  console.assert(!nav.includes('bg-white border-bottom sticky-top') && !nav.includes('col-auto'), 'subnav no fabricated classes');
+  assert(nav.includes('Go To...') && nav.includes('dropdown-menu') && nav.includes('d-block d-lg-none'), 'subnav mobile dropdown');
+  assert(nav.includes('id="desktop-menu"') && nav.includes('class="row subnav text-center d-none d-lg-flex"'), 'subnav desktop row classes');
+  assert(nav.includes('class="col on-scroll active"') && nav.includes('class="col on-scroll">Contact</a>'), 'subnav on-scroll + active');
+  assert(!nav.includes('bg-white border-bottom sticky-top') && !nav.includes('col-auto'), 'subnav no fabricated classes');
 
   console.log('sections.mjs demo() passed');
 }
-if (process.argv.includes('--check')) demo();
+if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

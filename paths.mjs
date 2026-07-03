@@ -1,4 +1,6 @@
 // paths.mjs — canonical detail-page URLs, derived entirely from our data.
+import assert from 'node:assert';
+import { fileURLToPath } from 'node:url';
 import { slugify } from './data.mjs';
 
 const citySlug = h => slugify((h.communityObj && h.communityObj.city) || h.city || '');
@@ -23,12 +25,12 @@ export function linksMap(qmis, communities) {
 function demo() {
   const c = { name: 'El Eden', slug: 'el-eden', city: 'Laredo' };
   const h = { community: 'El Eden', slug: '5131-carambola-ln', city: 'Laredo', communityObj: c };
-  console.assert(qmiPath(h) === '/new-homes/tx/laredo/el-eden/5131-carambola-ln/', qmiPath(h));
-  console.assert(communityPath(c) === '/new-homes/tx/laredo/el-eden/', communityPath(c));
+  assert(qmiPath(h) === '/new-homes/tx/laredo/el-eden/5131-carambola-ln/', qmiPath(h));
+  assert(communityPath(c) === '/new-homes/tx/laredo/el-eden/', communityPath(c));
   const m = linksMap([h], [c]);
-  console.assert(m.qmi['el-eden/5131-carambola-ln'] === '/new-homes/tx/laredo/el-eden/5131-carambola-ln/', 'qmi link');
-  console.assert(m.community['el-eden'] === '/new-homes/tx/laredo/el-eden/', 'community link');
-  console.assert(floorplanPath({ slug: 'agave' }) === '/floorplans/agave/', 'fp path');
+  assert(m.qmi['el-eden/5131-carambola-ln'] === '/new-homes/tx/laredo/el-eden/5131-carambola-ln/', 'qmi link');
+  assert(m.community['el-eden'] === '/new-homes/tx/laredo/el-eden/', 'community link');
+  assert(floorplanPath({ slug: 'agave' }) === '/floorplans/agave/', 'fp path');
   console.log('paths.mjs demo() passed');
 }
-if (process.argv.includes('--check')) demo();
+if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
