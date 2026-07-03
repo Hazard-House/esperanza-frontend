@@ -26,6 +26,9 @@
 
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var money = function (n) { return n ? '$' + Number(n).toLocaleString('en-US') : ''; };
+  var slugify = function (s) { return String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  var LINKS = { qmi: {}, community: {} }; // qmi-links.json community map: slug -> community page URL
+  function communityUrl(c) { return LINKS.community[c.slug] || LINKS.community[slugify(c.name)] || ''; }
 
   // Prefer the O'Neill coord (by name); fall back to the API's own coordinate.
   function coordOf(c) {
@@ -36,7 +39,8 @@
   }
 
   function popupHTML(c) {
-    return '<div class="oi-infowindow overflow-hidden">' +
+    var url = communityUrl(c), a0 = url ? '<a href="' + esc(url) + '">' : '', a1 = url ? '</a>' : '';
+    return '<div class="oi-infowindow overflow-hidden">' + a0 +
       (c.image ? '<div class="oi-aspect two-one rounded-top"><img src="' + esc(c.image) + '" loading="lazy" class="oi-aspect-img rounded-top" alt="' + esc(c.name) + '"></div>' : '') +
       '<div class="row my-2 g-0">' +
       '<div class="col px-2 my-auto">' +
@@ -44,7 +48,7 @@
       '<div class="card-location">' + esc(c.town) + ', TX</div>' +
       '</div>' +
       (c.priceFrom ? '<div class="col-auto px-2 my-auto"><div class="price-title">From</div><div class="price mt-1">' + money(c.priceFrom) + '</div></div>' : '') +
-      '</div></div>';
+      '</div>' + a1 + '</div>';
   }
 
   function toGeoJSON(list) {
@@ -119,8 +123,12 @@
     var detail = document.getElementById('map');
     if ((!home && !detail) || typeof mapboxgl === 'undefined') return;
     mapboxgl.accessToken = TOKEN;
-    fetch(API + '/communities').then(function (r) { return r.json(); }).then(function (d) {
-      var comms = (d.communities || []).filter(function (c) { return c.active !== false; });
+    Promise.all([
+      fetch(API + '/communities').then(function (r) { return r.json(); }),
+      fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
+    ]).then(function (res) {
+      if (res[1]) LINKS = res[1];
+      var comms = (res[0].communities || []).filter(function (c) { return c.active !== false; });
       if (home) buildHome(home, comms);
       if (detail) buildDetail(detail, comms);
     }).catch(function () {});

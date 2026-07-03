@@ -14,6 +14,10 @@
 
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var money = function (n) { return n ? '$' + Number(n).toLocaleString('en-US') : ''; };
+  var slugify = function (s) { return String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  // qmi-links.json maps a community slug -> its shipped detail page (built from the pages).
+  var LINKS = { qmi: {}, community: {} };
+  function communityUrl(c) { return LINKS.community[c.slug] || LINKS.community[slugify(c.name)] || ''; }
 
   function coordOf(c) {
     var k = (c.name || '').trim().toLowerCase();
@@ -25,27 +29,29 @@
   // ---- cards ----
   function cardHTML(c) {
     var stat = function (v, label) { return v ? '<div class="col-auto pe-3"><span class="overpass bold">' + esc(v) + '</span> ' + label + '</div>' : ''; };
+    var url = communityUrl(c), a0 = url ? '<a href="' + esc(url) + '">' : '', a1 = url ? '</a>' : '';
     return '' +
       '<div class="col-12 col-md-6 col-lg-4 mb-3 px-2">' +
-      '<div class="card oi-map-item h-100 border border-gray" data-latitude="' + (coordOf(c) ? coordOf(c)[1] : '') + '" data-longitude="' + (coordOf(c) ? coordOf(c)[0] : '') + '">' +
+      '<div class="card oi-map-item h-100 border border-gray" data-latitude="' + (coordOf(c) ? coordOf(c)[1] : '') + '" data-longitude="' + (coordOf(c) ? coordOf(c)[0] : '') + '">' + a0 +
       '<div class="oi-aspect two-one rounded-top">' + (c.image ? '<img src="' + esc(c.image) + '" loading="lazy" class="oi-aspect-img rounded-top" alt="' + esc(c.name) + '">' : '') + '</div>' +
       '<div class="card-body p-3">' +
       '<div class="card-title">' + esc(c.name) + '</div>' +
       '<div class="card-location mb-2">' + esc(c.town) + ', TX</div>' +
       (c.priceFrom ? '<div class="price-title">From</div><div class="price mb-2">' + money(c.priceFrom) + '</div>' : '') +
       '<div class="row g-0 fs-9 text-gray">' + stat(c.beds, 'Beds') + stat(c.baths, 'Baths') + stat(c.sqft, 'Sq.Ft.') + '</div>' +
-      '</div></div></div>';
+      '</div>' + a1 + '</div></div>';
   }
 
   // ---- map (identical spec to the QMI map) ----
   var map, mapReady = false;
   function popupHTML(c) {
-    return '<div class="oi-infowindow overflow-hidden">' +
+    var url = communityUrl(c), a0 = url ? '<a href="' + esc(url) + '">' : '', a1 = url ? '</a>' : '';
+    return '<div class="oi-infowindow overflow-hidden">' + a0 +
       (c.image ? '<div class="oi-aspect two-one rounded-top"><img src="' + esc(c.image) + '" loading="lazy" class="oi-aspect-img rounded-top" alt="' + esc(c.name) + '"></div>' : '') +
       '<div class="row my-2 g-0"><div class="col px-2 my-auto"><div class="card-title">' + esc(c.name) + '</div>' +
       '<div class="card-location">' + esc(c.town) + ', TX</div></div>' +
       (c.priceFrom ? '<div class="col-auto px-2 my-auto"><div class="price-title">From</div><div class="price mt-1">' + money(c.priceFrom) + '</div></div>' : '') +
-      '</div></div>';
+      '</div>' + a1 + '</div>';
   }
   function toGeoJSON(list) {
     return { type: 'FeatureCollection', features: list.filter(function (x) { return x.coord; }).map(function (x) {
@@ -95,7 +101,11 @@
 
   function boot() {
     if (!document.getElementById('oi-map') && !document.getElementById('oi-filter-results')) return;
-    fetch(API + '/communities').then(function (r) { return r.json(); }).then(function (d) {
+    Promise.all([
+      fetch(API + '/communities').then(function (r) { return r.json(); }),
+      fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
+    ]).then(function (res) {
+      var d = res[0]; if (res[1]) LINKS = res[1];
       var comms = (d.communities || []).filter(function (c) { return c.active !== false; });
       var grid = document.getElementById('oi-filter-results');
       if (grid) grid.innerHTML = comms.length ? comms.map(cardHTML).join('') : '<div class="col-12 p-4 text-center text-gray">No communities found.</div>';
