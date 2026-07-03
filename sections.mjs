@@ -47,7 +47,7 @@ export function galleryHtml(gallery, fallback, address) {
   const alt = esc(address || ''), hero = imgs[0];
   const heroCol = imgs.length > 1 ? 'col-12 col-lg-8' : 'col-12';
   const mosaic = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(hero.url)}" class="oi-aspect-img" loading="eager" alt="${alt}"></div>`
-    + `<div class="photo-overlay"><a href="#" class="open-gallery btn card-button" data-fancybox-trigger="photos">View ${imgs.length} Photos</a></div></div>`;
+    + `<div class="photo-overlay"><a href="#" class="open-gallery btn btn-green small-btn mt-5" data-fancybox-trigger="photos">View ${imgs.length} Photos</a></div></div>`;
   const side = imgs.length > 1 ? `<div class="col-12 col-lg-4 d-none d-lg-flex flex-column p-0">`
     + imgs.slice(1, 3).map(g => `<div class="oi-aspect sixteen-nine mb-2"><img src="${esc(g.url)}" class="oi-aspect-img" loading="lazy" alt="${alt}"></div>`).join('')
     + `</div>` : '';
@@ -55,22 +55,31 @@ export function galleryHtml(gallery, fallback, address) {
   return `<div id="detail-gallery" class="container-fluid p-0"><div class="row m-0">${mosaic}${side}</div>${hidden}</div>`;
 }
 
+// Real theme section-heading pattern (verified against a live QMI detail page's
+// #virtualtour/#elevations/#plans/#sales/#request-a-tour/recommended sections) —
+// NOT the fabricated `<h2 class="... fs-3 text-center mb-4">` used before.
+export function sectionHeading(title, barClass = 'green-bar-light my-2 my-lg-3') {
+  return `<div class="text-gray bodoni ls-sm fs-2 ps-0">${esc(title)}</div><div class="${barClass}"></div>`;
+}
+
 export function subnavHtml(anchors) {
   if (!anchors.length) return '';
-  const links = anchors.map(a => a[0] === 'photos'
-    ? `<a class="col-auto text-center py-2 px-3" href="#" data-fancybox-trigger="photos">${esc(a[1])}</a>`
-    : `<a class="col-auto text-center py-2 px-3" href="#${a[0]}">${esc(a[1])}</a>`).join('');
-  return `<div class="subnav bg-white border-bottom sticky-top"><div class="container"><div id="desktop-menu" class="row subnav justify-content-center">${links}</div></div></div>`;
+  const items = anchors.map((a, i) => ({ href: a[0] === 'photos' ? '#' : `#${a[0]}`, label: esc(a[1]), photos: a[0] === 'photos', active: i === 0 }));
+  const dropdown = items.map(it => `<li><a href="${it.href}"${it.photos ? ' data-fancybox-trigger="photos"' : ''} class="dropdown-item">${it.label}</a></li>`).join('');
+  const desktop = items.map(it => it.photos
+    ? `<a class="col" data-fancybox-trigger="photos" role="button">${it.label}</a>`
+    : `<a href="${it.href}" class="col on-scroll${it.active ? ' active' : ''}">${it.label}</a>`).join('');
+  return `<div class="subnav"><div class="dropdown d-block d-lg-none"><button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Go To...</button><ul class="dropdown-menu">${dropdown}</ul></div><div id="desktop-menu" class="row subnav text-center d-none d-lg-flex">${desktop}</div></div>`;
 }
 
 export function tourHtml(url) {
   if (!url) return '';
-  return `<section id="virtualtour" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container"><h2 class="bodoni text-gray fs-3 text-center mb-4">Virtual Tour</h2><div class="oi-aspect sixteen-nine oi-matterport"><iframe class="oi-video-iframe" src="${esc(url)}" frameborder="0" allowfullscreen allow="xr-spatial-tracking" style="width:100%;height:100%"></iframe></div></div></section>`;
+  return `<section id="virtualtour" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container">${sectionHeading('Virtual Tour')}<div class="oi-aspect sixteen-nine oi-matterport"><iframe class="oi-video-iframe" src="${esc(url)}" frameborder="0" allowfullscreen allow="xr-spatial-tracking" style="width:100%;height:100%"></iframe></div></div></section>`;
 }
 
 export function elevationHtml(label, image) {
   if (!image) return '';
-  return `<section id="elevations" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container"><h2 class="bodoni text-gray fs-3 text-center mb-4">Elevations</h2><div class="row oi-listings justify-content-center"><div class="col-12 col-md-6"><a data-fancybox="elevations" data-caption="${esc(label || '')}" href="${esc(image)}"><div class="oi-aspect three-two">${label ? `<div class="banner dark-green">${esc(label)}</div>` : ''}<img src="${esc(image)}" class="oi-aspect-img" alt="${esc(label || 'elevation')}"></div></a></div></div></div></section>`;
+  return `<section id="elevations" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container">${sectionHeading('Elevations')}<div class="row oi-listings justify-content-center"><div class="col-12 col-md-6"><a data-fancybox="elevations" data-caption="${esc(label || '')}" href="${esc(image)}"><div class="oi-aspect three-two">${label ? `<div class="banner dark-green">${esc(label)}</div>` : ''}<img src="${esc(image)}" class="oi-aspect-img" alt="${esc(label || 'elevation')}"></div></a></div></div></div></section>`;
 }
 
 export function idaproPlanHtml(url, image, name, desc) {
@@ -78,7 +87,7 @@ export function idaproPlanHtml(url, image, name, desc) {
     ? `<div class="text-center mb-3"><a class="btn btn-primary" href="${esc(url)}" target="_blank" rel="noopener">Launch Interactive Floor Plan</a></div><iframe src="${esc(url)}" name="modelframe" frameborder="0" style="width:100%;height:600px"></iframe>`
     : (image ? `<div class="oi-aspect three-two"><img src="${esc(image)}" class="oi-aspect-img" alt="${esc(name || '')} floor plan"></div>` : '');
   if (!body) return '';
-  return `<section id="plans" class="pagejump floor-plan py-4 py-lg-5"><div class="container"><h2 class="bodoni text-gray fs-3 text-center mb-4">Floor Plan</h2>${body}${desc ? `<div class="wysiwyg mt-4">${esc(desc)}</div>` : ''}</div></section>`;
+  return `<section id="plans" class="pagejump floor-plan py-4 py-lg-5"><div class="container">${sectionHeading('Floor Plan')}${body}${desc ? `<div class="wysiwyg mt-4">${esc(desc)}</div>` : ''}</div></section>`;
 }
 
 export function communityBlurbHtml(c) {
@@ -91,15 +100,15 @@ export function mapSalesHtml(c) {
   if (!(c && c.lat && c.lng)) return '';
   const tel = c.officePhone ? `<a class="oi-click-to-call d-block text-green" href="tel:${esc(String(c.officePhone).replace(/[^0-9+]/g, ''))}">${esc(c.officePhone)}</a>` : '';
   const hours = c.officeHours ? `<div class="fs-9 text-gray mt-1">${esc(c.officeHours)}</div>` : '';
-  return `<section id="sales" class="pagejump py-4 py-lg-5"><div class="container"><div class="row"><div class="col-12 col-lg-7 mb-3"><div id="map" style="height:420px" data-latitude="${c.lat}" data-longitude="${c.lng}" data-zoom="13" data-vendor="mapbox"></div></div><div class="col-12 col-lg-5"><h2 class="bodoni text-gray fs-3">Visit Us</h2>${c.address ? `<address class="mt-3">${esc(c.address)}<br>${esc(c.city)}, TX</address>` : ''}${tel}${hours}<a href="https://maps.google.com/maps?q=${c.lat},${c.lng}" target="_blank" rel="noopener" class="btn btn-green mt-3 oi-directions-click">Get Directions</a></div></div></div></section>`;
+  return `<section id="sales" class="pagejump py-4 py-lg-5"><div class="container"><div class="row"><div class="col-12 col-lg-7 mb-3"><div id="map" style="height:420px" data-latitude="${c.lat}" data-longitude="${c.lng}" data-zoom="13" data-vendor="mapbox"></div></div><div class="col-12 col-lg-5">${sectionHeading('Sales Office', 'brown-bar short my-3')}${c.address ? `<address class="mt-3">${esc(c.address)}<br>${esc(c.city)}, TX</address>` : ''}${tel}${hours}<a href="https://maps.google.com/maps?q=${c.lat},${c.lng}" target="_blank" rel="noopener" class="btn btn-gray mt-3 oi-directions-click">Get Directions</a></div></div></div></section>`;
 }
 
 export function formSlotHtml(kind, ctx) {
-  return `<section id="request-a-tour" class="pagejump py-4 py-lg-5"><div class="container"><div class="row justify-content-center"><div class="col-12 col-lg-8 text-center"><h2 class="bodoni text-gray fs-3 mb-3">Request a Tour</h2><div class="hs-form-slot" data-form="${esc(kind)}" data-context="${esc(ctx || '')}"><p class="text-gray">Contact us or <a href="#offcanvas-contact" data-bs-toggle="offcanvas">request information</a>.</p></div></div></div></div></section>`;
+  return `<section id="request-a-tour" class="pagejump py-4 py-lg-5"><div class="container"><div class="row justify-content-center"><div class="col-12 col-lg-8 text-center">${sectionHeading('Schedule An Exploratory Visit', 'green-bar-light my-3')}<div class="hs-form-slot" data-form="${esc(kind)}" data-context="${esc(ctx || '')}"><p class="text-gray">Contact us or <a href="#offcanvas-contact" data-bs-toggle="offcanvas">request information</a>.</p></div></div></div></div></section>`;
 }
 
 export function recommendedHtml() {
-  return `<section class="py-4 py-lg-5 bg-tan-white"><div class="container"><h2 class="bodoni text-gray fs-3 text-center mb-4">Recommended For You</h2><div class="recommended-content row oi-listings" id="recommended"></div></div></section>`;
+  return `<section class="py-4 py-lg-5 bg-tan-white"><div class="container">${sectionHeading('Recommended For You')}<div class="recommended-content row oi-listings" id="recommended"></div></div></section>`;
 }
 
 function banners(availability, promo) {
@@ -160,6 +169,39 @@ function demo() {
   console.assert(head.includes('<title>T</title>') && head.includes('href="/c/"'), 'setHead');
   const page = finalizePage('<head></head><body><!--CONTENT--></body>', { content: '<p>hi</p>', head: { title: 'T', canonical: '/c/', url: '/c/' }, page: { type: 'qmi', id: 'rec1' }, islands: ['detail-extras.js'] });
   console.assert(page.includes('<p>hi</p>') && page.includes('__ESPERANZA_PAGE') && page.includes('detail-extras.js'), 'finalizePage');
+
+  // Fabricated heading pattern must never reappear; real theme pattern must be used
+  // in all six section builders (verified against a live QMI detail page).
+  const noFakeH2 = s => !/class="[^"]*fs-3 text-center[^"]*"/.test(s);
+
+  const tour = tourHtml('https://my.matterport.com/show/?m=x');
+  console.assert(noFakeH2(tour) && tour.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Virtual Tour</div>') && tour.includes('green-bar-light my-2 my-lg-3'), 'tourHtml heading');
+
+  const elev = elevationHtml('Farmhouse', '/e.jpg');
+  console.assert(noFakeH2(elev) && elev.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Elevations</div>'), 'elevationHtml heading');
+
+  const plan = idaproPlanHtml(null, '/fp.jpg', 'Plan A', 'desc');
+  console.assert(noFakeH2(plan) && plan.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Floor Plan</div>'), 'idaproPlanHtml heading');
+
+  const rec = recommendedHtml();
+  console.assert(noFakeH2(rec) && rec.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Recommended For You</div>'), 'recommendedHtml heading');
+
+  const sales = mapSalesHtml({ lat: 1, lng: 2, address: '1 Main St', city: 'Brownsville', officePhone: '956-000-0000' });
+  console.assert(noFakeH2(sales) && sales.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Sales Office</div>') && sales.includes('brown-bar short my-3') && sales.includes('btn btn-gray mt-3 oi-directions-click') && !sales.includes('btn btn-green mt-3 oi-directions-click'), 'mapSalesHtml Sales Office + brown-bar + btn-gray');
+
+  const form = formSlotHtml('qmi', 'ctx1');
+  console.assert(noFakeH2(form) && form.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Schedule An Exploratory Visit</div>') && form.includes('green-bar-light my-3'), 'formSlotHtml Schedule An Exploratory Visit');
+
+  const gallery = galleryHtml([{ url: '/a.jpg', alt: 'A' }, { url: '/b.jpg', alt: 'B' }], null, 'Home');
+  console.assert(gallery.includes('btn btn-green small-btn mt-5') && !gallery.includes('card-button'), 'galleryHtml CTA class');
+
+  // subnav: mobile "Go To..." dropdown + desktop row with `on-scroll` links (active on first item)
+  const nav = subnavHtml([['overview', 'Overview'], ['photos', 'Photo Gallery'], ['sales', 'Contact']]);
+  console.assert(nav.includes('Go To...') && nav.includes('dropdown-menu') && nav.includes('d-block d-lg-none'), 'subnav mobile dropdown');
+  console.assert(nav.includes('id="desktop-menu"') && nav.includes('class="row subnav text-center d-none d-lg-flex"'), 'subnav desktop row classes');
+  console.assert(nav.includes('class="col on-scroll active"') && nav.includes('class="col on-scroll">Contact</a>'), 'subnav on-scroll + active');
+  console.assert(!nav.includes('bg-white border-bottom sticky-top') && !nav.includes('col-auto'), 'subnav no fabricated classes');
+
   console.log('sections.mjs demo() passed');
 }
 if (process.argv.includes('--check')) demo();
