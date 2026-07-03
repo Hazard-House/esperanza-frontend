@@ -10,11 +10,23 @@
 	root * /srv/public
 	encode zstd gzip
 
+	# Security headers, site-wide. No CSP on purpose: the scrape carries many
+	# third-party pixels a policy would break.
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
 	# Same-origin proxy to the public API so the browser avoids CORS (the API only
 	# allows the esperanzahomes.com origin). The live island fetches /api/public/*.
 	handle /api/* {
 		reverse_proxy https://esperanza-api.round-base-ed8c.workers.dev {
 			header_up Host esperanza-api.round-base-ed8c.workers.dev
+			# D1 data changes slowly: let the CF edge cache the JSON (60s) and the
+			# browser cache it briefly (30s).
+			header_down Cache-Control "public, s-maxage=60, max-age=30"
 		}
 	}
 
@@ -26,16 +38,19 @@
 		respond `{"data":{"content":""},"success":true}` 200
 	}
 
-	# Pretty URLs: /new-homes/available/ -> /new-homes/available/index.html
-	try_files {path} {path}/index.html {path}.html
-
-	file_server
-
-	# Long cache for the immutable theme; short for HTML.
+	# Long cache for the immutable theme.
 	@static path /static/*
 	header @static Cache-Control "public, max-age=31536000, immutable"
-	@html path *.html /
-	header @html Cache-Control "public, max-age=300"
+
+	# Pretty URLs, then the HTML cache header. The route block forces literal order
+	# so @html matches AFTER try_files rewrites; otherwise Caddy sorts `header` ahead
+	# of the rewrite and the pre-rewrite path misses /contact/, /new-homes/available/…
+	route {
+		try_files {path} {path}/index.html {path}.html
+		@html path *.html
+		header @html Cache-Control "public, max-age=300"
+		file_server
+	}
 
 	# Unmigrated paths (blog archives, JS-only floorplans catalog, the media/PDF
 	# library) fall through to the still-live O'Neill site so nav stays clickable.
