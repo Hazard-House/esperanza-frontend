@@ -11,8 +11,8 @@
 
 import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { execSync } from 'node:child_process';
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
+import { generateDetails } from './generate-details.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -66,24 +66,7 @@ function buildShellHtml(raw) {
   return injectIsland(html, SHELL.island);
 }
 
-// Map live API homes -> shipped detail pages (for the available island's card links).
-// Key QMI by <communitySlug>/<addressSlug> (near-unique); community pages by <communitySlug>
-// as a fallback for homes newer than the scrape. Written to public/qmi-links.json.
-function writeLinksMap() {
-  const find = a => execSync(`find ${a}`, { cwd: WWW }).toString().trim().split('\n').filter(Boolean);
-  const qmi = {};
-  for (const p of find('new-homes/tx -mindepth 6 -name index.html')) {
-    const s = p.split('/'); qmi[`${s[3]}/${s[5]}`] = '/' + s.slice(0, 7).join('/') + '/';
-  }
-  const community = {};
-  for (const p of find('new-homes/tx -mindepth 4 -maxdepth 4 -name index.html')) {
-    const s = p.split('/'); community[s[3]] = '/' + s.slice(0, 5).join('/') + '/';
-  }
-  writeFileSync(join(OUT, 'qmi-links.json'), JSON.stringify({ qmi, community }));
-  console.log(`qmi-links.json: ${Object.keys(qmi).length} detail + ${Object.keys(community).length} community`);
-}
-
-function build() {
+async function build() {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
 
@@ -95,6 +78,8 @@ function build() {
   for (const rel of shipList()) {
     const src = join(WWW, rel);
     if (!existsSync(src)) { console.warn(`skip missing: ${rel}`); continue; }
+    // Detail pages are generated fresh from D1 (Task 12) — don't ship the frozen scrape copies.
+    if (/^new-homes\/tx\/[^/]+\/[^/]+\/[^/]+\//.test(rel) || /^floorplans\/[^/]+\/[^/]+\//.test(rel)) continue;
     let html = rewriteCommon(readFileSync(src, 'utf8'));
     // QMI detail pages (new-homes/tx/<city>/<community>/<cid>/<slug>/<listing>/index.html,
     // i.e. 8 path segments = find -mindepth 6): their hard-linked relative brochure PDF
@@ -138,7 +123,7 @@ function build() {
   }
 
   // 3. Islands (from both explicit LIVE_PAGES and container-inferred CONTAINER_ISLANDS).
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island]);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js']);
   for (const island of islands) {
     cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   }
@@ -153,7 +138,7 @@ function build() {
   cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
   // pre-launch crawl block (NOINDEX): belt-and-suspenders with the per-page noindex meta.
   if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
-  writeLinksMap();
+  await generateDetails();
   console.log(`public/ assembled at ${OUT}`);
 }
 
@@ -191,4 +176,4 @@ function demo() {
 }
 
 if (process.argv.includes('--check')) demo();
-else build();
+else build().catch(e => { console.error(e); process.exit(1); });

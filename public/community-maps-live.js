@@ -103,9 +103,10 @@
   }
 
   function buildDetail(el, comms) {
-    // The community for this page = the slug segment just before the trailing id in the URL.
+    // Prefer the slug the generator baked into the page; fall back to URL parsing.
+    var PAGE = window.__ESPERANZA_PAGE || {};
     var segs = location.pathname.replace(/\/+$/, '').split('/');
-    var slug = segs[segs.length - 2] || '';
+    var slug = PAGE.communitySlug || segs[segs.length - 2] || '';
     var c = comms.filter(function (x) { return x.slug === slug; })[0]
          || comms.filter(function (x) { return (x.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') === slug; })[0];
     if (!c) return; // unknown community -> leave the base map as-is
