@@ -156,7 +156,8 @@
     return out;
   }
 
-  // ---- map ----
+  // ---- map (1:1 with the live QMI map: Esperanza-Common base, #295135 clusters,
+  //      green map_pin individuals, oi-infowindow popup) ----
   var map, mapReady = false;
   function toGeoJSON(homes) {
     return {
@@ -166,37 +167,54 @@
       }),
     };
   }
+  // STYLE is a URL to our bundled Esperanza-Common JSON; fetch it -> style object.
+  function resolveStyle(s, cb) {
+    if (typeof s === 'string' && /\.json($|\?)/.test(s)) fetch(s).then(function (r) { return r.json(); }).then(cb).catch(function () { cb(s); });
+    else cb(s);
+  }
+  function ensurePin(m, cb) {
+    if (m.hasImage('map_pin')) return cb();
+    m.loadImage('/map_pin.png', function (err, img) { if (!err && img && !m.hasImage('map_pin')) m.addImage('map_pin', img, { pixelRatio: 2 }); cb(); });
+  }
+  function popupHTML(p) {
+    return '<div class="oi-infowindow overflow-hidden"><a href="' + p.url + '" target="_blank" rel="noopener">' +
+      (p.img ? '<div class="oi-aspect two-one rounded-top"><img src="' + p.img + '" loading="lazy" class="oi-aspect-img rounded-top" alt="' + p.address + '"></div>' : '') +
+      '<div class="row my-2 g-0"><div class="col px-2 my-auto"><div class="card-title">' + p.address + '</div>' +
+      '<div class="card-location">' + p.city + ', TX</div></div>' +
+      (p.price ? '<div class="col-auto px-2 my-auto"><div class="price-title">From</div><div class="price mt-1">' + p.price + '</div></div>' : '') +
+      '</div></a></div>';
+  }
 
   function initMap(homes) {
     if (typeof mapboxgl === 'undefined') return;
     var el = document.getElementById('oi-map');
     if (el) el.innerHTML = ''; // drop the stale canvas the scrape baked into #oi-map
     mapboxgl.accessToken = TOKEN;
-    map = new mapboxgl.Map({ container: 'oi-map', style: STYLE, center: [-98.23, 26.19], zoom: 8, minZoom: 3, maxZoom: 16.5 });
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.on('load', function () {
-      map.addSource('homes', { type: 'geojson', data: toGeoJSON(homes), cluster: true, clusterMaxZoom: 14, clusterRadius: 45 });
-      map.addLayer({ id: 'clusters', type: 'circle', source: 'homes', filter: ['has', 'point_count'], paint: { 'circle-color': '#295135', 'circle-radius': 18 } });
-      map.addLayer({ id: 'cluster-count', type: 'symbol', source: 'homes', filter: ['has', 'point_count'], layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 13 }, paint: { 'text-color': '#fff' } });
-      map.addLayer({ id: 'unclustered', type: 'circle', source: 'homes', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': '#295135', 'circle-radius': 8, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' } });
-      map.on('click', 'clusters', function (e) {
-        var f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-        map.getSource('homes').getClusterExpansionZoom(f[0].properties.cluster_id, function (err, z) { if (!err) map.easeTo({ center: f[0].geometry.coordinates, zoom: z }); });
+    resolveStyle(STYLE, function (style) {
+      map = new mapboxgl.Map({ container: 'oi-map', style: style, center: [-98.23, 26.19], zoom: 8, minZoom: 3, maxZoom: 16.5 });
+      map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.on('load', function () {
+        ensurePin(map, function () {
+          map.addSource('homes', { type: 'geojson', data: toGeoJSON(homes), cluster: true, clusterMaxZoom: 14 }); // clusterRadius default 50 (matches live)
+          map.addLayer({ id: 'clusters', type: 'circle', source: 'homes', filter: ['>', 'point_count', 0], paint: { 'circle-color': '#295135', 'circle-radius': 20, 'circle-stroke-width': 1, 'circle-stroke-color': '#fff' } });
+          map.addLayer({ id: 'cluster-counts', type: 'symbol', source: 'homes', filter: ['>', 'point_count', 0], layout: { 'text-field': '{point_count_abbreviated}', 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-size': 12 }, paint: { 'text-color': '#fff' } });
+          map.addLayer({ id: 'places-symbol', type: 'symbol', source: 'homes', filter: ['!', ['has', 'point_count']], layout: { 'icon-allow-overlap': true, 'icon-image': 'map_pin', 'icon-anchor': 'bottom' } });
+          map.on('click', 'clusters', function (e) {
+            var f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+            map.getSource('homes').getClusterExpansionZoom(f[0].properties.cluster_id, function (err, z) { if (!err) map.easeTo({ center: f[0].geometry.coordinates, zoom: z }); });
+          });
+          map.on('click', 'places-symbol', function (e) {
+            var c = e.features[0].geometry.coordinates.slice();
+            new mapboxgl.Popup({ offset: [0, -52] }).setLngLat(c).setHTML(popupHTML(e.features[0].properties)).addTo(map);
+          });
+          ['clusters', 'places-symbol'].forEach(function (l) {
+            map.on('mouseenter', l, function () { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', l, function () { map.getCanvas().style.cursor = ''; });
+          });
+          mapReady = true;
+          fitTo(homes);
+        });
       });
-      map.on('click', 'unclustered', function (e) {
-        var p = e.features[0].properties, c = e.features[0].geometry.coordinates.slice();
-        new mapboxgl.Popup({ offset: 12 }).setLngLat(c).setHTML(
-          '<a href="' + p.url + '" target="_blank" rel="noopener" class="oi-infowindow" style="text-decoration:none;color:inherit">' +
-          (p.img ? '<img src="' + p.img + '" style="width:100%;height:110px;object-fit:cover;border-radius:4px 4px 0 0" alt="">' : '') +
-          '<div style="padding:6px 8px"><div class="card-title" style="font-size:14px">' + p.address + '</div><div class="card-location" style="font-size:12px">' + p.city + ', TX</div><div class="price mt-1" style="font-weight:700">' + p.price + '</div></div></a>'
-        ).addTo(map);
-      });
-      ['clusters', 'unclustered'].forEach(function (l) {
-        map.on('mouseenter', l, function () { map.getCanvas().style.cursor = 'pointer'; });
-        map.on('mouseleave', l, function () { map.getCanvas().style.cursor = ''; });
-      });
-      mapReady = true;
-      fitTo(homes);
     });
   }
   function fitTo(homes) {

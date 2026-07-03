@@ -25,9 +25,11 @@ const OUT = join(import.meta.dirname, 'public');
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGF6YXJkaG91c2UiLCJhIjoiY21kdG1xMWwwMTFvbDJqb2h1bXgxYmw3ZyJ9.ER4JhSJ2bl89WJ-3Xv5erA';
 // Homepage "Find Your Home" uses our recreated counties style ("Texas Counties Map").
 const STYLE_HOME = 'mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg';
-// QMI + community-detail maps roll back to generic streets for now (custom styles for
-// those in our account are a follow-up). available-live.js reads PUBLIC_STYLE as MAPBOX_STYLE.
-const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11';
+// QMI + Communities + detail maps use the captured "Esperanza-Common" style JSON,
+// served as a static file and passed to mapbox-gl as a style object. Its data is the
+// public mapbox-streets-v8 tileset, so our token renders it 1:1 (no account style needed).
+const STYLE_COMMON_URL = '/esperanza-common.json';
+const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11'; // fallback only (unused now)
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
 // pre-launch: flip to false at domain cutover. Gates robots.txt Disallow + per-page noindex meta.
 const NOINDEX = true;
@@ -40,7 +42,10 @@ const ALWAYS = ['index.html'];
 // their HTML contains (CONTAINER_ISLANDS) — the latter auto-covers every homepage /
 // community-detail map without listing all 30+ paths. available-live.js stays explicit
 // (it renders QMI cards + filters, not just a map, so it can't be container-inferred).
-const LIVE_PAGES = { 'new-homes/available/index.html': 'available-live.js' };
+const LIVE_PAGES = {
+  'new-homes/available/index.html': 'available-live.js', // Quick Move-Ins (QMI homes)
+  'new-homes/index.html': 'communities-live.js',         // Communities
+};
 // Generic runtime QMI-detail shell for homes newer than the scrape (no static page).
 // Built from an existing scraped detail page so it inherits the site chrome/theme;
 // its home-specific content is stripped and qmi-detail-live.js fills #qmi-live from
@@ -147,7 +152,7 @@ function injectIsland(html, islandFile) {
   }
   const marker = `src="/${islandFile}"`;
   if (!html.includes(marker)) {
-    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: PUBLIC_STYLE, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_DETAIL: PUBLIC_STYLE };
+    const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: STYLE_COMMON_URL, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: STYLE_COMMON_URL };
     const tag = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};</script>\n<script src="/${islandFile}" defer></script>\n`;
     const i = html.lastIndexOf('</body>');
     html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
@@ -245,6 +250,9 @@ function build() {
   // Marker sprite for the community maps (streets/counties styles have no map_pin),
   // loaded at runtime via addImage. The exact O'Neill green teardrop (90x120 @2x).
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
+  // Captured "Esperanza-Common" style JSON — QMI/Communities/detail maps load it as a
+  // style object (renders 1:1 under our token; data is the public streets tileset).
+  cpSync(join(import.meta.dirname, 'islands', 'esperanza-common.json'), join(OUT, 'esperanza-common.json'));
   // Frozen site-search index (oilib fetches /sitesearch.json) — served same-origin so
   // header search works and doesn't CORS-fail against the dead live domain.
   cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
