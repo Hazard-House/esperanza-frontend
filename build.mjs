@@ -30,6 +30,14 @@ const STYLE_HOME = 'mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg';
 const PUBLIC_STYLE = 'mapbox://styles/mapbox/streets-v11';
 const API_BASE = '/api/public'; // same-origin; Caddy reverse-proxies to the API worker (avoids CORS)
 
+// Sentry browser error monitoring. The DSN's public key ships in client JS by design
+// (it is not a secret), so we inject the Sentry Loader Script on every page for
+// visibility into user-facing JS errors. Set SENTRY_FRONTEND_DSN at build time to
+// enable; unset -> no Sentry (local/POC builds stay clean). The loader lazy-loads the
+// SDK and auto-captures unhandled errors + promise rejections; sampling/replay/perf
+// toggle live in the Sentry UI (Settings -> Client Keys -> Loader Script).
+const SENTRY_KEY = (process.env.SENTRY_FRONTEND_DSN || '').match(/\/\/([^@]+)@/)?.[1] || '';
+
 // Pages to ship are listed in ship.txt (one rel path per line, relative to WWW),
 // grown per phase. Always include the homepage. Pages get rewriteCommon; the ones
 // in LIVE_PAGES additionally get their island injected.
@@ -89,7 +97,7 @@ function resolveMedia(rawPath, prefix, map) {
 // --- rewrite rules ----------------------------------------------------------
 // Applied to every flagship page. Order matters: xhr before the broad host rules.
 function rewriteCommon(html) {
-  return html
+  html = html
     // R1: XHR form/lead endpoints -> placeholder (deferred). Absolute + root-relative.
     // xhr endpoints -> same-origin /xhr/ (Caddy answers with benign JSON so the
     // frozen snapshot's recommend/oicheck/form calls resolve quietly instead of
@@ -116,6 +124,16 @@ function rewriteCommon(html) {
     // non-greedy match to the first </div> is safe.
     .replace(/<div class="col-12 oneilinteractive-attribution[^>]*>[\s\S]*?<\/div>/,
       '<div class="col-12 oneilinteractive-attribution text-center text-white fs-9 mb-2"><a href="https://hazardhouse.ai" rel="noopener" target="_blank" class="text-small text-white">Powered by Hazard House</a></div>');
+  return injectSentry(html, SENTRY_KEY);
+}
+
+// Inject the Sentry browser Loader Script into <head> so it initializes before the
+// scrape's own scripts (catching their errors too). Pure for demo(); no key or an
+// already-injected page -> unchanged (idempotent).
+function injectSentry(html, key) {
+  if (!key || html.includes('js.sentry-cdn.com')) return html;
+  const tag = `<script src="https://js.sentry-cdn.com/${key}.min.js" crossorigin="anonymous"></script>`;
+  return html.replace(/<head([^>]*)>/i, `<head$1>\n${tag}`);
 }
 
 // Live pages: disable oilib (so it doesn't fight our island for #oi-map /
@@ -255,7 +273,12 @@ function demo() {
   console.assert(!shell.includes('id="detail-gallery"') && !shell.includes('PRICE $9'), 'shell: home content stripped');
   console.assert(shell.includes('<footer>f</footer>'), 'shell: footer/chrome preserved');
   console.assert(shell.includes('src="/qmi-detail-live.js"') && shell.includes('window.oi='), 'shell: island + oi stub injected');
-  console.log('demo() rewrite + shell checks passed');
+
+  // Sentry loader: injected into <head> when a key is set; no-op without one; idempotent.
+  console.assert(injectSentry('<head><title>t</title></head>', 'abc123').includes('https://js.sentry-cdn.com/abc123.min.js'), 'sentry: loader injected with key');
+  console.assert(injectSentry('<head></head>', '') === '<head></head>', 'sentry: no key -> unchanged');
+  console.assert(injectSentry('<head><script src="https://js.sentry-cdn.com/x.min.js"></script></head>', 'y').match(/js\.sentry-cdn\.com/g).length === 1, 'sentry: idempotent');
+  console.log('demo() rewrite + shell + sentry checks passed');
 }
 
 if (process.argv.includes('--check')) demo();

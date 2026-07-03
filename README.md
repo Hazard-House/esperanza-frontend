@@ -47,6 +47,15 @@ node build.mjs --check    # run the rewrite self-checks
 railway up                # deploy (Caddy Dockerfile). Service: esperanza-oneill-static
 ```
 
+**Error monitoring (Sentry):** set `SENTRY_FRONTEND_DSN` before `node build.mjs` to inject
+the Sentry browser Loader Script into every page (visibility into user-facing JS errors).
+The DSN's public key ships in client JS by design; unset -> no Sentry. Use the
+`esperanza-frontend` project DSN from the hazard-house Sentry org, e.g.:
+
+```bash
+SENTRY_FRONTEND_DSN='https://<key>@o<org>.ingest.us.sentry.io/<project>' node build.mjs
+```
+
 ⚠ `public/` must NOT be git-ignored — Railway's uploader honors git ignores and will
 skip it, failing the `COPY public` build step.
 
