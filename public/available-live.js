@@ -10,6 +10,7 @@
   var ICON = {
     bed: STAT + 'bedroom%EF%B9%96v=7516482.svg',
     bath: STAT + 'bathroom%EF%B9%96v=f390d85.svg',
+    garage: STAT + 'garage%EF%B9%96v=f234cc0.svg',
     story: STAT + 'stairs%EF%B9%96v=348b88c.svg',
     living: STAT + 'livingsqft%EF%B9%96v=fc46974.svg',
     total: STAT + 'sqft%EF%B9%96v=64b8d65.svg',
@@ -44,7 +45,9 @@
       price: f.Price,
       beds: f.bedroom_count,
       baths: f.bathroom_count,
+      garage: un(f['FP: Garage']),
       stories: f.stories_count,
+      lot: (function () { var hn = f.housenumber != null ? String(f.housenumber).trim() : ''; return hn ? (/^\d+$/.test(hn) ? String(Number(hn)) : hn) : null; })(),
       livingSqft: f.living_square_footage,
       totalSqft: f.total_square_footage,
       community: f.Community,
@@ -71,12 +74,14 @@
     var banners = '';
     if (h.promo) banners += '<div class="banner overlay-promo green">' + esc(h.promo) + '</div>';
     if (h.availability) banners += '<div class="banner gray"' + (h.promo ? ' style="top:2.5rem"' : '') + '>' + esc(h.availability) + '</div>';
+    if (h.lot) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">Lot #' + esc(h.lot) + '</div>';
     function stat(icon, txt) {
       return '<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="' + icon + '" aria-hidden="true" width="18">' + txt + '</div>';
     }
     var stats = '';
     if (h.beds != null) stats += stat(ICON.bed, esc(h.beds) + ' Bedrooms');
     if (h.baths != null) stats += stat(ICON.bath, esc(h.baths) + ' Bathrooms');
+    if (h.garage != null) stats += stat(ICON.garage, esc(h.garage) + ' Car Garage');
     if (h.stories != null) stats += stat(ICON.story, esc(h.stories) + (h.stories == 1 ? ' Story' : ' Stories'));
     if (h.livingSqft != null) stats += stat(ICON.living, Number(h.livingSqft).toLocaleString() + ' <span class="overpass bold ms-1">Living</span>&nbsp;Sq. Ft.');
     if (h.totalSqft != null) stats += stat(ICON.total, Number(h.totalSqft).toLocaleString() + ' <span class="overpass bold ms-1">Total</span>&nbsp;Sq. Ft.');
@@ -95,7 +100,7 @@
       '<a href="' + esc(url) + '" target="_blank" rel="noopener"><div class="btn card-button d-block my-3">VIEW HOME</div></a>' +
       '</div></div>' +
       '</div>' +
-      '<div class="row community-row m-0 p-2 w-100 d-none d-xl-flex">' +
+      '<div class="row community-row m-0 p-2 w-100 d-flex">' +
       '<div class="col text-center text-lg-start py-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">COMMUNITY</div><div class="text-gray fs-9">' + esc(h.community) + '</div></div>' +
       '<div class="col text-center text-lg-start py-1 border-start"><div class="row"><div class="col-auto mx-auto"><div class="text-brown overpass bold fs-9 text-decoration-underline">FLOOR PLAN</div><div class="text-gray fs-9">' + esc(h.floorPlan) + '</div>' + collLine + '</div></div></div>' +
       '</div>' +
