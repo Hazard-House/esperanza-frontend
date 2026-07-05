@@ -20,7 +20,7 @@
     if (!raw) return;
     var f = raw.fields || raw;
     set('price', money(f.Price));
-    set('availability', f.availability_text);
-    set('promo', f.promo_text);
+    // availability + promo stay as BAKED (harvested from the live original at build;
+    // D1's availability_text/promo_text are known to drift from what O'Neill shows).
   }).catch(function () {});
 })();
