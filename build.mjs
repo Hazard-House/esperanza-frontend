@@ -16,7 +16,7 @@ import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOI
 import { generateDetails } from './generate-details.mjs';
 import { loadData } from './data.mjs';
 import { communityPath, floorplanPath } from './paths.mjs';
-import { hydrateCommunity, hydrateFloorplan } from './hydrate-scraped.mjs';
+import { hydrateCommunity, hydrateFloorplan, swapCommunityBanner, bakeRecommend } from './hydrate-scraped.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -123,19 +123,19 @@ async function build() {
       if (det.type === 'community') {
         const c = communityBySlug.get(det.slug);
         if (!c) { counts.gated++; continue; } // gone from API -> Caddy 404->302, like the original's removal
-        const html = hydrateCommunity(rewriteCommon(readFileSync(src, 'utf8')), c, d);
+        const html = bakeRecommend(swapCommunityBanner(hydrateCommunity(rewriteCommon(readFileSync(src, 'utf8')), c, d), rel), rel);
         writeOut(rel, html); // scraped ID path
         writeOut(communityPath(c).replace(/^\//, '') + 'index.html', html); // clean path
         scrapedCommunities.add(communityPath(c));
         counts.community++;
       } else if (det.type === 'plan') {
         if (!communityBySlug.has(det.community)) { counts.gated++; continue; }
-        writeOut(rel, rewriteCommon(readFileSync(src, 'utf8'))); // frozen prices acceptable here for now
+        writeOut(rel, bakeRecommend(swapCommunityBanner(rewriteCommon(readFileSync(src, 'utf8')), rel), rel)); // frozen prices acceptable here for now
         counts.plan++;
       } else if (det.type === 'floorplan') {
         const fp = fpBySlug.get(det.slug);
         if (!fp) { counts.gated++; continue; }
-        const html = hydrateFloorplan(rewriteCommon(readFileSync(src, 'utf8')), fp, d);
+        const html = bakeRecommend(hydrateFloorplan(rewriteCommon(readFileSync(src, 'utf8')), fp, d), rel);
         writeOut(rel, html);
         writeOut(floorplanPath(fp).replace(/^\//, '') + 'index.html', html);
         scrapedFloorplans.add(floorplanPath(fp));

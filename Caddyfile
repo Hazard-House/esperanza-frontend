@@ -30,6 +30,12 @@
 		}
 	}
 
+	# Homefiniti analytics beacons (/hfa/event/) — answer 204 so the client stops
+	# chasing a cross-origin 302 and spamming console CORS errors.
+	handle /hfa/* {
+		respond "" 204
+	}
+
 	# Frozen snapshot fires XHRs to /xhr/* (recommend, oicheck, form posts). Answer
 	# same-origin with benign JSON so they resolve quietly (recommend section renders
 	# empty; forms are deferred until HubSpot) instead of erroring on the dead domain.

@@ -6,8 +6,58 @@
 // non-matching page ships un-hydrated instead of breaking the build.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { qmiCardHtml } from './sections.mjs';
 import { slugify } from './data.mjs';
+import { rewriteCommon, freshBannerHtml } from './rewrite.mjs';
+
+// Harvested live-site facts (see harvest-live-facts.mjs): community-page ticker
+// slides + the /xhr/recommend responses our Caddy stub can't serve.
+const FACTS = (() => {
+  const p = join(import.meta.dirname, 'assets', 'live-facts.json');
+  try { return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {}; } catch { return {}; }
+})();
+const RECOMMEND = {};
+for (const [kind, raw] of Object.entries(FACTS.recommendHtml || {})) RECOMMEND[kind] = rewriteCommon(raw);
+
+// Community-scoped pages carry an extra ticker slide vs the sitewide default —
+// swap the fresh default banner (rewriteCommon already replaced the frozen one)
+// for the community-page slide set.
+export function swapCommunityBanner(html, page) {
+  const slides = FACTS.bannerSlidesCommunity;
+  if (!slides || !slides.length) return html;
+  if (!html.includes('class="alert-banner"')) return html; // page ships no ticker (matches its original)
+  const re = /<div class="alert-banner">[\s\S]*?<!--\/fresh-banner-->/;
+  if (!re.test(html)) { miss(page, 'community banner'); return html; }
+  return html.replace(re, freshBannerHtml(slides));
+}
+
+// Recommended For You: the original fills .recommended-content via POST
+// /xhr/recommend/ (kind from the page's own inline ajax call); our Caddy stubs
+// /xhr/* empty. Bake the harvested response and strip the ajax so the stub's
+// empty reply can't wipe it.
+export function bakeRecommend(html, page) {
+  const kindM = html.match(/data:\s*"m=(\w+)&/);
+  const kind = kindM && (RECOMMEND[kindM[1]] ? kindM[1] : null);
+  if (!kindM) return html; // page has no recommend section
+  if (!kind) { miss(page, `recommend (no harvested ${kindM[1]})`); return html; }
+  // The container may be empty (community pages) or carry the crawler-baked XHR
+  // content (most plan/fp pages) — replace its balanced innerHTML either way.
+  const openM = html.match(/<div class="recommended-content[^"]*"[^>]*>/);
+  if (!openM) { miss(page, 'recommend container'); return html; }
+  const start = openM.index + openM[0].length;
+  let depth = 1, i = start;
+  const tag = /<\/?div\b/g;
+  tag.lastIndex = start;
+  let m2;
+  while (depth > 0 && (m2 = tag.exec(html))) { depth += m2[0][1] === '/' ? -1 : 1; i = m2.index; }
+  if (depth !== 0) { miss(page, 'recommend container (unbalanced)'); return html; }
+  html = html.slice(0, start) + RECOMMEND[kind] + html.slice(i);
+  // strip the ajax so our /xhr/ stub's empty reply can't wipe the baked content
+  html = html.replace(/<script>\s*\$\(function\(\)\{\s*\$\.ajax\(\{[\s\S]*?xhr\/recommend[\s\S]*?<\/script>/, '');
+  return html;
+}
 
 const num = n => Number(n).toLocaleString('en-US');
 const money = n => '$' + num(n);

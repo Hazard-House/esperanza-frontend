@@ -94,6 +94,8 @@ export async function loadData() {
   for (const h of qmis) {
     h.communityObj = commById.get(h.communityId) || null;
     h.floorplanObj = fpById.get(h.floorPlanId) || null;
+    // plan-first stories: D1 per-home stories_count is missing/wrong for many homes
+    if (h.floorplanObj && h.floorplanObj.stories != null) h.stories = h.floorplanObj.stories;
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
     // backfilled) else the committed _FP.png map (interim). null -> CTA fallback.
     h.planImage = (h.floorplanObj && h.floorplanObj.floorPlanImage) || FP_MAP[(h.floorplanObj && h.floorplanObj.slug) || slugify(h.floorPlan)] || null;

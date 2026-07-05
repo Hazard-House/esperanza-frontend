@@ -309,7 +309,8 @@ export function qmiCardHtml(h) {
   const promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
   let banners = '';
   if (promoText) banners += `<div class="banner overlay-promo ${promoColor}">${esc(promoText)}</div>`;
-  if (h.availability) banners += `<div class="banner gray"${promoText ? ' style="top:2.5rem"' : ''}>${esc(h.availability)}</div>`;
+  const availColor = /available now/i.test(h.availability || '') ? 'green' : 'gray';
+  if (h.availability) banners += `<div class="banner ${availColor}"${promoText ? ' style="top:2.5rem"' : ''}>${esc(h.availability)}</div>`;
   const lotTxt = fmtLot(h.lot, h.community);
   if (lotTxt) banners += `<div class="badge lot bg-light-gray overpass light text-secondary">Lot #${esc(lotTxt)}</div>`;
   const stat = (icon, txt) => `<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="${icon}" aria-hidden="true" loading="lazy" width="18">${txt}</div>`;
@@ -329,11 +330,25 @@ export function qmiCardHtml(h) {
     + `</div>`;
   let est = '';
   if (h.price) {
-    const m = monthlyPayment(h.price, FACTS.rate || 6.15, (FACTS.taxMult || {})[slugify(h.community)] || 2.2);
+    const RATE = FACTS.rate || 6.15;
+    const tax = (FACTS.taxMult || {})[slugify(h.community)] || 2.2;
+    const m = monthlyPayment(h.price, RATE, tax);
+    const promoRate = promoText && (promoText.match(/([\d.]+)\s*%/) || [])[1];
+    let inner;
+    if (promoRate && Number(promoRate) < RATE) {
+      // original promo-rate card: promo monthly + struck standard + 30-yr savings
+      // (both /mo spans render WITHOUT thousands separators on the original)
+      const pm = monthlyPayment(h.price, Number(promoRate), tax);
+      const savings = (m - pm) * 360;
+      inner = `<span class="fs-9 overpass bold text-green">$${pm.toFixed(2)}/mo*</span>`
+        + `<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="${m.toFixed(2)}">$${m.toFixed(2)}/mo*</span>`
+        + `<p class="fs-9 overpass bold text-green mb-1">$${savings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Savings Over 30 Years</p>`;
+    } else {
+      inner = `<span class="estimated-price fs-9 overpass bold text-green" data-price="${m}">$${m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo*</span>`;
+    }
     est = `<a href="${esc(url)}#mortgage-calculator" class="lh-1">`
       + `<span class="fs-9 overpass text-gray">ESTIMATED MONTHLY</span><br>`
-      + `<span class="fs-9 overpass text-gray">PRICE: </span>`
-      + `<span class="estimated-price fs-9 overpass bold text-green" data-price="${m}">$${m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo*</span>`
+      + `<span class="fs-9 overpass text-gray">PRICE: </span>` + inner
       + `</a>`;
   }
   return `<div class="col-12 col-md-6 mb-2">`

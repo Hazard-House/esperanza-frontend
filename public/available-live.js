@@ -102,7 +102,8 @@
     var promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
     var banners = '';
     if (promoText) banners += '<div class="banner overlay-promo ' + promoColor + '">' + esc(promoText) + '</div>';
-    if (h.availability) banners += '<div class="banner gray"' + (promoText ? ' style="top:2.5rem"' : '') + '>' + esc(h.availability) + '</div>';
+    var availColor = /available now/i.test(h.availability || '') ? 'green' : 'gray';
+    if (h.availability) banners += '<div class="banner ' + availColor + '"' + (promoText ? ' style="top:2.5rem"' : '') + '>' + esc(h.availability) + '</div>';
     var lotTxt = fmtLot(h.lot, h.community);
     if (lotTxt) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">Lot #' + esc(lotTxt) + '</div>';
     function stat(icon, txt) {
@@ -127,11 +128,24 @@
     }
     var est = '';
     if (h.price) {
-      var m = monthlyPayment(h.price, RATE, FACTS.taxMult[slugify(h.community)] || 2.2);
+      var tax = FACTS.taxMult[slugify(h.community)] || 2.2;
+      var m = monthlyPayment(h.price, RATE, tax);
+      var promoRate = promoText && (promoText.match(/([\d.]+)\s*%/) || [])[1];
+      var inner;
+      if (promoRate && Number(promoRate) < RATE) {
+        // original promo-rate card: promo monthly + struck standard + 30-yr savings
+        // (these two spans render WITHOUT thousands separators on the original)
+        var pm = monthlyPayment(h.price, Number(promoRate), tax);
+        var savings = (m - pm) * 360;
+        inner = '<span class="fs-9 overpass bold text-green">$' + pm.toFixed(2) + '/mo*</span>' +
+          '<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="' + m.toFixed(2) + '">$' + m.toFixed(2) + '/mo*</span>' +
+          '<p class="fs-9 overpass bold text-green mb-1">$' + savings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years</p>';
+      } else {
+        inner = '<span class="estimated-price fs-9 overpass bold text-green" data-price="' + m + '">$' + m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/mo*</span>';
+      }
       est = '<a href="' + esc(url) + '#mortgage-calculator" class="lh-1">' +
         '<span class="fs-9 overpass text-gray">ESTIMATED MONTHLY</span><br>' +
-        '<span class="fs-9 overpass text-gray">PRICE: </span>' +
-        '<span class="estimated-price fs-9 overpass bold text-green" data-price="' + m + '">$' + m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/mo*</span>' +
+        '<span class="fs-9 overpass text-gray">PRICE: </span>' + inner +
         '</a>';
     }
 
@@ -324,13 +338,22 @@
       fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
       fetch(API + '/settings').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       fetch('/live-facts.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+      fetch(API + '/floorplans').then(function (r) { return r.json(); }).catch(function () { return { floorplans: [] }; }),
     ]).then(function (res) {
       if (res[2]) LINKS = res[2];
       var lf = res[4] || {};
-      FACTS = { rate: lf.rate, taxMult: lf.taxMult || {}, badges: lf.badges || {} };
+      FACTS = { rate: lf.rate, taxMult: lf.taxMult || {}, badges: lf.badges || {}, lotFormat: lf.lotFormat || {} };
       var settings = (res[3] && res[3].settings) || {};
       RATE = FACTS.rate || settings.mortgage_rate || 6.15;
+      var planStories = {};
+      ((res[5] && res[5].floorplans) || []).forEach(function (fp) {
+        if (fp.storiesCount != null) { planStories[String(fp.name || '').toLowerCase()] = fp.storiesCount; planStories[fp.slug] = fp.storiesCount; }
+      });
       var homes = (res[0].homes || []).map(normalizeHome);
+      homes.forEach(function (h) {
+        var ps = planStories[String(h.floorPlan || '').toLowerCase()];
+        if (ps != null) h.stories = ps; // plan-first: D1 per-home stories_count is unreliable
+      });
       // community centroid fallback for homes with no coords
       var cc = {};
       (res[1].communities || []).forEach(function (c) { if (c.coordinates) { var p = c.coordinates.split(','); cc[c.id] = [Number(p[0]), Number(p[1])]; } });

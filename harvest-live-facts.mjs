@@ -84,6 +84,51 @@ try {
   }
 } catch (e) { console.warn('banner harvest skipped: ' + e.message); }
 
+// Community pages carry an extra ticker slide (e.g. the 4.99% promo) the homepage
+// lacks — harvest the community-page slide set separately.
+let bannerSlidesCommunity = [];
+try {
+  const first = byCommunity.values().next().value; // any QMI detail URL -> its community page is 2 dirs up
+  const commPage = first ? first.replace(/[^/]+\/\d+\/$/, '') : null;
+  if (commPage) {
+    const html = await getText(ORIGIN + commPage);
+    const wrap = html.match(/swiper-alert-banner[\s\S]*?swiper-alert-banner-button-prev/);
+    if (wrap) {
+      const seen = new Set();
+      for (const sm of wrap[0].matchAll(/<div class="swiper-slide(?![^"]*duplicate)[^"]*"[^>]*>([\s\S]*?)<\/div>/g)) {
+        const p = sm[1].match(/<p>\s*([\s\S]*?)\s*<\/p>/);
+        if (!p) continue;
+        const text = unent(p[1]);
+        if (seen.has(text)) continue;
+        seen.add(text);
+        const a = sm[1].match(/<a href="([^"]+)"[^>]*>\s*([\s\S]*?)\s*<\/a>/);
+        let href = a ? unent(a[1]) : null;
+        if (href && href.startsWith(ORIGIN)) href = href.slice(ORIGIN.length);
+        bannerSlidesCommunity.push({ text, ctaLabel: a ? unent(a[2]) : null, ctaHref: href });
+      }
+    }
+  }
+} catch (e) { console.warn('community banner harvest skipped: ' + e.message); }
+
+// Recommended-For-You content: the original fills it via POST /xhr/recommend/ (our
+// Caddy stubs /xhr/* empty). Responses depend only on the m=/t= kind, not the page,
+// so harvest one per kind and bake at build (hydrate-scraped.mjs).
+const recommendHtml = {};
+for (const kind of ['spec', 'plan', 'masterplan']) {
+  try {
+    const r = await fetch(ORIGIN + '/xhr/recommend/', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-requested-with': 'XMLHttpRequest', 'user-agent': 'Mozilla/5.0 (live-facts harvest)' },
+      body: `m=${kind}&l=4&t=${kind}`,
+    });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.data && j.data.content) recommendHtml[kind] = j.data.content;
+    }
+  } catch (e) { console.warn(`recommend ${kind} skipped: ${e.message}`); }
+  await sleep(300);
+}
+
 // Per-community promo ribbon + incentive line from the live /new-homes/ cards
 // (our API's promoBadgeText/promoBannerText are currently empty for all communities).
 const communityPromos = {};
@@ -102,7 +147,7 @@ try {
   }
 } catch (e) { console.warn('community promos harvest skipped: ' + e.message); }
 
-const out = { rate, taxMult, badges, lotFormat, bannerSlides, communityPromos };
+const out = { rate, taxMult, badges, lotFormat, bannerSlides, bannerSlidesCommunity, recommendHtml, communityPromos };
 const dst = join(import.meta.dirname, 'assets', 'live-facts.json');
 writeFileSync(dst, JSON.stringify(out, null, 2) + '\n');
-console.log(`live-facts.json: rate=${rate}, taxMult=${Object.keys(taxMult).length} communities, badges=${Object.keys(badges).length} homes, lotFormat=${Object.keys(lotFormat).length}, bannerSlides=${bannerSlides.length}, communityPromos=${Object.keys(communityPromos).length}`);
+console.log(`live-facts.json: rate=${rate}, taxMult=${Object.keys(taxMult).length} communities, badges=${Object.keys(badges).length} homes, lotFormat=${Object.keys(lotFormat).length}, bannerSlides=${bannerSlides.length}, communityPromos=${Object.keys(communityPromos).length}, communitySlides=${bannerSlidesCommunity.length}, recommend=${Object.keys(recommendHtml).join("+")}`);

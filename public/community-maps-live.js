@@ -101,6 +101,12 @@
       var map = new mapboxgl.Map({ container: 'home-map', style: style, center: [-97.99095702142638, 26.190129499262383], zoom: 10, minZoom: 5, maxZoom: 22 });
       map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
       whenStyleReady(map, function () {
+        // O'Neill's counties style has a transparent background (page bg shows through,
+        // which is also what lets the Texas-inset img behind the canvas stay visible);
+        // our copy paints opaque beige — flatten it.
+        (map.getStyle().layers || []).forEach(function (l) {
+          if (l.type === 'background') map.setPaintProperty(l.id, 'background-opacity', 0);
+        });
         addPins(map, toGeoJSON(pts));
         map.fitBounds(BOUNDS, { duration: 0 });
       });
