@@ -47,7 +47,8 @@
       baths: f.bathroom_count,
       garage: un(f['FP: Garage']),
       stories: f.stories_count,
-      lot: (function () { var hn = f.housenumber != null ? String(f.housenumber).trim() : ''; return hn ? (/^\d+$/.test(hn) ? String(Number(hn)) : hn) : null; })(),
+      // raw, just trimmed — the original shows "Lot #007", zeros intact
+      lot: (function () { var hn = f.housenumber != null ? String(f.housenumber).trim() : ''; return hn || null; })(),
       livingSqft: f.living_square_footage,
       totalSqft: f.total_square_footage,
       community: f.Community,
@@ -55,6 +56,7 @@
       collection: un(f['FP: Collection']),
       slug: f.slug,
       city: f.City,
+      postal: f.postal_code,
       address: f.address,
       image: fixHost(f.image_url),
       floorPlan: f['Floor Plan'],
@@ -68,28 +70,74 @@
     };
   }
 
+  // live-facts.json: harvested from the live site (rate, per-community taxmultiplier,
+  // per-home promo badges). Fetched in boot(); {} until then / if missing.
+  var FACTS = { rate: null, taxMult: {}, badges: {} };
+  // D1 stores lots 8-digit zero-padded; O'Neill displays per-community pad3 ("007") or bare ("82").
+  function fmtLot(raw, community) {
+    if (!raw) return null;
+    if (!/^\d+$/.test(raw)) return raw;
+    var n = String(parseInt(raw, 10));
+    return ((FACTS.lotFormat || {})[slugify(community)] === 'pad3') ? ('00' + n).slice(-Math.max(3, n.length)) : n;
+  }
+  var RATE = 6.15;
+
+  // Verified to the cent against the live mortgage calculator:
+  // 3.5% down, 30yr P&I, tax = price*taxMult%/12, ins 0.4%/yr, PMI 0.75%/yr on loan.
+  function monthlyPayment(price, rate, taxMult) {
+    var loan = price * (1 - 0.035);
+    var r = rate / 1200;
+    var pi = loan * r / (1 - Math.pow(1 + r, -360));
+    var m = pi + price * (taxMult / 100) / 12 + price * 0.004 / 12 + loan * 0.0075 / 12;
+    return Math.round(m * 100) / 100;
+  }
+
   function cardHTML(h) {
     var url = homeUrl(h);
     var img = h.image || '';
+    // Per-home badge from the live site wins; fields.promo_text is often the generic
+    // site-wide banner, but render it anyway when there's no override.
+    var badge = FACTS.badges[slugify(h.address)];
+    var promoText = badge ? badge.text : h.promo;
+    var promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
     var banners = '';
-    if (h.promo) banners += '<div class="banner overlay-promo green">' + esc(h.promo) + '</div>';
-    if (h.availability) banners += '<div class="banner gray"' + (h.promo ? ' style="top:2.5rem"' : '') + '>' + esc(h.availability) + '</div>';
-    if (h.lot) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">Lot #' + esc(h.lot) + '</div>';
+    if (promoText) banners += '<div class="banner overlay-promo ' + promoColor + '">' + esc(promoText) + '</div>';
+    if (h.availability) banners += '<div class="banner gray"' + (promoText ? ' style="top:2.5rem"' : '') + '>' + esc(h.availability) + '</div>';
+    var lotTxt = fmtLot(h.lot, h.community);
+    if (lotTxt) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">Lot #' + esc(lotTxt) + '</div>';
     function stat(icon, txt) {
-      return '<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="' + icon + '" aria-hidden="true" width="18">' + txt + '</div>';
+      return '<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="' + icon + '" aria-hidden="true" loading="lazy" width="18">' + txt + '</div>';
     }
+    // Original order: bed, garage (omitted when 0), bath, story, living, total.
     var stats = '';
     if (h.beds != null) stats += stat(ICON.bed, esc(h.beds) + ' Bedrooms');
+    if (h.garage != null && String(h.garage) !== '0') stats += stat(ICON.garage, esc(h.garage) + ' Car Garage');
     if (h.baths != null) stats += stat(ICON.bath, esc(h.baths) + ' Bathrooms');
-    if (h.garage != null) stats += stat(ICON.garage, esc(h.garage) + ' Car Garage');
     if (h.stories != null) stats += stat(ICON.story, esc(h.stories) + (h.stories == 1 ? ' Story' : ' Stories'));
     if (h.livingSqft != null) stats += stat(ICON.living, Number(h.livingSqft).toLocaleString() + ' <span class="overpass bold ms-1">Living</span>&nbsp;Sq. Ft.');
     if (h.totalSqft != null) stats += stat(ICON.total, Number(h.totalSqft).toLocaleString() + ' <span class="overpass bold ms-1">Total</span>&nbsp;Sq. Ft.');
     var collLine = h.collection ? '<div class="text-brown fs-9">' + esc(h.collection) + (/collection/i.test(h.collection) ? '' : ' Collection') + '</div>' : '';
+    // The original renders this block twice: desktop copy inside the left column,
+    // mobile copy as the LAST child of .row.m-0 (fixes mobile ordering).
+    function commRow(vis) {
+      return '<div class="row community-row m-0 p-2 w-100 ' + vis + '">' +
+        '<div class="col text-center text-lg-start py-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">COMMUNITY</div><div class="text-gray fs-9">' + esc(h.community) + '</div></div>' +
+        '<div class="col text-center text-lg-start py-1 border-start"><div class="row"><div class="col-auto mx-auto"><div class="text-brown overpass bold fs-9 text-decoration-underline">FLOOR PLAN</div><div class="text-gray fs-9">' + esc(h.floorPlan) + '</div>' + collLine + '</div></div></div>' +
+        '</div>';
+    }
+    var est = '';
+    if (h.price) {
+      var m = monthlyPayment(h.price, RATE, FACTS.taxMult[slugify(h.community)] || 2.2);
+      est = '<a href="' + esc(url) + '#mortgage-calculator" class="lh-1">' +
+        '<span class="fs-9 overpass text-gray">ESTIMATED MONTHLY</span><br>' +
+        '<span class="fs-9 overpass text-gray">PRICE: </span>' +
+        '<span class="estimated-price fs-9 overpass bold text-green" data-price="' + m + '">$' + m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/mo*</span>' +
+        '</a>';
+    }
 
     return '' +
       '<div class="col-12 col-md-6 col-lg-12 mb-3 px-2">' +
-      '<div class="card spec-card spec-card-detail oi-map-item mb-0 border border-gray p-2" data-listing-id="' + esc(h.id) + '" data-latitude="' + (h.lat || '') + '" data-longitude="' + (h.lng || '') + '">' +
+      '<div class="card spec-card spec-card-detail oi-map-item mb-0 border border-gray p-2" data-listing-type="spec" data-listing-id="' + esc(h.id) + '" data-latitude="' + (h.lat || '') + '" data-longitude="' + (h.lng || '') + '" data-marker-icon-wh="20,32" data-marker-icon-id="map_pin">' +
       '<div class="row m-0">' +
       '<div class="col-12 col-xl-7 px-0 pe-xl-3 d-flex align-content-stretch flex-wrap">' +
       '<div class="oi-aspect sixteen-nine three-two-xxl">' + banners +
@@ -98,20 +146,19 @@
       '</a>' +
       '<div class="hover-button d-none d-lg-flex"><div class="m-auto">' +
       '<a href="' + esc(url) + '" target="_blank" rel="noopener"><div class="btn card-button d-block my-3">VIEW HOME</div></a>' +
+      '<a href="' + esc(url) + '#request-a-tour" target="_blank" rel="noopener"><div class="btn card-button green d-block my-3">REQUEST A TOUR</div></a>' +
       '</div></div>' +
       '</div>' +
-      '<div class="row community-row m-0 p-2 w-100 d-flex">' +
-      '<div class="col text-center text-lg-start py-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">COMMUNITY</div><div class="text-gray fs-9">' + esc(h.community) + '</div></div>' +
-      '<div class="col text-center text-lg-start py-1 border-start"><div class="row"><div class="col-auto mx-auto"><div class="text-brown overpass bold fs-9 text-decoration-underline">FLOOR PLAN</div><div class="text-gray fs-9">' + esc(h.floorPlan) + '</div>' + collLine + '</div></div></div>' +
-      '</div>' +
+      commRow('d-none d-xl-flex') +
       '</div>' +
       '<div class="col-12 col-xl px-0 px-xl-1"><div class="card-body d-flex flex-column lh-2 h-100 px-xl-0 py-xl-1">' +
       '<div class="row"><a href="' + esc(url) + '" target="_blank" rel="noopener"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">' + esc(h.address) + '</div></a>' +
-      '<div class="card-location text-green mb-2">' + esc(h.city) + ', TX</div></div>' +
+      '<div class="card-location text-green mb-2">' + esc(h.city) + ', TX' + (h.postal ? ' ' + esc(h.postal) : '') + '</div></div>' +
       '<div class="row h-100">' +
-      '<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">' + money(h.price) + '</div></div></div>' +
+      '<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">' + money(h.price) + '</div>' + est + '</div></div>' +
       '<div class="col-auto col-xl-12 stat-group mt-xl-2 stat-flex d-flex flex-column mx-auto">' + stats + '</div>' +
       '</div></div></div>' +
+      commRow('d-flex d-xl-none') +
       '</div></div></div>';
   }
 
@@ -275,8 +322,14 @@
       fetch(API + '/qmi').then(function (r) { return r.json(); }),
       fetch(API + '/communities').then(function (r) { return r.json(); }).catch(function () { return { communities: [] }; }),
       fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
+      fetch(API + '/settings').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+      fetch('/live-facts.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
     ]).then(function (res) {
       if (res[2]) LINKS = res[2];
+      var lf = res[4] || {};
+      FACTS = { rate: lf.rate, taxMult: lf.taxMult || {}, badges: lf.badges || {} };
+      var settings = (res[3] && res[3].settings) || {};
+      RATE = FACTS.rate || settings.mortgage_rate || 6.15;
       var homes = (res[0].homes || []).map(normalizeHome);
       // community centroid fallback for homes with no coords
       var cc = {};

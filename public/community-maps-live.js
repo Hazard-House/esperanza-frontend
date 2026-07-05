@@ -53,7 +53,7 @@
 
   function toGeoJSON(list) {
     return { type: 'FeatureCollection', features: list.map(function (x) {
-      return { type: 'Feature', geometry: { type: 'Point', coordinates: x.coord }, properties: { html: popupHTML(x.c) } };
+      return { type: 'Feature', geometry: { type: 'Point', coordinates: x.coord }, properties: { html: popupHTML(x.c), icon: /master planned/i.test(x.c.name || '') ? 'mp_pin' : 'map_pin' } };
     }) };
   }
 
@@ -66,10 +66,14 @@
 
   // Load the green map_pin sprite (not in the streets/counties styles) once, then cb.
   function ensurePin(map, cb) {
-    if (map.hasImage('map_pin')) return cb();
-    map.loadImage(PIN_URL, function (err, img) {
-      if (!err && img && !map.hasImage('map_pin')) map.addImage('map_pin', img, { pixelRatio: 2 }); // 90x120@2x -> 45x60
-      cb();
+    var want = [['map_pin', PIN_URL], ['mp_pin', '/mp_pin.png']].filter(function (p) { return !map.hasImage(p[0]); });
+    if (!want.length) return cb();
+    var left = want.length;
+    want.forEach(function (p) {
+      map.loadImage(p[1], function (err, img) {
+        if (!err && img && !map.hasImage(p[0])) map.addImage(p[0], img, { pixelRatio: 2 }); // 90x120@2x -> 45x60
+        if (!--left) cb();
+      });
     });
   }
 
@@ -77,7 +81,7 @@
   function addPins(map, fc) {
     ensurePin(map, function () {
       if (!map.getSource('places')) map.addSource('places', { type: 'geojson', data: fc });
-      if (!map.getLayer('places-symbol')) map.addLayer({ id: 'places-symbol', type: 'symbol', source: 'places', layout: { 'icon-allow-overlap': true, 'icon-image': 'map_pin', 'icon-anchor': 'bottom' } });
+      if (!map.getLayer('places-symbol')) map.addLayer({ id: 'places-symbol', type: 'symbol', source: 'places', layout: { 'icon-allow-overlap': true, 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom' } });
       map.on('click', 'places-symbol', function (e) {
         var c = e.features[0].geometry.coordinates.slice();
         new mapboxgl.Popup({ offset: [0, -52] }).setLngLat(c).setHTML(e.features[0].properties.html).addTo(map);
@@ -91,14 +95,16 @@
     var pts = comms.map(function (c) { return { c: c, coord: coordOf(c) }; }).filter(function (x) { return x.coord; });
     el.innerHTML = '';
     resolveStyle(STYLE_HOME, function (style) {
-      var map = new mapboxgl.Map({ container: 'home-map', style: style, center: [-98.23, 26.9], zoom: 6.5, minZoom: 3, maxZoom: 16.5 });
-      map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // O'Neill homepage config: init center/zoom 10, zoom control bottom-right, then
+      // fit to their FIXED South-Texas bounds on idle + resize (not pin-derived bounds).
+      var BOUNDS = [[-99.6987, 25.8086], [-96.8329, 30.2443]];
+      var map = new mapboxgl.Map({ container: 'home-map', style: style, center: [-97.99095702142638, 26.190129499262383], zoom: 10, minZoom: 5, maxZoom: 22 });
+      map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
       whenStyleReady(map, function () {
         addPins(map, toGeoJSON(pts));
-        var b = new mapboxgl.LngLatBounds();
-        pts.forEach(function (x) { b.extend(x.coord); });
-        if (!b.isEmpty()) map.fitBounds(b, { padding: 60, maxZoom: 12, duration: 0 });
+        map.fitBounds(BOUNDS, { duration: 0 });
       });
+      window.addEventListener('resize', function () { map.fitBounds(BOUNDS); });
     });
   }
 
@@ -113,7 +119,7 @@
     var coord = coordOf(c); if (!coord) return;
     el.innerHTML = '';
     resolveStyle(STYLE_DETAIL, function (style) {
-      var map = new mapboxgl.Map({ container: 'map', style: style, center: coord, zoom: 13, minZoom: 3, maxZoom: 17 });
+      var map = new mapboxgl.Map({ container: 'map', style: style, center: coord, zoom: 10, minZoom: 3, maxZoom: 17 });
       map.addControl(new mapboxgl.NavigationControl(), 'top-right');
       whenStyleReady(map, function () { addPins(map, toGeoJSON([{ c: c, coord: coord }])); });
     });

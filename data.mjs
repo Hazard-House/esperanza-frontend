@@ -28,7 +28,7 @@ function normQmi(h) {
   const g = f.photo_gallery; // exposed by the esperanza-cf PR (Task 13); absent until then
   if (Array.isArray(g)) gallery = g.map(x => ({ url: fixHost(x.url || x), alt: x.alt || '' }));
   const hn = f.housenumber != null ? String(f.housenumber).trim() : '';
-  const lot = hn ? (/^\d+$/.test(hn) ? String(Number(hn)) : hn) : undefined;
+  const lot = hn || undefined; // raw — the original shows "Lot #007", zeros intact
   return {
     id: h.id, price: f.Price,
     beds: f.bedroom_count, baths: f.bathroom_count, halfBaths: f.half_bathroom_count,
@@ -38,7 +38,7 @@ function normQmi(h) {
     community: f.Community, communityId: un(f['Community (Link)']),
     floorPlan: f['Floor Plan'], floorPlanId: un(f['Floor Plan (Link)']),
     collection: un(f['FP: Collection']),
-    slug: f.slug, city: f.City, address: f.address,
+    slug: f.slug, city: f.City, postalCode: f.postal_code, address: f.address,
     image: fixHost(f.image_url), gallery,
     fpImage: fp ? fixHost(fp.url || fp) : null, fpDescription: f['FP: Description'],
     planViewerUrl: f['FP: Plan Viewer'], virtualTourUrl: f['FP: Virtual Tour'],

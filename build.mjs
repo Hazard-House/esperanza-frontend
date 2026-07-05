@@ -14,6 +14,9 @@ import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } fr
 import { dirname, join } from 'node:path';
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
 import { generateDetails } from './generate-details.mjs';
+import { loadData } from './data.mjs';
+import { communityPath, floorplanPath } from './paths.mjs';
+import { hydrateCommunity, hydrateFloorplan } from './hydrate-scraped.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -45,9 +48,26 @@ const CONTAINER_ISLANDS = [
   { id: 'id="home-map"', island: 'community-maps-live.js' }, // homepage Find-Your-Home (Counties)
   { id: 'id="map"', island: 'community-maps-live.js' },      // community detail single-location (Common)
 ];
+// City/filter/lot maps stay oilib-owned; mapbox-patch.js (injected by rewriteCommon)
+// fixes their style + map_pin so they render 1:1 without disabling oilib.
 // Extra scripts appended to a page (before </body>) without disabling oilib — layered
 // on top of any island. Homepage Search -> /new-homes/available/ with filter params.
 const EXTRA_SCRIPTS = { 'index.html': ['homepage-filter.js'] };
+// Classify a ship.txt path within the detail-page URL space. Scraped community /
+// plan-in-community / floor-plan pages ship 1:1 (with hydration) when their entity
+// still exists in the live API; QMI details (high churn) and utm-junk variants stay
+// generated/skipped. Pure so demo() can assert the routing.
+export function classifyDetail(rel) {
+  let m;
+  if ((m = rel.match(/^new-homes\/tx\/[^/]+\/([^/]+)\/\d+\/index\.html$/))) return { type: 'community', slug: m[1] };
+  if ((m = rel.match(/^new-homes\/tx\/[^/]+\/([^/]+)\/[^/]+\/\d+\/index\.html$/))) return { type: 'plan', community: m[1] };
+  if (/^new-homes\/tx\/[^/]+\/[^/]+\/\d+\/[^/]+\/\d+\/index\.html$/.test(rel)) return { type: 'qmi' };
+  if ((m = rel.match(/^floorplans\/([^/]+)\/\d+\/index\.html$/))) return { type: 'floorplan', slug: m[1] };
+  // anything else under the detail space (e.g. index﹖utm=… crawl variants) -> skip
+  if (/^new-homes\/tx\/[^/]+\/[^/]+\/[^/]+\//.test(rel) || /^floorplans\/[^/]+\/[^/]+\//.test(rel)) return { type: 'skip' };
+  return null; // not a detail page — normal ship path
+}
+
 function shipList() {
   const manifest = join(import.meta.dirname, 'ship.txt');
   const extra = existsSync(manifest)
@@ -67,20 +87,62 @@ function buildShellHtml(raw) {
   return injectIsland(html, SHELL.island);
 }
 
+function writeOut(rel, html) {
+  const dst = join(OUT, rel);
+  mkdirSync(dirname(dst), { recursive: true });
+  writeFileSync(dst, html);
+}
+
 async function build() {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
+
+  // Live data, loaded ONCE (generateDetails reuses it below).
+  const d = await loadData();
+  const communityBySlug = new Map(d.communities.map(c => [c.slug, c]));
+  const fpBySlug = new Map(d.floorplans.map(fp => [fp.slug, fp]));
+  // Clean paths of entities shipped from the scrape — generateDetails skips these.
+  const scrapedCommunities = new Set();
+  const scrapedFloorplans = new Set();
 
   // 1. Theme bundle -> /static (preserve the ﹖v=hash filenames verbatim).
   cpSync(THEME, join(OUT, 'static'), { recursive: true });
 
   // 2. Ship every page in the manifest; islands for the LIVE_PAGES.
   let n = 0;
+  const counts = { community: 0, plan: 0, floorplan: 0, gated: 0 };
   for (const rel of shipList()) {
     const src = join(WWW, rel);
     if (!existsSync(src)) { console.warn(`skip missing: ${rel}`); continue; }
-    // Detail pages are generated fresh from D1 (Task 12) — don't ship the frozen scrape copies.
-    if (/^new-homes\/tx\/[^/]+\/[^/]+\/[^/]+\//.test(rel) || /^floorplans\/[^/]+\/[^/]+\//.test(rel)) continue;
+    // Detail-page space: scraped community/plan/floor-plan pages ship 1:1 (hydrated)
+    // when the entity survives in the API; QMI details stay generated (Task 12).
+    // NOTE: these pages bypass CONTAINER_ISLANDS on purpose — their id="map"/lot-map
+    // markup must stay oilib-driven (mapbox-patch.js from rewriteCommon fixes style+pins).
+    const det = classifyDetail(rel);
+    if (det) {
+      if (det.type === 'community') {
+        const c = communityBySlug.get(det.slug);
+        if (!c) { counts.gated++; continue; } // gone from API -> Caddy 404->302, like the original's removal
+        const html = hydrateCommunity(rewriteCommon(readFileSync(src, 'utf8')), c, d);
+        writeOut(rel, html); // scraped ID path
+        writeOut(communityPath(c).replace(/^\//, '') + 'index.html', html); // clean path
+        scrapedCommunities.add(communityPath(c));
+        counts.community++;
+      } else if (det.type === 'plan') {
+        if (!communityBySlug.has(det.community)) { counts.gated++; continue; }
+        writeOut(rel, rewriteCommon(readFileSync(src, 'utf8'))); // frozen prices acceptable here for now
+        counts.plan++;
+      } else if (det.type === 'floorplan') {
+        const fp = fpBySlug.get(det.slug);
+        if (!fp) { counts.gated++; continue; }
+        const html = hydrateFloorplan(rewriteCommon(readFileSync(src, 'utf8')), fp, d);
+        writeOut(rel, html);
+        writeOut(floorplanPath(fp).replace(/^\//, '') + 'index.html', html);
+        scrapedFloorplans.add(floorplanPath(fp));
+        counts.floorplan++;
+      }
+      continue; // qmi + skip types: generated / dropped
+    }
     let html = rewriteCommon(readFileSync(src, 'utf8'));
     if (LIVE_PAGES[rel]) {
       html = injectIsland(html, LIVE_PAGES[rel]);
@@ -95,12 +157,10 @@ async function build() {
         html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }
     }
-    const dst = join(OUT, rel);
-    mkdirSync(dirname(dst), { recursive: true });
-    writeFileSync(dst, html);
+    writeOut(rel, html);
     n++;
   }
-  console.log(`rewrote ${n} pages`);
+  console.log(`rewrote ${n} pages; scraped details: ${counts.community} community + ${counts.plan} plan-in-community + ${counts.floorplan} floorplan (${counts.gated} gated out by API)`);
 
   // 2b. Generic QMI-detail shell (for homes newer than the scrape). Served by Caddy
   // try_files at /new-homes/available/home/; qmi-detail-live.js fills it from the API.
@@ -115,22 +175,29 @@ async function build() {
   }
 
   // 3. Islands (from both explicit LIVE_PAGES and container-inferred CONTAINER_ISLANDS).
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js']);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js']);
   for (const island of islands) {
     cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   }
   // Marker sprite for the community maps (streets/counties styles have no map_pin),
   // loaded at runtime via addImage. The exact O'Neill green teardrop (90x120 @2x).
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
+  // mp_pin: the O'Neill house-icon teardrop for Master Planned communities (96x118 @2x).
+  cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));
   // Captured "Esperanza-Common" style JSON — QMI/Communities/detail maps load it as a
   // style object (renders 1:1 under our token; data is the public streets tileset).
   cpSync(join(import.meta.dirname, 'islands', 'esperanza-common.json'), join(OUT, 'esperanza-common.json'));
   // Frozen site-search index (oilib fetches /sitesearch.json) — served same-origin so
   // header search works and doesn't CORS-fail against the dead live domain.
   cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
+  // Harvested live-site facts (mortgage rate, tax multipliers, promo badges) used by
+  // available-live.js cards; regenerate with `node harvest-live-facts.mjs`.
+  const facts = join(import.meta.dirname, 'assets', 'live-facts.json');
+  if (existsSync(facts)) cpSync(facts, join(OUT, 'live-facts.json'));
+  else console.warn('skip live-facts.json (run harvest-live-facts.mjs)');
   // pre-launch crawl block (NOINDEX): belt-and-suspenders with the per-page noindex meta.
   if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
-  await generateDetails();
+  await generateDetails(d, { skipCommunities: scrapedCommunities, skipFloorplans: scrapedFloorplans });
   console.log(`public/ assembled at ${OUT}`);
 }
 
@@ -164,8 +231,20 @@ function demo() {
   assert(!shell.includes('id="detail-gallery"') && !shell.includes('PRICE $9'), 'shell: home content stripped');
   assert(shell.includes('<footer>f</footer>'), 'shell: footer/chrome preserved');
   assert(shell.includes('src="/qmi-detail-live.js"') && shell.includes('window.oi='), 'shell: island + oi stub injected');
-  console.log('demo() rewrite + shell checks passed');
+
+  // detail-page routing classifier
+  assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/15176/index.html'), { type: 'community', slug: 'harvest-coves' }, 'community route');
+  assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/indigo/231384/index.html'), { type: 'plan', community: 'harvest-coves' }, 'plan-in-community route');
+  assert.deepEqual(classifyDetail('new-homes/tx/brownsville/palo-alto-groves/7522/2144-sand-lane/1751815/index.html'), { type: 'qmi' }, 'qmi route');
+  assert.deepEqual(classifyDetail('floorplans/agave/6133/index.html'), { type: 'floorplan', slug: 'agave' }, 'floorplan route');
+  assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/15176/index﹖utm_campaign=x.html'), { type: 'skip' }, 'utm variant skipped');
+  assert.equal(classifyDetail('floorplans/index.html'), null, 'floorplans index ships normally');
+  assert.equal(classifyDetail('new-homes/available/index.html'), null, 'available page ships normally');
+  console.log('demo() rewrite + shell + routing checks passed');
 }
 
+// Only build when run directly — classifyDetail is importable without side effects.
+// (compare real paths, not raw file:// strings — see rewrite.mjs note)
+import { fileURLToPath } from 'node:url';
 if (process.argv.includes('--check')) demo();
-else build().catch(e => { console.error(e); process.exit(1); });
+else if (process.argv[1] === fileURLToPath(import.meta.url)) build().catch(e => { console.error(e); process.exit(1); });

@@ -18,16 +18,21 @@ function writePage(urlPath, html) {
   writeFileSync(dst, html);
 }
 
-export async function generateDetails() {
+// data + skip-sets are injectable so build.mjs can load the API once and skip
+// entities it already shipped as hydrated scrape copies (clean paths in the sets).
+export async function generateDetails(data, { skipCommunities, skipFloorplans } = {}) {
   if (!existsSync(OUT)) mkdirSync(OUT, { recursive: true });
   const shell = readFileSync(SHELL_PATH, 'utf8');
-  const d = await loadData();
+  const d = data || await loadData();
+  const skipC = skipCommunities || new Set();
+  const skipF = skipFloorplans || new Set();
   for (const h of d.qmis) writePage(qmiPath(h), renderQmi(h, shell));
-  for (const c of d.communities) writePage(communityPath(c), renderCommunity(c, shell));
-  for (const fp of d.floorplans) writePage(floorplanPath(fp), renderFloorplan(fp, shell));
+  let nc = 0, nf = 0;
+  for (const c of d.communities) if (!skipC.has(communityPath(c))) { writePage(communityPath(c), renderCommunity(c, shell)); nc++; }
+  for (const fp of d.floorplans) if (!skipF.has(floorplanPath(fp))) { writePage(floorplanPath(fp), renderFloorplan(fp, shell)); nf++; }
   writeFileSync(join(OUT, 'qmi-links.json'), JSON.stringify(linksMap(d.qmis, d.communities)));
-  console.log(`generate-details: ${d.qmis.length} qmi + ${d.communities.length} community + ${d.floorplans.length} floorplan pages`);
-  return { qmi: d.qmis.length, community: d.communities.length, floorplan: d.floorplans.length };
+  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape)`);
+  return { qmi: d.qmis.length, community: nc, floorplan: nf };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();

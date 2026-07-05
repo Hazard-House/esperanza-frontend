@@ -1,7 +1,30 @@
 // sections.mjs — shared HTML section builders for the detail-page renderers.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
+import { slugify } from './data.mjs';
+
+// Harvested live-site facts (mortgage rate, per-community taxmultiplier, per-home
+// promo badges) — see harvest-live-facts.mjs. Build-time read; {} if missing.
+// D1 stores lots 8-digit zero-padded; O'Neill displays per-community pad3 ("007") or bare ("82").
+export function fmtLot(raw, community) {
+  if (!raw) return null;
+  if (!/^\d+$/.test(raw)) return raw;
+  const n = String(parseInt(raw, 10));
+  return (FACTS.lotFormat || {})[slugify(community)] === 'pad3' ? n.padStart(3, '0') : n;
+}
+const FACTS = (() => {
+  try { return JSON.parse(readFileSync(join(import.meta.dirname, 'assets', 'live-facts.json'), 'utf8')); }
+  catch { return {}; }
+})();
+// Per-plan Energy Cost Comparison values harvested from the June-8 scrape
+// (see harvest-energy.mjs). {} if missing -> energy section self-hides.
+const ENERGY = (() => {
+  try { return JSON.parse(readFileSync(join(import.meta.dirname, 'assets', 'fp-energy.json'), 'utf8')); }
+  catch { return {}; }
+})();
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, disableOilib } from './rewrite.mjs';
 
 export const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -27,13 +50,13 @@ export function statItem(icon, txt) {
 export function descHtml(raw) {
   if (!raw) return '';
   if (/<\w+[\s>]/.test(raw)) return `<div class="wysiwyg pt-2 pt-lg-4">${raw}</div>`;
-  let out = '', inList = false;
-  for (const ln of String(raw).split(/\r?\n/)) {
-    const t = ln.trim();
-    if (/^[-•]\s+/.test(t)) { if (!inList) { out += '<ul>'; inList = true; } out += `<li>${esc(t.replace(/^[-•]\s+/, ''))}</li>`; }
-    else { if (inList) { out += '</ul>'; inList = false; } if (t) out += `<p>${esc(t)}</p>`; }
-  }
-  if (inList) out += '</ul>';
+  // 1:1 with O'Neill: every line (hyphen bullets included, hyphen kept) is its own
+  // <p>, blank lines between content become <p><br></p> — the wide spacing comes
+  // from the paragraph margins, NOT a <ul>.
+  const lines = String(raw).split(/\r?\n/).map(l => l.trim());
+  while (lines.length && !lines[0]) lines.shift();
+  while (lines.length && !lines[lines.length - 1]) lines.pop();
+  const out = lines.map(t => t ? `<p>${esc(t)}</p>` : '<p><br></p>').join('');
   return `<div class="wysiwyg pt-2 pt-lg-4">${out}</div>`;
 }
 
@@ -44,19 +67,21 @@ export function bannerHtml(availability, promo) {
   return s;
 }
 
-export function galleryHtml(gallery, fallback, address) {
-  const imgs = (gallery && gallery.length) ? gallery : (fallback ? [{ url: fallback, alt: address }] : []);
-  if (!imgs.length) return '';
+export function galleryHtml(gallery, heroUrl, address) {
+  const imgs = (gallery && gallery.length) ? gallery : [];
+  const heroSrc = heroUrl || (imgs[0] && imgs[0].url);
+  if (!heroSrc) return '';
   const alt = esc(address || '');
-  // 1:1 with O'Neill: hero (col-lg-8) + a side column (col-lg-4) of up to two
-  // sixteen-nine thumbs in h-50 rows; the LAST thumb carries the .photo-overlay
-  // ("Photo Gallery" + white-bar + View N Photos). Overlay lives inside a
+  // 1:1 with O'Neill: lead tile = the home's elevation render (image_url, col-lg-8) +
+  // a side column (col-lg-4) of up to two sixteen-nine PHOTO thumbs in h-50 rows; the
+  // LAST thumb carries the .photo-overlay ("Photo Gallery" + white-bar + View N
+  // Photos) where N = full photo_gallery size. Overlay lives inside a
   // position-relative cell so it never escapes to cover the page.
-  const heroCol = imgs.length > 1 ? 'col-12 col-lg-8' : 'col-12';
-  const hero = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(imgs[0].url)}" class="oi-aspect-img" loading="eager" alt="${alt}"></div></div>`;
+  const thumbs = imgs.filter(g => g.url !== heroSrc).slice(0, 2);
+  const heroCol = thumbs.length ? 'col-12 col-lg-8' : 'col-12';
+  const hero = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(heroSrc)}" class="oi-aspect-img" loading="eager" alt="${alt}"></div></div>`;
   let side = '';
-  if (imgs.length > 1) {
-    const thumbs = imgs.slice(1, 3);
+  if (thumbs.length) {
     const rows = thumbs.map((g, i) => {
       const last = i === thumbs.length - 1;
       const overlay = last
@@ -67,10 +92,18 @@ export function galleryHtml(gallery, fallback, address) {
     }).join('');
     side = `<div class="col-md-6 col-lg-4 ps-lg-1 d-none d-lg-block">${rows}</div>`;
   }
-  const hidden = `<div class="d-none">` + imgs.map(g => `<img src="${esc(g.url)}" loading="lazy" data-fancybox="photos" data-caption="" data-oi-event-name="oi-image-click" alt="${esc(g.alt || alt)}">`).join('') + `</div>`;
+  // Lightbox pages through the FULL photo gallery (the render is not in the group,
+  // matching the original's hidden fancybox set).
+  const hidden = imgs.length ? `<div class="d-none">` + imgs.map(g => `<img src="${esc(g.url)}" loading="lazy" data-fancybox="photos" data-caption="" data-oi-event-name="oi-image-click" alt="${esc(g.alt || alt)}">`).join('') + `</div>` : '';
   // O'Neill's legacy trigger: the overlay CTA clicks the first hidden fancybox thumb.
-  const script = (imgs.length > 1) ? `<script>$('.open-gallery').click(function(){$('.fancybox-thumb:eq(0)').click();});</script>` : '';
+  const script = imgs.length ? `<script>$('.open-gallery').click(function(){$('.fancybox-thumb:eq(0)').click();});</script>` : '';
   return `<div id="detail-gallery" class="container-fluid p-0"><div class="row m-0">${hero}${side}</div></div>${hidden}${script}`;
+}
+
+// Mobile full-width gallery CTA — sits directly under the "Go To..." dropdown on the
+// original; Fancybox (v4+) handles data-fancybox-trigger natively.
+export function mobileGalleryBarHtml(hasPhotos) {
+  return hasPhotos ? `<a class="d-block d-lg-none btn btn-green w-100 rounded-0" data-fancybox-trigger="photos">View Photo Gallery</a>` : '';
 }
 
 // Real theme section-heading pattern (verified against a live QMI detail page's
@@ -101,9 +134,11 @@ export function tourHtml(url, home = {}) {
   return `<section id="virtualtour" class="py-lg-5 pagejump"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Virtual Tour')}</div></div><div class="row mt-3"><div class="col-12 mb-3"><div class="oi-aspect oi-matterport one-one four-three-md sixteen-nine-lg" id="${fid}-container"><div class="oi-aspect-spacer"></div><iframe id="${fid}" class="oi-video-iframe embed-responsive-item oi-fit-fill" src="${esc(url)}" width="640" height="338" loading="lazy" title="${esc(title)}" allow="autoplay;fullscreen;" frameborder="0" allowfullscreen></iframe></div></div></div></div></section>`;
 }
 
+// Original QMI pages show the home's own elevation render (same art as the hero)
+// with NO label chip and an empty fancybox caption; label is used for alt only.
 export function elevationHtml(label, image) {
   if (!image) return '';
-  return `<section id="elevations" class="py-lg-5 pagejump"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Elevations')}</div></div><div class="row oi-listings mt-3"><div class="col-12 col-md-6 mb-4"><a href="${esc(image)}" data-fancybox="elevations" data-caption="${esc(label || '')}" data-oi-event-name="oi-image-click"><div class="oi-aspect sixteen-nine">${label ? `<div class="banner dark-green">${esc(label)}</div>` : ''}<img src="${esc(image)}" class="oi-aspect-img" loading="lazy" alt="${esc(label || 'elevation')}"></div></a></div></div></div></section>`;
+  return `<section id="elevations" class="py-lg-5 pagejump"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Elevations')}</div></div><div class="row oi-listings mt-3"><div class="col-12 col-md-6 mb-4"><a href="${esc(image)}" data-fancybox="elevations" data-caption="" data-oi-event-name="oi-image-click"><div class="oi-aspect sixteen-nine"><img src="${esc(image)}" class="oi-aspect-img" loading="lazy" alt="${esc(label || 'elevation')}"></div></a></div></div></div></section>`;
 }
 
 // planImage = the `{planCode}_FP.png` plan-DRAWING url (R1 backfill; see notes).
@@ -188,14 +223,64 @@ export function formSlotHtml(kind, ctx) {
   return `<section id="request-a-tour" class="pagejump"><div class="container-fluid bg-green-100"><div class="row"><div class="col-12 col-md-11 col-lg-6 col-xl-5 m-auto py-4 py-xl-6"><div class="row"><div class="col">${sectionHeading('Schedule An Exploratory Visit', 'green-bar-light my-3')}<div class="row my-3 mt-lg-4">${introImg ? `<div class="col-5 col-md-3"><div class="oi-aspect one-one"><img src="${introImg}" loading="lazy" class="oi-aspect-img rounded-2" alt="Schedule an Exploratory Visit"></div></div>` : ''}<div class="col${introImg ? '-7 col-lg-9' : ''} wysiwyg my-auto">Please fill out this quick and easy form and let us know what date and time works best for you.</div></div></div></div><div class="hs-form-slot" data-form="${esc(kind)}" data-context="${esc(address)}">${form}</div></div>${sideImg ? `<div class="col-lg-5 pe-0 position-relative d-none d-lg-block"><div class="oi-aspect two-three-lg seven-eight-xl h-100"><div class="gray-overlay dark"></div><img src="${sideImg}" loading="lazy" class="oi-aspect-img" alt="${sideAlt}"></div></div>` : ''}</div></div></section>`;
 }
 
-export function recommendedHtml() {
-  return `<section class="py-4 py-lg-5"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Recommended For You')}</div></div><div class="recommended-content row oi-listings g-2 mt-3" id="recommended"></div></div></section>`;
+// Recommended For You — static rebuild of the original's XHR floor-plan carousel
+// (/xhr/recommend/ returned a #recommend swiper of plan-cards; markup copied 1:1 from
+// a captured response in the scrape). plans = normalized floor-plan objects;
+// communityName picks the per-community "From" price. Init is deferred until the
+// footer swiper-bundle has loaded (the original's XHR content ran post-load).
+export function recommendedHtml(plans, communityName) {
+  const list = (plans || []).slice(0, 4);
+  if (!list.length) return '';
+  const stat = (icon, txt) => `<div class="item col-6 py-1 py-xl-2 pe-0"><img class="me-1" src="${icon}" aria-hidden="true" loading="lazy" width="18">${txt}</div>`;
+  const range = (a, b) => (a == null ? b : (b == null || a === b) ? a : `${a}-${b}`);
+  const keys = [];
+  const slides = list.map(fp => {
+    const key = String(fp.id || fp.slug).replace(/[^\w-]/g, '');
+    keys.push(key);
+    const url = floorplanPath(fp);
+    const price = (fp.communityPrices && fp.communityPrices[communityName]) != null ? fp.communityPrices[communityName] : fp.startingPrice;
+    const coll = fp.collection ? `${esc(fp.collection)}${/collection/i.test(fp.collection) ? '' : ' Collection'}` : '';
+    let stats = '';
+    const beds = range(fp.bedroomMin, fp.bedroomMax), baths = range(fp.bathroomMin, fp.bathroomMax);
+    if (beds != null) stats += stat(ICON.bed, esc(beds) + ' Bed');
+    if (fp.garage != null && String(fp.garage) !== '0') stats += stat(ICON.garage, esc(fp.garage) + ' Car Garage');
+    if (baths != null) stats += stat(ICON.bath, esc(baths) + ' Bath');
+    if (fp.stories != null) stats += stat(ICON.story, esc(fp.stories) + (fp.stories == 1 ? ' Story' : ' Stories'));
+    if (fp.livingSqft != null) stats += stat(ICON.total, num(fp.livingSqft) + ' Living Sq. Ft.');
+    if (fp.totalSqft != null) stats += stat(ICON.total, num(fp.totalSqft) + ' Total Sq. Ft.');
+    const tour = fp.virtualTourUrl ? `<img class="tour-icon" src="/static/esperanza_homes/images/stats/tour-icon%EF%B9%96v=ab309e1.svg" alt="Virtual Tour Available" loading="lazy" width="39">` : '';
+    const img = fp.image ? `<div class="swiper-slide"><div class="oi-aspect sixteen-nine one-one-xl four-three-xxl"><img src="${esc(fp.image)}" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img" alt="The ${esc(fp.name)} plan"></div></div>` : '';
+    const card = `<div class="card plan-card" data-price="${esc(price || '')}" data-square-feet="${esc(fp.livingSqft || '')}"><div class="row m-0 bg-hover">`
+      + `<div class="col-12 col-xl-6 my-xl-auto px-0"><div class="swiper content-${key}">${tour}<div class="swiper-wrapper">${img}</div>`
+      + `<div class="swiper-controls"><div class="swiper-prev left d-inline-block prev-${key}" role="button" aria-label="Previous slide"></div><div class="swiper-next right d-inline-block next-${key}" role="button" aria-label="Next slide"></div></div>`
+      + `</div></div>`
+      + `<div class="col-12 col-xl-6"><div class="card-body d-flex flex-column h-100 my-auto px-lg-2">`
+      + `<div class="card-title mb-1"><span class="fs-4">${esc(fp.name)}</span></div>`
+      + (price != null ? `<div class="col-auto my-auto"><div class="price-title">From</div><div class="price">${money(price)}</div></div>` : '')
+      + (coll ? `<div class="my-auto mb-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">PLAN COLLECTION</div><div class="text-gray fs-8">${coll}</div></div>` : '')
+      + `<div class="row mt-3 mt-xl-auto"><div class="col-12"><div class="row stat-group">${stats}</div></div>`
+      + `<div class="col-12"><a href="${esc(url)}" class="btn btn-primary small-btn mt-2">View Details</a></div></div>`
+      + `</div></div></div></div>`;
+    return `<div class="swiper-slide" role="group"><div class="col">${card}</div></div>`;
+  }).join('');
+  const inits = keys.map(k => `new Swiper('.content-${k}',{preloadImages:false,navigation:{nextEl:'.next-${k}',prevEl:'.prev-${k}'}});`).join('')
+    + `new Swiper('#recommend',{loop:false,cssMode:true,slidesPerView:1,spaceBetween:30,slidesPerGroup:1,pagination:{el:'.swiper-pagination',bulletClass:'map-bullet'},navigation:{nextEl:'.next-recommend',prevEl:'.prev-recommend'},breakpoints:{768:{slidesPerView:2,slidesPerGroup:2}}});`;
+  const script = `<script>(function(){function init(){if(!window.Swiper){return setTimeout(init,50);}${inits}}if(document.readyState==='complete'){init();}else{window.addEventListener('load',init);}})();</script>`;
+  return `<section class="py-4 py-lg-5"><div class="container-lg"><div class="row"><div class="col">${sectionHeading('Recommended For You')}</div></div>`
+    + `<div class="recommended-content w-100 mt-3"><div id="recommend" class="container-fluid p-0 swiper content-slider"><div class="swiper-wrapper">${slides}</div>`
+    + `<div class="swiper-controls row mt-3 justify-content-center justify-content-lg-start"><div class="swiper-prev prev-recommend left col-auto" role="button" aria-label="Previous slide"></div><div class="swiper-pagination col-auto p-0 my-auto"></div><div class="swiper-next next-recommend right col-auto" role="button" aria-label="Next slide"></div></div>`
+    + `</div>${script}</div></div></section>`;
 }
 
-// #energy_cost — Energy Cost Comparison / HERS. Requires per-home MONTHLY energy $
-// (newCost = Esperanza, oldCost = pre-owned); self-hides until both are present (R1
-// backfill). jQuery-UI slider scales by 1/12/120/360 months; bars are decorative CSS.
-export function energyHtml({ newCost, oldCost, hers } = {}) {
+// #energy_cost — Energy Cost Comparison / HERS. Monthly $ (newCost = Esperanza,
+// oldCost = pre-owned) come from the harvested per-plan map (planSlug) unless passed
+// explicitly; self-hides when the plan has no data. jQuery-UI slider (shipped in the
+// shell) scales by 1/12/120/360 months exactly like the original inline script.
+export function energyHtml({ planSlug, newCost, oldCost, hers } = {}) {
+  const e = (planSlug && ENERGY[planSlug]) || {};
+  if (newCost == null) newCost = e.newCost;
+  if (oldCost == null) oldCost = e.oldCost;
+  if (hers == null || hers === '') hers = e.hers;
   const toNum = v => (v == null || v === '') ? NaN : Number(v);
   const nc = toNum(newCost), oc = toNum(oldCost);
   if (!Number.isFinite(nc) || !Number.isFinite(oc)) return '';
@@ -204,17 +289,75 @@ export function energyHtml({ newCost, oldCost, hers } = {}) {
   return `<section id="energy_cost" class="py-4 pt-lg-6 pb-lg-5"><div class="container-lg"><div class="row"><div class="col"><div class="text-gray bodoni ls-sm fs-2 ps-0">Energy Cost Comparison</div><div class="green-bar-light my-2 my-lg-3"></div></div></div><div class="row mt-3 mt-lg-5 mx-0"><div class="col-12 col-lg-8"><div class="row"><div class="col-lg-6 col-md-6 col-sm-12 text-center mt-auto"><div class="height-one d-flex"><div class="ecp-num-results m-auto">$<span id="annualnew">${nc.toFixed(2)}</span></div></div><div class="d-block my-3 text-uppercase fs-9 text-dark-brown ls-sm overpass bold">Estimated Esperanza Cost</div><hr class="white m-0"></div><div class="col-lg-6 col-md-6 col-sm-12 text-center mt-auto"><div class="height-two d-flex"><div class="ecp-num-results m-auto">$<span id="annualold">${oc.toFixed(2)}</span></div></div><span class="d-block my-3 text-uppercase fs-9 text-dark-brown ls-sm overpass bold">Estimated Pre-Owned Cost</span><hr class="white m-0"></div></div><div class="row mt-4"><div class="number-slider"><div id="numslider" class="sld"></div><div class="numslider-label text-left d-flex justify-content-between fs-9 ls-sm text-uppercase overpass bold mt-3 text-dark-green"><div>1 Month</div><div>1 Year</div><div>10 Year</div><div>30 Year</div></div></div></div></div><div class="col-12 col-lg-3 offset-lg-1 text-center d-flex"><div class="bg-white border-15 p-4 w-100 mt-auto mb-4 d-flex"><div class="m-auto"><div class="text-uppercase overpass bold text-gray fs-8 ls-sm"><span id="time-period">Monthly</span> Cost Savings</div><div class="fs-5 overpass bold text-green mt-1 ls-sm">$<span id="annualsaving">${saving}</span></div><hr class="brown my-3"><h3 class="text-bold text-secondary"><div class="text-uppercase overpass bold text-gray fs-8 ls-sm">HERS SCORE</div><div class="fs-5 overpass bold text-green mt-1 ls-sm">${hersCell}</div></h3></div></div></div></div></div><script>$(document).ready(function(){var newCost=${nc},oldCost=${oc};var tOld=$('#annualold'),tNew=$('#annualnew'),tSave=$('#annualsaving');tSave.text((oldCost-newCost).toFixed(2));$.fn.digits=function(){return this.each(function(){$(this).text($(this).text().replace(/(\\d)(?=(\\d\\d\\d)+(?!\\d))/g,"$1,"));});};var amts=[0,1,2,3,4,5,6,7,8,9,12,11,12,13,14,15,16,17,18,120,20,21,22,23,24,25,26,27,360];$('#numslider').slider({min:1,max:28,step:9,value:1,change:s,slide:s});function s(){var month=amts[$('#numslider').slider("value")],tp=$('#time-period');var aOld=(month*oldCost).toFixed(2),aNew=(month*newCost).toFixed(2);tOld.text(aOld).digits();tNew.text(aNew).digits();tSave.text((aOld-aNew).toFixed(2)).digits();tp.text(month==1?'Monthly':month==12?'Annual':month==120?'10 Years':month==360?'30 Years':'Monthly');}});</script></section>`;
 }
 
-function banners(availability, promo) {
-  let s = '';
-  if (promo) s += `<div class="banner overlay-promo green">${esc(promo)}</div>`;
-  if (availability) s += `<div class="banner gray"${promo ? ' style="top:2.5rem"' : ''}>${esc(availability)}</div>`;
-  return s;
+// Verified to the cent against the live mortgage calculator:
+// 3.5% down, 30yr P&I, tax = price*taxMult%/12, ins 0.4%/yr, PMI 0.75%/yr on loan.
+export function monthlyPayment(price, rate, taxMult) {
+  const loan = price * (1 - 0.035);
+  const r = rate / 1200;
+  const pi = loan * r / (1 - Math.pow(1 + r, -360));
+  const m = pi + price * (taxMult / 100) / 12 + price * 0.004 / 12 + loan * 0.0075 / 12;
+  return Math.round(m * 100) / 100;
 }
 
+// Full O'Neill spec-card (community/floor-plan page variant: h-100, four-three-xl
+// aspect, no map data-attrs). Same anatomy as islands/available-live.js cardHTML.
 export function qmiCardHtml(h) {
   const url = qmiPath(h);
-  const specs = [h.beds != null ? esc(h.beds) + ' bd' : '', h.baths != null ? Number(h.baths).toFixed(1) + ' ba' : '', h.livingSqft != null ? num(h.livingSqft) + ' sq ft' : ''].filter(Boolean).join(' · ');
-  return `<div class="col-12 col-md-6 col-lg-4 mb-3"><div class="card spec-card spec-card-detail border border-gray p-2">${h.image ? `<a href="${esc(url)}"><div class="oi-aspect sixteen-nine">${banners(h.availability, h.promo)}<img src="${esc(h.image)}" class="oi-aspect-img" loading="lazy" alt="${esc(h.address)}"></div></a>` : ''}<div class="card-body"><a href="${esc(url)}"><div class="card-title lh-1 mt-2">${esc(h.address)}</div></a><div class="card-location text-green mb-2">${esc(h.city)}, TX</div><div class="spec-price">${money(h.price)}</div><div class="fs-9 text-gray mt-1">${specs}</div></div></div></div>`;
+  // Per-home badge harvested from the live site wins over the (often site-wide) promo_text.
+  const badge = (FACTS.badges || {})[slugify(h.address)];
+  const promoText = badge ? badge.text : h.promo;
+  const promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
+  let banners = '';
+  if (promoText) banners += `<div class="banner overlay-promo ${promoColor}">${esc(promoText)}</div>`;
+  if (h.availability) banners += `<div class="banner gray"${promoText ? ' style="top:2.5rem"' : ''}>${esc(h.availability)}</div>`;
+  const lotTxt = fmtLot(h.lot, h.community);
+  if (lotTxt) banners += `<div class="badge lot bg-light-gray overpass light text-secondary">Lot #${esc(lotTxt)}</div>`;
+  const stat = (icon, txt) => `<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="${icon}" aria-hidden="true" loading="lazy" width="18">${txt}</div>`;
+  // Original order: bed, garage (omitted when 0), bath, story, living, total.
+  let stats = '';
+  if (h.beds != null) stats += stat(ICON.bed, esc(h.beds) + ' Bedrooms');
+  if (h.garage != null && String(h.garage) !== '0') stats += stat(ICON.garage, esc(h.garage) + ' Car Garage');
+  if (h.baths != null) stats += stat(ICON.bath, esc(h.baths) + ' Bathrooms');
+  if (h.stories != null) stats += stat(ICON.story, esc(h.stories) + (h.stories == 1 ? ' Story' : ' Stories'));
+  if (h.livingSqft != null) stats += stat(ICON.living, num(h.livingSqft) + ' <span class="overpass bold ms-1">Living</span>&nbsp;Sq. Ft.');
+  if (h.totalSqft != null) stats += stat(ICON.total, num(h.totalSqft) + ' <span class="overpass bold ms-1">Total</span>&nbsp;Sq. Ft.');
+  const collLine = h.collection ? `<div class="text-brown fs-9">${esc(h.collection)}${/collection/i.test(h.collection) ? '' : ' Collection'}</div>` : '';
+  // Rendered twice: desktop copy inside the left column, mobile copy last in .row.m-0.
+  const commRow = vis => `<div class="row community-row m-0 p-2 w-100 ${vis}">`
+    + `<div class="col text-center text-lg-start py-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">COMMUNITY</div><div class="text-gray fs-9">${esc(h.community)}</div></div>`
+    + `<div class="col text-center text-lg-start py-1 border-start"><div class="row"><div class="col-auto mx-auto"><div class="text-brown overpass bold fs-9 text-decoration-underline">FLOOR PLAN</div><div class="text-gray fs-9">${esc(h.floorPlan)}</div>${collLine}</div></div></div>`
+    + `</div>`;
+  let est = '';
+  if (h.price) {
+    const m = monthlyPayment(h.price, FACTS.rate || 6.15, (FACTS.taxMult || {})[slugify(h.community)] || 2.2);
+    est = `<a href="${esc(url)}#mortgage-calculator" class="lh-1">`
+      + `<span class="fs-9 overpass text-gray">ESTIMATED MONTHLY</span><br>`
+      + `<span class="fs-9 overpass text-gray">PRICE: </span>`
+      + `<span class="estimated-price fs-9 overpass bold text-green" data-price="${m}">$${m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo*</span>`
+      + `</a>`;
+  }
+  return `<div class="col-12 col-md-6 mb-2">`
+    + `<div class="card spec-card spec-card-detail mb-0 border border-gray p-2 h-100">`
+    + `<div class="row m-0 h-100">`
+    + `<div class="col-12 col-xl-7 px-0 pe-xl-3 d-flex align-content-stretch flex-wrap">`
+    + `<div class="oi-aspect sixteen-nine four-three-xl three-two-xxl">${banners}`
+    + `<a href="${esc(url)}">${h.image ? `<img src="${esc(h.image)}" loading="lazy" class="oi-aspect-img" alt="${esc(h.address)}">` : ''}</a>`
+    + `<div class="hover-button d-none d-lg-flex"><div class="m-auto">`
+    + `<a href="${esc(url)}"><div class="btn card-button d-block my-3">VIEW HOME</div></a>`
+    + `<a href="${esc(url)}#request-a-tour"><div class="btn card-button green d-block my-3">REQUEST A TOUR</div></a>`
+    + `</div></div>`
+    + `</div>`
+    + commRow('d-none d-xl-flex')
+    + `</div>`
+    + `<div class="col-12 col-xl px-0 px-xl-1"><div class="card-body d-flex flex-column lh-2 h-100 px-xl-0 py-xl-1">`
+    + `<div class="row"><a href="${esc(url)}"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">${esc(h.address)}</div></a>`
+    + `<div class="card-location text-green mb-2">${esc(h.city)}, TX${h.postalCode ? ' ' + esc(h.postalCode) : ''}</div></div>`
+    + `<div class="row h-100">`
+    + `<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">${money(h.price)}</div>${est}</div></div>`
+    + `<div class="col-auto col-xl-12 stat-group mt-xl-2 stat-flex d-flex flex-column mx-auto">${stats}</div>`
+    + `</div></div></div>`
+    + commRow('d-flex d-xl-none')
+    + `</div></div></div>`;
 }
 
 export function planCardHtml(fp) {
@@ -254,10 +397,27 @@ export function finalizePage(shell, { content, head, page, islands }) {
 function demo() {
   assert(esc('a<b>&"') === 'a&lt;b&gt;&amp;&quot;', 'esc');
   assert(money(236990) === '$236,990', 'money');
+  // monthly payment — verified to the cent against the live site
+  const mp = monthlyPayment(229990, 6.15, 2.39);
+  assert(Math.abs(mp - 2025.55) <= 0.15, `monthlyPayment ${mp} != 2025.55`);
+  // qmi card — full spec-card anatomy
+  const card = qmiCardHtml({ id: 'h1', address: '1806 E Bella St', community: 'Villas at La Sienna', city: 'Edinburg', postalCode: '78542', slug: '1806-e-bella-st', price: 229990, beds: 2, baths: 2, garage: 2, stories: 1, lot: '007', livingSqft: 960, totalSqft: 1433, floorPlan: 'Lunelli', collection: 'Villas Collection', image: '/h.jpg', availability: 'Available SEP/OCT 2026', promo: 'Unlock Your $20K Flex Discount Now!' });
+  assert(card.indexOf('Bedrooms') < card.indexOf('Car Garage') && card.indexOf('Car Garage') < card.indexOf('Bathrooms') && card.indexOf('Bathrooms') < card.indexOf('Story') && card.indexOf('Living') < card.indexOf('Total'), 'card stat order');
+  assert(card.includes('Edinburg, TX 78542') && card.includes('Lot #007'), 'card zip + raw lot');
+  assert(card.includes('banner overlay-promo tan') && card.includes('ESTIMATED MONTHLY') && card.includes('REQUEST A TOUR'), 'card promo/est/tour');
+  assert(card.includes('d-none d-xl-flex') && card.includes('d-flex d-xl-none'), 'card dual community-row');
+  assert(!qmiCardHtml({ address: 'x', community: 'c', city: 'y', floorPlan: 'p', garage: 0, beds: 3 }).includes('Car Garage'), 'garage 0 omitted');
   const g = galleryHtml([{ url: '/a.jpg', alt: 'A' }, { url: '/b.jpg', alt: 'B' }], null, 'Home');
   assert(g.includes('id="detail-gallery"') && g.includes('data-fancybox="photos"') && g.includes('View 2 Photos'), 'gallery');
+  // hero = the render (image_url), side thumbs = gallery photos, N = gallery size,
+  // lightbox group = gallery only (render excluded, like the original).
+  const gh = galleryHtml([{ url: '/p1.jpg', alt: '' }, { url: '/p2.jpg', alt: '' }, { url: '/p3.jpg', alt: '' }], '/render.jpg', 'Home');
+  assert(gh.indexOf('/render.jpg') < gh.indexOf('/p1.jpg') && gh.includes('View 3 Photos'), 'gallery hero render + count');
+  assert((gh.match(/data-fancybox="photos"/g) || []).length === 3 && !gh.includes('src="/render.jpg" loading="lazy" data-fancybox'), 'lightbox = gallery only');
+  assert(mobileGalleryBarHtml(true).includes('View Photo Gallery') && mobileGalleryBarHtml(true).includes('d-block d-lg-none') && mobileGalleryBarHtml(false) === '', 'mobile gallery bar');
   const d = descHtml('Highlights:\n- Big yard\n- New roof');
-  assert(d.includes('<ul>') && d.includes('<li>Big yard</li>'), 'desc bullets -> ul');
+  assert(d.includes('<p>- Big yard</p>') && d.includes('<p>- New roof</p>') && !d.includes('<ul>'), 'desc hyphen paragraphs (no ul)');
+  assert(descHtml('Intro\n\nHighlights:').includes('<p><br></p>'), 'desc blank-line spacing');
   const head = setHead('<head><title>x</title><link rel="canonical" href="y"></head>', { title: 'T', canonical: '/c/', url: '/c/', description: 'D' });
   assert(head.includes('<title>T</title>') && head.includes('href="/c/"'), 'setHead');
   const page = finalizePage('<head></head><body><!--CONTENT--></body>', { content: '<p>hi</p>', head: { title: 'T', canonical: '/c/', url: '/c/' }, page: { type: 'qmi', id: 'rec1' }, islands: ['detail-extras.js'] });
@@ -272,12 +432,23 @@ function demo() {
 
   const elev = elevationHtml('Farmhouse', '/e.jpg');
   assert(noFakeH2(elev) && elev.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Elevations</div>'), 'elevationHtml heading');
+  assert(!elev.includes('banner dark-green') && elev.includes('data-caption=""'), 'elevationHtml no label chip, empty caption');
 
   const plan = idaproPlanHtml('/fp.png', 'Marigold');
   assert(noFakeH2(plan) && plan.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Floor Plan</div>') && plan.includes('id="viewer"') && plan.includes('viewer-wrap') && plan.includes('plan-list'), 'idaproPlanHtml iviewer');
 
-  const rec = recommendedHtml();
+  const recPlans = [
+    { id: 'rec1', name: 'San Luis', slug: 'san-luis', collection: 'Haven', startingPrice: 219990, communityPrices: { 'El Eden': 229990 }, bedroomMin: 3, bedroomMax: 3, bathroomMin: 2, bathroomMax: 2, garage: 2, stories: 1, livingSqft: 1443, totalSqft: 1887, image: '/sl.jpg', virtualTourUrl: 'https://my.matterport.com/x' },
+    { id: 'rec2', name: 'Marigold', slug: 'marigold', collection: 'Haven', startingPrice: 239990, communityPrices: {}, bedroomMin: 3, bedroomMax: 4, bathroomMin: 2, bathroomMax: 2.5, garage: 2, stories: 2, livingSqft: 1600, image: '/mg.jpg' },
+  ];
+  const rec = recommendedHtml(recPlans, 'El Eden');
   assert(noFakeH2(rec) && rec.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Recommended For You</div>'), 'recommendedHtml heading');
+  assert(rec.includes('id="recommend"') && rec.includes('swiper content-slider') && rec.includes('swiper-wrapper') && (rec.match(/class="swiper-slide" role="group"/g) || []).length === 2, 'recommendedHtml swiper slides');
+  assert(rec.includes('prev-recommend') && rec.includes('next-recommend') && rec.includes('swiper-pagination'), 'recommendedHtml nav + dots');
+  assert(rec.includes('card plan-card') && rec.includes('$229,990') && rec.includes('View Details') && rec.includes('PLAN COLLECTION') && rec.includes('Haven Collection'), 'recommendedHtml card anatomy + community price');
+  assert(rec.includes('tour-icon') && rec.indexOf('tour-icon') > rec.indexOf('content-rec1') && rec.lastIndexOf('tour-icon') < rec.indexOf('content-rec2'), 'recommendedHtml 360 badge only w/ virtual tour');
+  assert(rec.includes('3-4 Bed') && rec.includes('1,443 Living Sq. Ft.') && !/undefined|NaN/.test(rec), 'recommendedHtml stats + clean');
+  assert(recommendedHtml([]) === '' && recommendedHtml() === '', 'recommendedHtml omitted without plans');
 
   const sales = mapSalesHtml({ lat: 1, lng: 2, address: '1 Main St', city: 'Brownsville', officePhone: '956-000-0000' });
   assert(noFakeH2(sales) && sales.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Sales Office</div>') && sales.includes('brown-bar short my-3') && sales.includes('btn btn-gray') && sales.includes('oi-directions-click') && !sales.includes('btn btn-green'), 'mapSalesHtml Sales Office + brown-bar + btn-gray');
@@ -293,7 +464,14 @@ function demo() {
   assert(planUrl.includes('id="plans"') && planUrl.includes('View Interactive Floor Plan') && planUrl.includes('href="https://idapro.cloud/flr_pln/x"') && !planUrl.includes('name="modelframe"'), 'idaproPlanHtml CTA fallback');
   const en = energyHtml({ newCost: 116.67, oldCost: 207.17, hers: 44 });
   assert(en.includes('id="energy_cost"') && en.includes('id="annualnew"') && en.includes('116.67') && en.includes('id="numslider"'), 'energyHtml renders with data');
-  assert(energyHtml({}) === '' && energyHtml({ newCost: 100 }) === '', 'energyHtml self-hides without both costs');
+  assert(en.includes('1 Month') && en.includes('30 Year') && !/undefined|NaN/.test(en), 'energyHtml period selector + clean');
+  assert(energyHtml({}) === '' && energyHtml({ newCost: 100 }) === '' && energyHtml({ planSlug: 'no-such-plan-xyz' }) === '', 'energyHtml self-hides without data');
+  // Harvested per-plan lookup (assets/fp-energy.json is committed by harvest-energy.mjs).
+  if (ENERGY['san-luis']) {
+    const enS = energyHtml({ planSlug: 'san-luis' });
+    assert(enS.includes('id="energy_cost"') && enS.includes(ENERGY['san-luis'].newCost.toFixed(2)), 'energyHtml harvested lookup');
+    assert(energyHtml({ planSlug: 'san-luis', hers: 99 }).includes('>99<'), 'energyHtml explicit HERS wins');
+  }
   const comm = communityBlurbHtml({ name: 'El Eden', slug: 'el-eden', city: 'Laredo', image: '/c.jpg', description: '<p>x</p>' });
   assert(comm.includes('gray-gradient') && comm.includes('oi-aspect-img') && comm.includes('About the Community') && comm.includes('photo-block-info') && !comm.includes('background-image'), 'communityBlurbHtml real-img structure');
 

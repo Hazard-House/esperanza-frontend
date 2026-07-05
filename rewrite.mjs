@@ -25,6 +25,27 @@ function loadKeyMap(file, prefix) {
 }
 const ESP_KEYS = loadKeyMap('media-keys-esperanza.txt', '');
 const HF_KEYS = loadKeyMap('media-keys-homefiniti.txt', 'homefiniti/');
+
+// Current promo-ticker slides harvested from the live site (harvest-live-facts.mjs).
+// The scrape's baked ticker is frozen at June-8 (stale events); swap in the live
+// slides as clean PRE-init swiper markup so the theme JS initializes it like O'Neill's.
+function loadBannerSlides() {
+  const p = join(import.meta.dirname, 'assets', 'live-facts.json');
+  if (!existsSync(p)) return null;
+  try { const s = JSON.parse(readFileSync(p, 'utf8')).bannerSlides; return s && s.length ? s : null; }
+  catch { return null; }
+}
+const BANNER_SLIDES = loadBannerSlides();
+const escAttr = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export function freshBannerHtml(slides) {
+  const inner = slides.map(sl =>
+    `<div class="swiper-slide"><p>${escAttr(sl.text)}</p>${sl.ctaHref ? `<a href="${escAttr(sl.ctaHref)}" class="btn btn-primary">${escAttr(sl.ctaLabel || 'Learn More!')}</a>` : ''}</div>`).join('');
+  return '<div class="alert-banner"><div class="swiper-alert-banner swiper"><div class="swiper-wrapper">' + inner + '</div>' +
+    '<div class="swiper-alert-banner-button-prev swiper-button-prev"><i class="fa-regular fa-chevron-left d-block" aria-label="Previous slide"></i></div>' +
+    '<div class="swiper-alert-banner-button-next swiper-button-next"><i class="fa-regular fa-chevron-right d-block" aria-label="Next slide"></i></div>' +
+    '</div></div><!--/fresh-banner-->';
+}
+const FROZEN_BANNER_RE = /<div class="alert-banner">[\s\S]*?<span class="swiper-notification"[^>]*><\/span><\/div>\s*<\/div>/;
 export function resolveMedia(rawPath, prefix, map) {
   const clean = rawPath.split('%EF%B9%96')[0].split('?')[0];
   return map.get(prefix + stripExt(clean)) || (prefix + clean);
@@ -39,10 +60,14 @@ export function rewriteCommon(html) {
     .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.homefiniti\.com\/([^"'\s)]*)/g,
       (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, 'homefiniti/', HF_KEYS)}`)
     .replace(/(?:\.\.\/)*api\.mapbox\.com\//g, 'https://api.mapbox.com/')
+    // shim oilib-owned maps (city/filter/lot maps): branded style + map_pin sprite
+    .replace(/(<script[^>]*api\.mapbox\.com\/mapbox-gl-js[^>]*><\/script>)/,
+      '$1<script src="/mapbox-patch.js"></script>')
     .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN)
     .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE)
     .replace(/<div class="col-12 oneilinteractive-attribution[^>]*>[\s\S]*?<\/div>/,
       '<div class="col-12 oneilinteractive-attribution text-center text-white fs-9 mb-2"><a href="https://hazardhouse.ai" rel="noopener" target="_blank" class="text-small text-white">Powered by Hazard House</a></div>');
+  if (BANNER_SLIDES) html = html.replace(FROZEN_BANNER_RE, freshBannerHtml(BANNER_SLIDES));
   if (NOINDEX) {
     const meta = '<meta name="robots" content="noindex,nofollow">';
     html = /<meta name="robots"[^>]*>/i.test(html)

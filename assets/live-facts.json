@@ -1,0 +1,726 @@
+{
+  "rate": 6.15,
+  "taxMult": {
+    "villas-at-la-sienna": 2.39,
+    "los-prados": 2.05,
+    "el-eden": 2.08,
+    "rogers-coves": 2.39,
+    "retama-village-55-at-bentsen-palm": 2.45,
+    "texas-heights": 2.52,
+    "harvest-coves": 2.35,
+    "villas-on-freddy": 2.24,
+    "villas-at-tres-lagos": 2.36,
+    "sendero-at-bentsen-palm": 2.45,
+    "paso-real": 2.05,
+    "wolf-creek": 2.08,
+    "cielo-vista": 2.08,
+    "palo-alto-groves": 2.07,
+    "wright-ranch": 2.12,
+    "las-brisas-at-tres-lagos": 2.36,
+    "stewart-coves": 2.58,
+    "anaqua-at-tres-lagos": 2.49,
+    "tanglewood-at-bentsen-palm": 2.45,
+    "sapphire-at-la-sienna": 2.39,
+    "antlers-crossing": 2.08,
+    "aqualina-at-tres-lagos": 2.49,
+    "cascada-at-tres-lagos": 2.49
+  },
+  "badges": {
+    "1806-e-bella-st": {
+      "text": "Unlock Your $20K Flex Discount Now!",
+      "color": "tan"
+    },
+    "4110-appaloosa-dr": {
+      "text": "Eligible for Homebuyer Advantage Program",
+      "color": "green"
+    },
+    "4102-appaloosa-dr": {
+      "text": "Eligible for Homebuyer Advantage Program",
+      "color": "green"
+    },
+    "4109-appaloosa-dr": {
+      "text": "Eligible for Homebuyer Advantage Program",
+      "color": "green"
+    },
+    "5131-carambola-ln": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "7036-castano-drive": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "1045-w-star-flower-st": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "5121-carambola-ln": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "3804-heron-way": {
+      "text": "Unlock Your $25K Flex Discount Now!",
+      "color": "tan"
+    },
+    "218-san-antonio-south-lp": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "3920-westway-ave": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "1421-zurich-ave": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "1805-e-bella-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "5804-wisdom-ave": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "1803-e-bella-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "14914-rio-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "5800-wisdom-ave": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "5111-carambola-ln": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "1411-s-moorefield-rd": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "1427-s-moorefield-rd": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "2520-cove-real-drive": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "5421-st-leo-dr": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "5428-st-leo-dr": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "2108-sanderling-ln": {
+      "text": "Unlock Your $25K Flex Discount Now!",
+      "color": "tan"
+    },
+    "5305-moses-loop": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "5315-moses-lp": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "5426-st-leo-dr": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "5704-st-dominic-dr": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "5117-carambola-ln": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "5309-moses-loop": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "3921-peggy-dr": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "3911-fortuna-dr": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "3918-peggy-dr": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "4228-n-serena-ave": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "2309-grove-lane": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "3341-kings-court": {
+      "text": "Unlock Your $10K Flex Discount Now!",
+      "color": "tan"
+    },
+    "4012-westway-ave": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "4104-appaloosa-dr": {
+      "text": "Eligible for Homebuyer Advantage Program",
+      "color": "green"
+    },
+    "4107-appaloosa-dr": {
+      "text": "Eligible for Homebuyer Advantage Program",
+      "color": "green"
+    },
+    "4111-appaloosa-dr": {
+      "text": "Eligible for Homebuyer Advantage Program",
+      "color": "green"
+    },
+    "5905-wisdom-ave": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "5313-moses-loop": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "5419-st-leo-dr": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "4232-n-serena-ave": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "1050-w-star-flower-st": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "1417-s-moorefield-rd": {
+      "text": "4.99% 30 Year Fixed Rate",
+      "color": "green"
+    },
+    "5403-brahman-ln": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "15520-sereno-st": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "15420-n-brisas-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "2558-paso-drive": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "5135-carambola-ln": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "4108-appaloosa-dr": {
+      "text": "Eligible for Homebuyer Advantage Program",
+      "color": "green"
+    },
+    "1904-s-lake-texoma-st": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "319-san-antonio-south-lp": {
+      "text": "Unlock Your $10K Flex Discount Now!",
+      "color": "tan"
+    },
+    "3916-westway-ave": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "5125-carambola-ln": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "2125-sand-lane": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "3314-kings-court": {
+      "text": "Unlock Your $10K Flex Discount Now!",
+      "color": "tan"
+    },
+    "1525-s-moorefield-rd": {
+      "text": "4.99% 30 Year Fixed Rate",
+      "color": "green"
+    },
+    "5128-carambola-ln": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "15400-n-brisas-st": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "2321-grove-lane": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "6608-anaqua-loop": {
+      "text": "UNLOCK YOUR 15K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "1036-w-star-flower-st": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "15507-sereno-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "15501-n-brisas-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "1939-s-lake-travis-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "15405-n-brisas-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "1905-s-lake-texoma-st": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "202-san-antonio-south-lp": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "2434-nilgai-trail": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "3353-kings-court": {
+      "text": "Unlock Your $10K Flex Discount Now!",
+      "color": "tan"
+    },
+    "2303-grove-lane": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "1925-s-lake-texoma-st": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "2136-s-lake-texoma-st": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "1802-e-bella-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "1804-e-bella-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "3907-fortuna-dr": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "3919-peggy-dr": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "3917-peggy-dr": {
+      "text": "UNLOCK YOUR 10K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "3922-peggy-dr": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "3300-kestrel-dr": {
+      "text": "Unlock Your $20K Flex Discount Now!",
+      "color": "tan"
+    },
+    "14916-rio-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "415-san-antonio-south-lp": {
+      "text": "Unlock Your $10K Flex Discount Now!",
+      "color": "tan"
+    },
+    "5802-wisdom-ave": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "2622-paso-drive": {
+      "text": "Unlock Your $10K Flex Discount Now!",
+      "color": "tan"
+    },
+    "4417-pear-ave": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "3711-westway-court": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "1601-e-marquise-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "6619-anaqua-loop": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "15527-sereno-st": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "6600-anaqua-loop": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "14009-sugarberry-ln": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "2615-n-40th-st": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "3361-kings-court": {
+      "text": "Unlock Your $10K Flex Discount Now!",
+      "color": "tan"
+    },
+    "3706-westway-court": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "1812-e-marquise-st": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "6617-anaqua-loop": {
+      "text": "UNLOCK YOUR 15K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "14924-aqualina-way": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "6529-anaqua-loop": {
+      "text": "4.99% Rate + up to $5000 in Closing Costs",
+      "color": "green"
+    },
+    "14004-sugarberry-ln": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "14008-sugarberry-ln": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "14918-aqualina-way": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "14815-aqualina-way": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "14920-aqualina-way": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "14005-sugarberry-ln": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "7023-cypress-springs-dr": {
+      "text": "4.99% 30 YEAR FIXED RATE*",
+      "color": "green"
+    },
+    "1708-e-marquise-st": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "900-s-templo-dorado": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "2418-nilgai-trail": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "3702-westway-court": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "4122-westway-court": {
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
+    },
+    "6631-anaqua-loop": {
+      "text": "UNLOCK YOUR 15K FLEX DISCOUNT NOW!",
+      "color": "tan"
+    },
+    "7011-cypress-springs-dr": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    },
+    "2009-goldfinch-dr": {
+      "text": "4.99% Rate + up to $5,000 in Closing Costs",
+      "color": "green"
+    },
+    "7012-cypress-springs-dr": {
+      "text": "Unlock Your $15K Flex Discount Now!",
+      "color": "tan"
+    }
+  },
+  "lotFormat": {
+    "villas-at-la-sienna": "pad3",
+    "los-prados": "bare",
+    "el-eden": "pad3",
+    "rogers-coves": "bare",
+    "retama-village-55-at-bentsen-palm": "bare",
+    "texas-heights": "bare",
+    "harvest-coves": "bare",
+    "villas-on-freddy": "bare",
+    "villas-at-tres-lagos": "pad3",
+    "sendero-at-bentsen-palm": "bare",
+    "paso-real": "bare",
+    "wolf-creek": "pad3",
+    "cielo-vista": "pad3",
+    "palo-alto-groves": "bare",
+    "wright-ranch": "bare",
+    "las-brisas-at-tres-lagos": "pad3",
+    "stewart-coves": "bare",
+    "anaqua-at-tres-lagos": "pad3",
+    "tanglewood-at-bentsen-palm": "bare",
+    "sapphire-at-la-sienna": "pad3",
+    "antlers-crossing": "bare",
+    "aqualina-at-tres-lagos": "pad3",
+    "cascada-at-tres-lagos": "pad3"
+  },
+  "bannerSlides": [
+    {
+      "text": "3 NEW Floor Plans Just Released!",
+      "ctaLabel": "Learn More!",
+      "ctaHref": "/blog/esperanza-homes-unveils-three-new-floor-plans/"
+    },
+    {
+      "text": "Explore Move-In Ready Homes-  Self-Tour Today!",
+      "ctaLabel": "View Homes!",
+      "ctaHref": "/new-homes/available/filter/2eb0769/"
+    },
+    {
+      "text": "You're Invited to the 2026 RGVBA Parade of Homes - July 11th-12th and July 18th-19th!",
+      "ctaLabel": "RSVP Today!",
+      "ctaHref": "https://share.hsforms.com/1wyEOBFbVSrq7sMapqdIZ-A4ugas"
+    }
+  ],
+  "communityPromos": {
+    "anaqua-at-tres-lagos": {
+      "ribbon": {
+        "text": "Unlock Your Flex Discount Now!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "antlers-crossing": {
+      "ribbon": null,
+      "incentive": null
+    },
+    "aqualina-at-tres-lagos": {
+      "ribbon": null,
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "aquero": {
+      "ribbon": null,
+      "incentive": "Enjoy $10,000 in a Flex Discount!"
+    },
+    "bentsen-palm-master-planned-community": {
+      "ribbon": null,
+      "incentive": null
+    },
+    "cascada-at-tres-lagos": {
+      "ribbon": {
+        "text": "Unlock Your Flex Discount Now!",
+        "color": "green"
+      },
+      "incentive": null
+    },
+    "cielo-vista": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $10,000 in a Flex Discount!"
+    },
+    "el-eden": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $10,000 in a Flex Discount!"
+    },
+    "harvest-coves": {
+      "ribbon": {
+        "text": "Enjoy $15,000 in a Flex Discount!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "las-brisas-at-tres-lagos": {
+      "ribbon": {
+        "text": "Unlock Your Flex Discount Now!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "los-arroyos": {
+      "ribbon": {
+        "text": "Coming Soon",
+        "color": "gray"
+      },
+      "incentive": null
+    },
+    "los-prados": {
+      "ribbon": null,
+      "incentive": null
+    },
+    "mccoll-groves": {
+      "ribbon": {
+        "text": "Coming Soon",
+        "color": "gray"
+      },
+      "incentive": null
+    },
+    "meadow-ridge": {
+      "ribbon": {
+        "text": "Coming Soon",
+        "color": "gray"
+      },
+      "incentive": null
+    },
+    "palo-alto-groves": {
+      "ribbon": {
+        "text": "Unlock Your Flex Discount Now!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "paso-real": {
+      "ribbon": {
+        "text": "Unlock Your Flex Discount Now!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $10,000 in a Flex Discount!"
+    },
+    "retama-village-55-at-bentsen-palm": {
+      "ribbon": null,
+      "incentive": "Enjoy $20,000 in a Flex Discount!"
+    },
+    "rogers-coves": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": null
+    },
+    "sapphire-at-la-sienna": {
+      "ribbon": null,
+      "incentive": "Receive $15,000 in a Flex Discount!*"
+    },
+    "sendero-at-bentsen-palm": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "silos-at-la-sienna": {
+      "ribbon": {
+        "text": "Unlock Your Flex Discount Now!",
+        "color": "green"
+      },
+      "incentive": null
+    },
+    "stewart-coves": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "tanglewood-at-bentsen-palm": {
+      "ribbon": {
+        "text": "Unlock Your Flex Discount Now!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $20,000 in a Flex Discount!"
+    },
+    "texas-heights": {
+      "ribbon": {
+        "text": "Enjoy $10,000 in a Flex Discount!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $10,000 in a Flex Discount!"
+    },
+    "tres-lagos-master-planned-community": {
+      "ribbon": null,
+      "incentive": null
+    },
+    "villas-at-la-sienna": {
+      "ribbon": null,
+      "incentive": "Receive $20,000 in a Flex Discount!*"
+    },
+    "villas-at-tres-lagos": {
+      "ribbon": null,
+      "incentive": "Enjoy $15,000 in a Flex Discount!"
+    },
+    "villas-las-lagunas": {
+      "ribbon": null,
+      "incentive": null
+    },
+    "villas-on-freddy": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": null
+    },
+    "vista-verde": {
+      "ribbon": null,
+      "incentive": null
+    },
+    "wolf-creek": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": "Enjoy $10,000 in a Flex Discount!"
+    },
+    "wright-ranch": {
+      "ribbon": {
+        "text": "UNLOCK YOUR FLEX DISCOUNT NOW!",
+        "color": "green"
+      },
+      "incentive": null
+    }
+  }
+}

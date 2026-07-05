@@ -1,14 +1,16 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, galleryHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage } from './sections.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
+import { slugify } from './data.mjs';
 
 const GREEN_ARROW = '/static/esperanza_homes/images/green-arrow%EF%B9%96v=a02d15d.svg';
 
 export function qmiContent(h) {
   const c = h.communityObj || {};
-  const has = { tour: !!h.virtualTourUrl, plans: !!(h.planViewerUrl || h.planImage), elev: !!h.fpImage, comm: !!(c.description || c.image), sales: !!(c.lat && c.lng) };
+  // Elevations = the home's own elevation render (same art as the hero), per original.
+  const has = { tour: !!h.virtualTourUrl, plans: !!(h.planViewerUrl || h.planImage), elev: !!h.image, comm: !!(c.description || c.image), sales: !!(c.lat && c.lng) };
 
   // --- Header (1:1 O'Neill; left-align relies on body.spec-detail, present in shell) ---
   const fpHref = floorplanPath(h.floorplanObj || { name: h.floorPlan });
@@ -45,19 +47,36 @@ export function qmiContent(h) {
 
   const anchors = [['overview', 'Overview'], has.tour && ['virtualtour', 'Virtual Tour'], has.elev && ['elevations', 'Elevations'], has.plans && ['plans', 'Floor Plans'], ['photos', 'Photo Gallery'], has.comm && ['community', 'Community'], has.sales && ['sales', 'Contact']].filter(Boolean);
 
+  // Recommended For You = other floor plans offered in this home's community
+  // (excluding its own plan); fall back to same-collection plans from the plan's
+  // other communities. Cap 4 like the original's /xhr/recommend/ (l=4).
+  const fpSlug = (h.floorplanObj && h.floorplanObj.slug) || slugify(h.floorPlan);
+  let recPlans = (c.plans || []).filter(fp => fp.id !== h.floorPlanId);
+  if (!recPlans.length && h.floorplanObj && h.floorplanObj.collection) {
+    const seen = new Set([h.floorPlanId]);
+    recPlans = (h.floorplanObj.communityList || []).flatMap(c2 => c2.plans || [])
+      .filter(fp => fp.collection === h.floorplanObj.collection && !seen.has(fp.id) && seen.add(fp.id));
+  }
+
+  // Schedule-form thumbnail: an interior photo (2nd+ gallery image), not the
+  // sales-office exterior.
+  const interior = (h.gallery[1] && h.gallery[1].url) || (h.gallery[0] && h.gallery[0].url) || c.image;
+
   return [
     header,
     galleryHtml(h.gallery, h.image, h.address),
     subnavHtml(anchors),
+    mobileGalleryBarHtml(h.gallery.length > 0),
     overview,
     has.tour && tourHtml(h.virtualTourUrl, h),
-    has.elev && elevationHtml(h.elevation, h.fpImage),
+    has.elev && elevationHtml(h.elevation, h.image),
     has.plans && idaproPlanHtml(h.planImage, h.floorPlan, h.planViewerUrl),
-    energyHtml({ newCost: h.newCost, oldCost: h.oldCost, hers: h.hersScore }),
+    energyHtml({ planSlug: fpSlug, hers: h.hersScore }),
     has.comm && communityBlurbHtml(c),
-    has.sales && mapSalesHtml(c),
-    recommendedHtml(),
-    formSlotHtml('tour', { address: h.address, image: c.image }),
+    // Original order: Sales Office -> Schedule An Exploratory Visit -> Recommended.
+    has.sales && mapSalesHtml({ ...c, zip: c.zip || h.postalCode }),
+    formSlotHtml('tour', { address: h.address, image: interior }),
+    recommendedHtml(recPlans, c.name),
   ].filter(Boolean).join('\n');
 }
 
@@ -71,17 +90,38 @@ export function renderQmi(h, shell) {
 }
 
 function demo() {
-  const c = { id: 'recC', name: 'El Eden', slug: 'el-eden', city: 'Laredo', lat: 27.43, lng: -99.45, description: '<p>Nice</p>', image: '/c.jpg', officePhone: '956-395-1516', officeHours: 'Mon-Sat 9-6' };
-  const h = { id: 'recH', address: '5131 Carambola Ln', community: 'El Eden', city: 'Laredo', slug: '5131-carambola-ln', floorPlan: 'Presidio', floorplanObj: { name: 'Presidio', slug: 'presidio' }, price: 236990, beds: 3, baths: 2, garage: 2, stories: 2, lot: '334', hersScore: 47, livingSqft: 1106, totalSqft: 1471, description: 'Highlights:\n- Big yard', gallery: [{ url: '/1.jpg', alt: '' }], image: '/1.jpg', virtualTourUrl: 'https://my.matterport.com/show/?m=x', planViewerUrl: 'https://idapro.cloud/flr_pln/presidio', fpImage: '/fp.jpg', elevation: 'Presidio - Tuscan', pdfUrl: 'https://pdf/x', availability: 'Available Now', promo: '', communityObj: c };
+  const otherPlan = { id: 'fp2', name: 'San Luis', slug: 'san-luis', collection: 'Haven', startingPrice: 219990, communityPrices: { 'El Eden': 229990 }, bedroomMin: 3, bedroomMax: 3, bathroomMin: 2, bathroomMax: 2, garage: 2, stories: 1, livingSqft: 1443, totalSqft: 1887, image: '/sl.jpg', virtualTourUrl: 'https://my.matterport.com/y' };
+  const c = { id: 'recC', name: 'El Eden', slug: 'el-eden', city: 'Laredo', lat: 27.43, lng: -99.45, description: '<p>Nice</p>', image: '/c.jpg', officePhone: '956-395-1516', officeHours: 'Mon-Sat 9-6', address: '104 Hidden Path Dr', plans: [otherPlan, { id: 'fp1' }] };
+  const h = { id: 'recH', address: '5131 Carambola Ln', community: 'El Eden', city: 'Laredo', postalCode: '78046', slug: '5131-carambola-ln', floorPlan: 'Presidio', floorPlanId: 'fp1', floorplanObj: { id: 'fp1', name: 'Presidio', slug: 'presidio' }, price: 236990, beds: 3, baths: 2, garage: 2, stories: 2, lot: '334', hersScore: 47, livingSqft: 1106, totalSqft: 1471, description: 'Highlights:\n- Big yard', gallery: [{ url: '/1.jpg', alt: '' }, { url: '/2.jpg', alt: '' }, { url: '/3.jpg', alt: '' }], image: '/render.jpg', virtualTourUrl: 'https://my.matterport.com/show/?m=x', planViewerUrl: 'https://idapro.cloud/flr_pln/presidio', fpImage: '/fp.jpg', elevation: 'Presidio - Tuscan', pdfUrl: 'https://pdf/x', availability: 'Available Now', promo: '', communityObj: c };
   const out = qmiContent(h);
-  for (const id of ['id="detail-gallery"', 'id="overview"', 'id="virtualtour"', 'id="plans"', 'id="community"', 'id="sales"', 'id="request-a-tour"']) assert(out.includes(id), 'has ' + id);
+  for (const id of ['id="detail-gallery"', 'id="overview"', 'id="virtualtour"', 'id="elevations"', 'id="plans"', 'id="energy_cost"', 'id="community"', 'id="sales"', 'id="request-a-tour"', 'id="recommend"']) assert(out.includes(id), 'has ' + id);
   assert(out.includes('data-live="price"') && out.includes('$236,990'), 'price');
   assert(out.includes('Lot #334'), 'lot number stat');
   assert(out.includes('2 Stories'), 'stories stat');
   assert(out.includes('Floor Plans') && out.includes('SCHEDULE AN EXPLORATORY VISIT'), 'subnav label + overview CTA');
-  assert(out.includes('<ul>') && out.includes('Big yard'), 'desc bullets');
+  assert(out.includes('<p>- Big yard</p>') && !out.includes('<li>Big yard</li>'), 'desc hyphen paragraphs');
   assert(out.includes('matterport.com') && out.includes('idapro.cloud'), 'tour+plan');
-  assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'no leftover markers/undefined');
+  // Gallery mosaic: render leads, side thumbs from the gallery, N = gallery size,
+  // mobile full-width bar under the Go To... dropdown.
+  assert(out.indexOf('/render.jpg') < out.indexOf('/1.jpg') && out.includes('View 3 Photos'), 'hero render + photo count');
+  assert(out.indexOf('Go To...') < out.indexOf('View Photo Gallery') && out.indexOf('View Photo Gallery') < out.indexOf('id="overview"'), 'mobile gallery bar placement');
+  // Elevations reuse the home render, no dark label chip.
+  const elevSec = out.slice(out.indexOf('id="elevations"'), out.indexOf('id="plans"'));
+  assert(elevSec.includes('/render.jpg') && !elevSec.includes('banner dark-green'), 'elevation render, no chip');
+  // Energy Cost Comparison from the harvested per-plan map (presidio), explicit HERS wins.
+  assert(out.includes('Energy Cost Comparison') && out.includes('>47<') && out.includes('id="numslider"'), 'energy section + HERS');
+  assert(!qmiContent({ ...h, floorPlan: 'No Such Plan', floorplanObj: null, hersScore: null }).includes('id="energy_cost"'), 'energy omitted without data');
+  // Original order: Sales Office -> Schedule form -> Recommended For You (last).
+  assert(out.indexOf('id="sales"') < out.indexOf('id="request-a-tour"') && out.indexOf('id="request-a-tour"') < out.indexOf('Recommended For You'), 'section order');
+  // Sales office address carries the ZIP (from the home when the community has none).
+  assert(out.includes('Laredo, TX 78046'), 'sales office zip');
+  // Recommended = other community plans as a swiper of plan-cards (own plan excluded).
+  assert(out.includes('card plan-card') && out.includes('San Luis') && out.includes('$229,990') && out.includes('View Details') && out.includes('tour-icon'), 'recommended plan carousel');
+  assert(!out.slice(out.indexOf('id="recommend"')).includes('Presidio</span>'), 'own plan excluded from carousel');
+  // Schedule-form thumbnail = interior photo (2nd gallery image), not the sales office.
+  const formSec = out.slice(out.indexOf('id="request-a-tour"'));
+  assert(formSec.includes('/2.jpg') && !formSec.includes('/c.jpg'), 'form interior thumbnail');
+  assert(!out.includes('<!--CONTENT-->') && !/undefined|NaN/.test(out), 'no leftover markers/undefined/NaN');
   const page = renderQmi(h, '<head><title>x</title></head><body><!--CONTENT--></body>');
   assert(page.includes('hydrate-live.js') && page.includes('community-maps-live.js') && page.includes('__ESPERANZA_PAGE'), 'islands+config');
   console.log('render-qmi.mjs demo() passed');
