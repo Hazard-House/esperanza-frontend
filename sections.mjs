@@ -8,6 +8,23 @@ import { slugify } from './data.mjs';
 
 // Harvested live-site facts (mortgage rate, per-community taxmultiplier, per-home
 // promo badges) — see harvest-live-facts.mjs. Build-time read; {} if missing.
+// Per-home promo badge harvested from the live site (fields.promo_text is often
+// just the site-wide banner) — {text, color} or null.
+export function homeBadge(h) { return (FACTS.badges || {})[slugify(h.address)] || null; }
+
+// Full per-home card facts as the live original renders them (badge, availability
+// text/color, verbatim lot, stories, self-tour, exact monthlies). Address slug
+// first; "<community>/<housenumber>" absorbs street-suffix slug differences.
+export function factOf(h) {
+  const cf = FACTS.cardFacts || {};
+  let hit = cf[slugify(h.address)];
+  if (!hit) {
+    const hn = String(h.address || '').match(/^(\d+)/);
+    if (hn) hit = cf[slugify(h.community) + '/' + hn[1]];
+  }
+  return hit || {};
+}
+
 // D1 stores lots 8-digit zero-padded; O'Neill displays per-community pad3 ("007") or bare ("82").
 export function fmtLot(raw, community) {
   if (!raw) return null;
@@ -304,17 +321,21 @@ export function monthlyPayment(price, rate, taxMult) {
 export function qmiCardHtml(h) {
   const url = qmiPath(h);
   // Per-home badge harvested from the live site wins over the (often site-wide) promo_text.
-  const badge = (FACTS.badges || {})[slugify(h.address)];
+  const fact = factOf(h);
+  const badge = fact.badge || (FACTS.badges || {})[slugify(h.address)];
   const promoText = badge ? badge.text : h.promo;
   const promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
   let banners = '';
   if (promoText) banners += `<div class="banner overlay-promo ${promoColor}">${esc(promoText)}</div>`;
-  const availColor = /available now/i.test(h.availability || '') ? 'green' : 'gray';
-  if (h.availability) banners += `<div class="banner ${availColor}"${promoText ? ' style="top:2.5rem"' : ''}>${esc(h.availability)}</div>`;
-  const lotTxt = fmtLot(h.lot, h.community);
+  const availText = (fact.avail && fact.avail.text) || h.availability;
+  const availColor = fact.avail ? fact.avail.color : (/available now/i.test(availText || '') ? 'green' : 'gray');
+  if (availText) banners += `<div class="banner ${availColor}"${promoText ? ' style="top:2.5rem"' : ''}>${esc(availText)}</div>`;
+  if (fact.selfTour) banners += `<div class="banner-self-tour banner"><p>Self-Touring Available</p></div>`;
+  const lotTxt = fact.lot || fmtLot(h.lot, h.community);
   if (lotTxt) banners += `<div class="badge lot bg-light-gray overpass light text-secondary">Lot #${esc(lotTxt)}</div>`;
   const stat = (icon, txt) => `<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="${icon}" aria-hidden="true" loading="lazy" width="18">${txt}</div>`;
   // Original order: bed, garage (omitted when 0), bath, story, living, total.
+  if (fact.stories != null) h = { ...h, stories: fact.stories };
   let stats = '';
   if (h.beds != null) stats += stat(ICON.bed, esc(h.beds) + ' Bedrooms');
   if (h.garage != null && String(h.garage) !== '0') stats += stat(ICON.garage, esc(h.garage) + ' Car Garage');
@@ -332,13 +353,13 @@ export function qmiCardHtml(h) {
   if (h.price) {
     const RATE = FACTS.rate || 6.15;
     const tax = (FACTS.taxMult || {})[slugify(h.community)] || 2.2;
-    const m = monthlyPayment(h.price, RATE, tax);
+    const m = fact.mStd != null ? fact.mStd : monthlyPayment(h.price, RATE, tax);
     const promoRate = promoText && (promoText.match(/([\d.]+)\s*%/) || [])[1];
     let inner;
     if (promoRate && Number(promoRate) < RATE) {
       // original promo-rate card: promo monthly + struck standard + 30-yr savings
       // (both /mo spans render WITHOUT thousands separators on the original)
-      const pm = monthlyPayment(h.price, Number(promoRate), tax);
+      const pm = fact.mPromo != null ? fact.mPromo : monthlyPayment(h.price, Number(promoRate), tax);
       const savings = (m - pm) * 360;
       inner = `<span class="fs-9 overpass bold text-green">$${pm.toFixed(2)}/mo*</span>`
         + `<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="${m.toFixed(2)}">$${m.toFixed(2)}/mo*</span>`

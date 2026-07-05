@@ -1,7 +1,7 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage, fmtLot, homeBadge } from './sections.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -18,8 +18,10 @@ export function qmiContent(h) {
   const fpLink = h.floorPlan ? `<div class="d-block text-brown"><a href="${esc(fpHref)}" class="text-brown">${esc(h.floorPlan)} Floor Plan</a></div>` : '';
   const commLink = h.community ? `<div class="d-block"><a href="${esc(commHref)}" class="text-brown">${esc(h.community)}${h.city ? ` in ${esc(h.city)}, TX` : ''}</a></div>` : '';
   const avail = h.availability ? `<div class="status-banner gray mt-2 align-top" data-live="availability">${esc(h.availability)}</div>` : '';
-  const promoB = h.promo ? `<div class="status-banner overlay-promo mt-2 align-top tan" data-live="promo">${esc(h.promo)}</div>` : '';
-  const saving = h.promo ? `<p id="calculator-promo-saving" class="small mb-2">Savings Over 30 Years</p>` : '';
+  const badge = homeBadge(h);
+  const promoText = (badge && badge.text) || h.promo;
+  const promoB = promoText ? `<div class="status-banner overlay-promo mt-2 align-top ${(badge && badge.color) || 'tan'}" data-live="promo">${esc(promoText)}</div>` : '';
+  const saving = promoText ? `<p id="calculator-promo-saving" class="small mb-2">Savings Over 30 Years</p>` : '';
   const header = `<section class="header text-center bg-tan-white pb-2 py-lg-4"><div class="container"><div class="row align-items-center"><div class="col-12 col-md-9"><div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div><h1 class="bodoni text-gray fs-1 ls-sm">${esc(h.address)}</h1>${fpLink}${commLink}${avail}${promoB}</div><div class="col-12 col-md-3"><div><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4" data-live="price">${money(h.price)}</div></div>${saving}<div><a data-bs-toggle="modal" data-bs-target="#payment-calculator"><div class="btn btn-auto btn-learn">Calculate Monthly Payment<img class="ms-auto mb-1" src="${GREEN_ARROW}" aria-hidden="true" loading="lazy" width="16"></div></a></div></div></div></div></section>`;
 
   // --- Overview: description | stat-group + share + osc-callout; CTA row spans below ---
@@ -31,7 +33,7 @@ export function qmiContent(h) {
     h.totalSqft != null && statItem(ICON.total, num(h.totalSqft) + ' Total Sq. Ft.'),
     // O'Neill's overview reuses the plain sqft icon for the Living row too.
     h.livingSqft != null && statItem(ICON.total, num(h.livingSqft) + ' Living Sq. Ft.'),
-    h.lot != null && statItem(ICON.lot, 'Lot #' + esc(h.lot)),
+    h.lot != null && statItem(ICON.lot, 'Lot #' + esc(fmtLot(h.lot, h.community) || h.lot)),
   ].filter(Boolean).join('');
   const subj = encodeURIComponent(h.address || ''), shareUrl = qmiPath(h);
   const share = `<div class="share-buttons mb-3"><ul><li class="h6 title-underline">Share</li><li><a href="mailto:?subject=${subj}&body=${esc(shareUrl)}" target="_blank"><i class="far fa-envelope text-brown me-2 fa-lg"></i></a></li><li><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=${esc(shareUrl)}&src=sdkpreparse" class="fb-xfbml-parse-ignore"><i class="fab fa-facebook text-brown me-1 fa-lg"></i></a></li><li><a href="https://twitter.com/intent/tweet?text=${subj}&url=${esc(shareUrl)}" target="_blank"><i class="fab fa-twitter text-brown fa-lg"></i></a></li></ul></div>`;

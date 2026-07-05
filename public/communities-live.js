@@ -53,13 +53,14 @@
     var item = function (icon, v, label) {
       return v ? '<div class="item py-2"><img class="me-2" src="' + icon + '" aria-hidden="true" loading="lazy" width="18">' + esc(v) + ' ' + label + '</div>' : '';
     };
-    var stats = item(ICON.bed, c.beds, 'Bed') + item(ICON.bath, c.baths, 'Bath') + item(ICON.sqft, c.sqft, 'Sq. Ft.');
-    var price = (!c.comingSoon && c.priceFrom) ?
+    var bare = !!lp.bare; // live original renders this card name/city(+ribbon) only
+    var stats = bare ? '' : item(ICON.bed, c.beds, 'Bed') + item(ICON.bath, c.baths, 'Bath') + item(ICON.sqft, c.sqft, 'Sq. Ft.');
+    var price = (!bare && !c.comingSoon && c.priceFrom) ?
       '<div class="col-auto ps-0 ms-auto py-2"><div class="price-title">Homes From</div><div class="price">' + money(c.priceFrom) + '</div></div>' : '';
     // ponytail: original's Learn More opens a promo modal that doesn't exist on the
     // mirror; a <span> keeps the classes and lets the click bubble to the card link.
-    var incentiveText = c.promoBannerText || lp.incentive;
-    var promo = incentiveText ?
+    var incentiveText = lp.incentive || (lp.ribbon !== undefined ? null : c.promoBannerText); // harvested truth wins; API only when no harvest data at all
+    var promo = (!bare && incentiveText) ?
       '<div class="mp-title"><div class="text-center p-2">' + esc(incentiveText) +
       '<div class="mp-title"><div class="btn btn-primary mt-1 xsmall-btn overpass">' +
       '<span class="promoModalLink text-white border-0 bg-transparent">Learn More</span>' +

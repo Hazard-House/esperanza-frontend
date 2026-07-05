@@ -32,15 +32,46 @@ const badges = {};
 // Lot-number display format per community — O'Neill shows some communities 3-digit
 // zero-padded ("Lot #007") and others bare ("Lot #82"); our D1 stores 8-digit padded.
 const lotFormat = {};
+// Full per-home card facts as the live original renders them — the exact display
+// values (badge, availability text/color, verbatim lot, stories, self-tour flag,
+// exact monthlies incl. the promo-rate pair). Keyed by address slug, with a
+// "<community>/<housenumber>" fallback key (street-suffix abbreviations differ
+// between our data and O'Neill's slugs, e.g. "sambar-lp" vs "sambar-loop").
+const cardFacts = {};
 for (const block of avail.split('class="card spec-card').slice(1)) {
   const href = block.match(/\/new-homes\/tx\/[^/]+\/([^/]+)\/\d+\/([^/]+)\/\d+\//);
+  if (!href) continue;
+  const [, comm, addr] = href;
   const banner = block.match(/banner overlay-promo (tan|green)[^>]*>\s*([\s\S]*?)\s*</);
-  if (href && banner && banner[2]) badges[href[2]] = { text: unent(banner[2]), color: banner[1] };
-  const lot = block.match(/Lot #(\d+)/);
-  if (href && lot) {
+  if (banner && banner[2]) badges[addr] = { text: unent(banner[2]), color: banner[1] };
+  const lot = block.match(/Lot #([\w-]+)/);
+  if (lot && /^\d+$/.test(lot[1])) {
     const fmt = lot[1].length === 3 && lot[1][0] === '0' ? 'pad3' : 'bare';
-    if (!(href[1] in lotFormat) || fmt === 'pad3') lotFormat[href[1]] = fmt;
+    if (!(comm in lotFormat) || fmt === 'pad3') lotFormat[comm] = fmt;
   }
+  const availB = block.match(/<div class="banner (green|gray)"[^>]*>\s*(Available[^<]*?)\s*</);
+  const stories = block.match(/(\d+)\s+Stor(?:y|ies)/);
+  let mStd = null, mPromo = null;
+  const strike = block.match(/text-strikethrough[^>]*data-price="([\d.]+)"/);
+  if (strike) {
+    mStd = Number(strike[1]);
+    const pro = block.match(/PRICE:\s*<\/span>\s*<span class="fs-9 overpass bold text-green">\$([\d.,]+)\/mo/);
+    if (pro) mPromo = Number(pro[1].replace(/,/g, ''));
+  } else {
+    const single = block.match(/estimated-price[^>]*data-price="([\d.,]+)"/);
+    if (single) mStd = Number(single[1].replace(/,/g, ''));
+  }
+  const f = {
+    badge: banner && banner[2] ? { text: unent(banner[2]), color: banner[1] } : null,
+    avail: availB ? { text: unent(availB[2]), color: availB[1] } : null,
+    lot: lot ? lot[1] : null,
+    selfTour: /banner-self-tour/.test(block),
+    stories: stories ? Number(stories[1]) : null,
+    mStd, mPromo,
+  };
+  cardFacts[addr] = f;
+  const hn = addr.match(/^(\d+)/);
+  if (hn) cardFacts[comm + '/' + hn[1]] = f;
 }
 
 // Sequential detail-page fetches (origin throttles bursts); tolerate failures.
@@ -143,11 +174,14 @@ try {
     communityPromos[link[1]] = {
       ribbon: ribbon ? { text: unent(ribbon[2]), color: ribbon[1] } : null,
       incentive,
+      // "bare" cards on the original render name/city (+ribbon) only — no stats,
+      // no Homes From price, no incentive line, no Learn More pill.
+      bare: !/price-title/.test(block),
     };
   }
 } catch (e) { console.warn('community promos harvest skipped: ' + e.message); }
 
-const out = { rate, taxMult, badges, lotFormat, bannerSlides, bannerSlidesCommunity, recommendHtml, communityPromos };
+const out = { rate, taxMult, badges, lotFormat, cardFacts, bannerSlides, bannerSlidesCommunity, recommendHtml, communityPromos };
 const dst = join(import.meta.dirname, 'assets', 'live-facts.json');
 writeFileSync(dst, JSON.stringify(out, null, 2) + '\n');
-console.log(`live-facts.json: rate=${rate}, taxMult=${Object.keys(taxMult).length} communities, badges=${Object.keys(badges).length} homes, lotFormat=${Object.keys(lotFormat).length}, bannerSlides=${bannerSlides.length}, communityPromos=${Object.keys(communityPromos).length}, communitySlides=${bannerSlidesCommunity.length}, recommend=${Object.keys(recommendHtml).join("+")}`);
+console.log(`live-facts.json: rate=${rate}, taxMult=${Object.keys(taxMult).length} communities, badges=${Object.keys(badges).length} homes, cardFacts=${Object.keys(cardFacts).length}, lotFormat=${Object.keys(lotFormat).length}, bannerSlides=${bannerSlides.length}, communityPromos=${Object.keys(communityPromos).length}, communitySlides=${bannerSlidesCommunity.length}, recommend=${Object.keys(recommendHtml).join("+")}`);

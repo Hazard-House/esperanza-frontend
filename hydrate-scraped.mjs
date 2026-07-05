@@ -19,7 +19,11 @@ const FACTS = (() => {
   try { return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {}; } catch { return {}; }
 })();
 const RECOMMEND = {};
-for (const [kind, raw] of Object.entries(FACTS.recommendHtml || {})) RECOMMEND[kind] = rewriteCommon(raw);
+for (const [kind, raw] of Object.entries(FACTS.recommendHtml || {})) {
+  // live URLs use real ?v= queries; the theme snapshot's files are literally named
+  // "X.svg\uFE56v=hash" (HTTrack), so map the query into the filename form.
+  RECOMMEND[kind] = rewriteCommon(raw).replace(/\/static\/([^"'?\s]+)\?v=(\w+)/g, '/static/$1%EF%B9%96v=$2');
+}
 
 // Community-scoped pages carry an extra ticker slide vs the sitewide default —
 // swap the fresh default banner (rewriteCommon already replaced the frozen one)
@@ -150,8 +154,12 @@ export function hydrateFloorplan(html, fp, d) {
   } catch (e) { miss(page, `min price (${e.message})`); }
 
   try {
+    // Card "HOMES FROM $X" shows the COMMUNITY's overall from-price on the
+    // original (not this plan's price in that community).
+    const commFromBySlug = new Map((d.communities || []).map(c => [c.slug, c.priceFrom]));
     html = html.replace(cardRe, seg => {
-      const price = priceOf(seg);
+      const m = seg.match(/new-homes\/tx\/[^/]+\/([^/]+)\/\d+\/index\.html/);
+      const price = m ? commFromBySlug.get(m[1]) : undefined;
       if (price == null) return seg; // community gone from API -> card stays frozen
       return seg.replace(/(<div class="price(?: mt-1)?">)\$[\d,]+(<\/div>)/g, (_, a, b) => a + money(price) + b);
     });
@@ -182,7 +190,7 @@ function demo() {
   assert(!out.includes('id="specs"') && out.includes('id="plans"'), 'empty community drops qmi section only');
 
   const fp = { slug: 'agave', communityPrices: { 'Aqualina at Tres Lagos': 451990, 'Silos at La Sienna': 396990 } };
-  const d = { communities: [{ slug: 'aqualina-at-tres-lagos', name: 'Aqualina at Tres Lagos' }] };
+  const d = { communities: [{ slug: 'aqualina-at-tres-lagos', name: 'Aqualina at Tres Lagos', priceFrom: 333990 }] };
   const fpage = '<a href="#mp-locations">Available in 2 Communities</a><div>Starting at $421,990</div>'
     + '<div class="overpass fs-7">PRICED FROM</div><div class="overpass bold text-dark-green fs-4">$421,990</div>'
     + '<section id="mp-locations"><div class="card oi-map-item"><a href="../../../new-homes/tx/mcallen/aqualina-at-tres-lagos/8658/index.html">x</a>'
@@ -193,7 +201,8 @@ function demo() {
   assert(fout.includes('Starting at $451,990'), 'header min = rendered-cards min');
   assert(fout.includes('fs-4">$451,990'), 'priced-from = rendered-cards min');
   assert(!fout.includes('$396,990'), 'cardless communityPrice excluded from min');
-  assert((fout.match(/\$451,990/g) || []).length === 4, 'header + priced-from + card + infowindow updated');
+  assert((fout.match(/\$451,990/g) || []).length === 2, 'header + priced-from use rendered min');
+  assert((fout.match(/\$333,990/g) || []).length >= 1, 'card HOMES FROM = community priceFrom');
   assert(fout.includes('$111,111'), 'unknown community card stays frozen');
   // no card matches communityPrices -> everything stays frozen
   const frozen = hydrateFloorplan(fpage, { slug: 'x', communityPrices: { Nowhere: 1 } }, d);

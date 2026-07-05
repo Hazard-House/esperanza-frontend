@@ -72,7 +72,19 @@
 
   // live-facts.json: harvested from the live site (rate, per-community taxmultiplier,
   // per-home promo badges). Fetched in boot(); {} until then / if missing.
-  var FACTS = { rate: null, taxMult: {}, badges: {} };
+  var FACTS = { rate: null, taxMult: {}, badges: {}, cardFacts: {} };
+  // Per-home facts exactly as the live original renders them (badge, availability,
+  // verbatim lot, stories, self-tour, exact monthlies). Address slug first; the
+  // "<community>/<housenumber>" key absorbs street-suffix slug differences.
+  function factOf(h) {
+    var cf = FACTS.cardFacts || {};
+    var hit = cf[slugify(h.address)];
+    if (!hit) {
+      var hn = String(h.address || '').match(/^(\d+)/);
+      if (hn) hit = cf[slugify(h.community) + '/' + hn[1]];
+    }
+    return hit || {};
+  }
   // D1 stores lots 8-digit zero-padded; O'Neill displays per-community pad3 ("007") or bare ("82").
   function fmtLot(raw, community) {
     if (!raw) return null;
@@ -97,19 +109,23 @@
     var img = h.image || '';
     // Per-home badge from the live site wins; fields.promo_text is often the generic
     // site-wide banner, but render it anyway when there's no override.
-    var badge = FACTS.badges[slugify(h.address)];
+    var fact = factOf(h);
+    var badge = fact.badge || FACTS.badges[slugify(h.address)];
     var promoText = badge ? badge.text : h.promo;
     var promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
     var banners = '';
     if (promoText) banners += '<div class="banner overlay-promo ' + promoColor + '">' + esc(promoText) + '</div>';
-    var availColor = /available now/i.test(h.availability || '') ? 'green' : 'gray';
-    if (h.availability) banners += '<div class="banner ' + availColor + '"' + (promoText ? ' style="top:2.5rem"' : '') + '>' + esc(h.availability) + '</div>';
-    var lotTxt = fmtLot(h.lot, h.community);
+    var availText = (fact.avail && fact.avail.text) || h.availability;
+    var availColor = fact.avail ? fact.avail.color : (/available now/i.test(availText || '') ? 'green' : 'gray');
+    if (availText) banners += '<div class="banner ' + availColor + '"' + (promoText ? ' style="top:2.5rem"' : '') + '>' + esc(availText) + '</div>';
+    if (fact.selfTour) banners += '<div class="banner-self-tour banner"><p>Self-Touring Available</p></div>';
+    var lotTxt = fact.lot || fmtLot(h.lot, h.community);
     if (lotTxt) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">Lot #' + esc(lotTxt) + '</div>';
     function stat(icon, txt) {
       return '<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="' + icon + '" aria-hidden="true" loading="lazy" width="18">' + txt + '</div>';
     }
     // Original order: bed, garage (omitted when 0), bath, story, living, total.
+    if (fact.stories != null) h.stories = fact.stories;
     var stats = '';
     if (h.beds != null) stats += stat(ICON.bed, esc(h.beds) + ' Bedrooms');
     if (h.garage != null && String(h.garage) !== '0') stats += stat(ICON.garage, esc(h.garage) + ' Car Garage');
@@ -129,13 +145,13 @@
     var est = '';
     if (h.price) {
       var tax = FACTS.taxMult[slugify(h.community)] || 2.2;
-      var m = monthlyPayment(h.price, RATE, tax);
+      var m = fact.mStd != null ? fact.mStd : monthlyPayment(h.price, RATE, tax);
       var promoRate = promoText && (promoText.match(/([\d.]+)\s*%/) || [])[1];
       var inner;
       if (promoRate && Number(promoRate) < RATE) {
         // original promo-rate card: promo monthly + struck standard + 30-yr savings
         // (these two spans render WITHOUT thousands separators on the original)
-        var pm = monthlyPayment(h.price, Number(promoRate), tax);
+        var pm = fact.mPromo != null ? fact.mPromo : monthlyPayment(h.price, Number(promoRate), tax);
         var savings = (m - pm) * 360;
         inner = '<span class="fs-9 overpass bold text-green">$' + pm.toFixed(2) + '/mo*</span>' +
           '<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="' + m.toFixed(2) + '">$' + m.toFixed(2) + '/mo*</span>' +
@@ -342,7 +358,7 @@
     ]).then(function (res) {
       if (res[2]) LINKS = res[2];
       var lf = res[4] || {};
-      FACTS = { rate: lf.rate, taxMult: lf.taxMult || {}, badges: lf.badges || {}, lotFormat: lf.lotFormat || {} };
+      FACTS = { rate: lf.rate, taxMult: lf.taxMult || {}, badges: lf.badges || {}, lotFormat: lf.lotFormat || {}, cardFacts: lf.cardFacts || {} };
       var settings = (res[3] && res[3].settings) || {};
       RATE = FACTS.rate || settings.mortgage_rate || 6.15;
       var planStories = {};
