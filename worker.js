@@ -1,0 +1,86 @@
+// Esperanza / O'Neill static replica — served by Cloudflare Workers Static Assets.
+// Replaces the Railway + Caddy setup 1:1. The static site lives in ./public (built by
+// build.mjs); this Worker runs first (assets.run_worker_first) so it owns headers,
+// the same-origin API proxy, the analytics/XHR stubs, and the 404 fallback — the exact
+// behaviour the old Caddyfile provided, in one place that survives rebuilds.
+
+const LIVE = "https://www.esperanzahomes.com";
+const API = "https://esperanza-api.round-base-ed8c.workers.dev";
+
+// Real assets fail fast on 404; page misses serve our branded 404 page (a mangled asset
+// URL must not fall through and pull down a full HTML page for every missing image).
+const ASSET_RE = /\.(js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|eot|map|mp4|json|xml|txt|pdf)$/i;
+
+// Site-wide security headers. No CSP on purpose: the scrape carries many third-party
+// pixels a policy would break (same decision as the old Caddyfile).
+const SEC = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "SAMEORIGIN",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+};
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const p = url.pathname;
+
+    // Same-origin proxy to the public API so the browser avoids CORS (the API only
+    // allows the esperanzahomes.com origin). Build a clean subrequest — forwarding the
+    // incoming Host header bounces the request back to this Worker instead of the API.
+    // Let the CF edge cache the JSON 60s.
+    if (p.startsWith("/api/")) {
+      const h = new Headers();
+      const accept = request.headers.get("accept");
+      if (accept) h.set("accept", accept);
+      const ct = request.headers.get("content-type");
+      if (ct) h.set("content-type", ct);
+      h.set("origin", LIVE); // the API's allow-listed origin
+      const sub = new Request(API + p + url.search, {
+        method: request.method,
+        headers: h,
+        body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
+        redirect: "manual",
+      });
+      const resp = await env.API.fetch(sub);
+      const out = new Response(resp.body, resp);
+      out.headers.set("Cache-Control", "public, s-maxage=60, max-age=30");
+      return out;
+    }
+
+    // Homefiniti analytics beacons — 204 so the client stops chasing a dead 302.
+    if (p.startsWith("/hfa/")) return new Response("", { status: 204 });
+
+    // Frozen-snapshot XHRs (recommend, oicheck, form posts) — benign JSON so they
+    // resolve quietly instead of erroring on the dead domain.
+    if (p.startsWith("/xhr/")) {
+      return new Response(JSON.stringify({ data: { content: "" }, success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Static assets. html_handling resolves pretty URLs (/contact -> /contact/index.html).
+    const resp = await env.ASSETS.fetch(request);
+
+    if (resp.status === 404) {
+      if (ASSET_RE.test(p)) return new Response("Not found", { status: 404 });
+      // Serve our branded 404 page (1:1 with the legacy site) with a real 404 status.
+      const nf = await env.ASSETS.fetch(new Request(new URL("/404.html", request.url)));
+      const headers = new Headers(nf.status === 200 ? nf.headers : {});
+      headers.set("Content-Type", "text/html; charset=utf-8");
+      headers.set("Cache-Control", "public, max-age=300");
+      for (const [k, v] of Object.entries(SEC)) headers.set(k, v);
+      return new Response(nf.status === 200 ? nf.body : "Page not found", { status: 404, headers });
+    }
+
+    const out = new Response(resp.body, resp);
+    for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
+    if (p.startsWith("/static/")) {
+      out.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    } else if ((resp.headers.get("content-type") || "").includes("text/html")) {
+      out.headers.set("Cache-Control", "public, max-age=300");
+    }
+    return out;
+  },
+};
