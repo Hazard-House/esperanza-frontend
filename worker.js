@@ -11,6 +11,19 @@ const API = "https://esperanza-api.round-base-ed8c.workers.dev";
 // URL must not fall through and pull down a full HTML page for every missing image).
 const ASSET_RE = /\.(js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|eot|map|mp4|json|xml|txt|pdf)$/i;
 
+// Hand-curated 301s for live URL shapes the static tree stores differently.
+// NOTE: PR #10 introduces a GENERATED redirects.mjs keyed the same way; when it lands,
+// fold these entries into that lookup (one mechanism) — keys don't overlap today.
+const REDIRECTS = {
+  // live QMI slug is "5315-moses-lp"; the generated mirror page uses the full street name
+  "/new-homes/tx/laredo/wolf-creek/5315-moses-lp/": "/new-homes/tx/laredo/wolf-creek/5315-moses-loop/",
+  // D1 community slug carries literal parens; live (and our shipped page) use the clean form
+  "/new-homes/tx/mission/retama-village-(55-)-at-bentsen-palm/": "/new-homes/tx/mission/retama-village-55-at-bentsen-palm/",
+  // retired blog slugs — live 301s both to the blog index
+  "/blog/vista-verde-groundbreaking-new-homes-coming-to-laredo-tx/": "/blog/",
+  "/blog/vista-verde-groundbreaking-ceremony-celebrates-new-community-coming-to-laredo/": "/blog/",
+};
+
 // Site-wide security headers. No CSP on purpose: the scrape carries many third-party
 // pixels a policy would break (same decision as the old Caddyfile).
 const SEC = {
@@ -42,7 +55,11 @@ export default {
         body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
         redirect: "manual",
       });
-      const resp = await env.API.fetch(sub);
+      // env.API is the deployed service binding. Under `wrangler dev` the binding is a
+      // 503 stub (no local esperanza-api session); fall back to a plain fetch there —
+      // the 1042 worker-to-worker block that motivated the binding only applies deployed.
+      let resp = env.API ? await env.API.fetch(sub) : null;
+      if (!resp || resp.status === 503) resp = await fetch(new Request(sub, { redirect: "manual" }));
       const out = new Response(resp.body, resp);
       out.headers.set("Cache-Control", "public, s-maxage=60, max-age=30");
       return out;
@@ -60,8 +77,33 @@ export default {
       });
     }
 
+    const slashed = p.endsWith("/") ? p : p + "/";
+    const dest = REDIRECTS[p] || REDIRECTS[slashed];
+    if (dest) return Response.redirect(url.origin + dest, 301);
+
+    // Scraped nav hrefs are relative; on the one-dir-shallower CLEAN community paths
+    // the Quick Move-Ins link resolves to /available/ (root-clamped) instead of
+    // /new-homes/available/. One redirect fixes the header on every affected page.
+    if (slashed.startsWith("/available/")) {
+      return Response.redirect(url.origin + "/new-homes" + p + url.search, 301);
+    }
+
+    // Live serves PDFs at extension-less URLs; the scrape stored them as named files.
+    // Map the live shapes onto the stored assets (mirror pages link the filename form
+    // directly, so this only matters for external/live-shape links).
+    let req = request;
+    if (slashed === "/new-homes/pdf/") {
+      req = new Request(new URL("/new-homes/pdf/Communities.pdf", request.url), request);
+    } else if (/^\/pdf-features\/.+\/$/.test(slashed) && p === slashed) {
+      req = new Request(new URL(slashed + "Features List.pdf", request.url), request);
+    } else if (slashed === "/floorplan-collections/pdf/") {
+      // 86MB scraped PDF exceeds the 25MiB static-asset cap; the esperanza-pdf Worker
+      // generates the same all-plans list from D1 (fresher data, same UX).
+      return Response.redirect("https://esperanza-pdf.round-base-ed8c.workers.dev/pdf/list/all-plans", 302);
+    }
+
     // Static assets. html_handling resolves pretty URLs (/contact -> /contact/index.html).
-    const resp = await env.ASSETS.fetch(request);
+    const resp = await env.ASSETS.fetch(req);
 
     if (resp.status === 404) {
       if (ASSET_RE.test(p)) return new Response("Not found", { status: 404 });
