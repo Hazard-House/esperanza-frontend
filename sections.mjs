@@ -214,26 +214,34 @@ export function mapSalesHtml(c) {
 }
 
 export function formSlotHtml(kind, ctx) {
-  // ctx = address string (legacy) or {address, image}. The .hs-form-slot contents are
-  // an INERT visual placeholder matching O'Neill's field grid 1:1; the HubSpot task
-  // replaces the inner form later. Field ids/classes are load-bearing (O'Neill's form
-  // CSS is scoped to #detailpagescheduletourform).
+  // ctx = address string (legacy) or {address, image}. Field ids/classes are
+  // load-bearing (O'Neill's form CSS is scoped to #detailpagescheduletourform).
+  // The form POSTs natively (generated pages run islands, not oilib) to the worker's
+  // /xhr/ lead endpoint, which forwards the lead to HubSpot and 303s to /thankyou/.
+  // required attrs + type="email" give browser-native validation in oilib's place.
   const c = (ctx && typeof ctx === 'object') ? ctx : { address: ctx };
   const address = c.address || '';
   const introImg = esc(c.introImage || c.image || '');
   const sideImg = esc(c.image || '');
   const sideAlt = esc(address || 'New Home');
-  const form = `<form id="detailpagescheduletourform" class="oi-form detailpagescheduletourform" novalidate onsubmit="return false">
+  const action = kind === 'general' ? '/xhr/general/' : '/xhr/tour/';
+  const event = kind === 'general' ? 'oi-contact-75' : 'oi-appointment-request';
+  const form = `<form id="detailpagescheduletourform" class="oi-form detailpagescheduletourform" data-oi-event="${event}" method="post" action="${action}">
     <div class="row g-3">
-        <div class="form-group charfield textinput first_name required"><label for="dpst__first_name">First Name</label><input type="text" name="first_name" placeholder="First Name*" class="form-control first_name required" id="dpst__first_name" aria-label="First Name"><span class="form-group-message"></span></div>
-        <div class="form-group charfield textinput last_name required"><label for="dpst__last_name">Last Name</label><input type="text" name="last_name" placeholder="Last Name*" class="form-control last_name required" id="dpst__last_name" aria-label="Last Name"><span class="form-group-message"></span></div>
-        <div class="form-group oiemailfield textinput email required"><label for="dpst__email">Email</label><input type="text" name="email" placeholder="Email*" class="form-control email required" id="dpst__email" aria-label="Email"><span class="form-group-message"></span></div>
+        <div class="form-group"><div id="detailpagescheduletourform_message" class="oi-form-message" style="display: none;"></div></div>
+        <div class="form-group charfield textinput first_name required"><label for="dpst__first_name">First Name</label><input type="text" name="first_name" placeholder="First Name*" class="form-control first_name required" id="dpst__first_name" required aria-label="First Name"><span class="form-group-message"></span></div>
+        <div class="form-group charfield textinput last_name required"><label for="dpst__last_name">Last Name</label><input type="text" name="last_name" placeholder="Last Name*" class="form-control last_name required" id="dpst__last_name" required aria-label="Last Name"><span class="form-group-message"></span></div>
+        <div class="form-group oiemailfield textinput email required"><label for="dpst__email">Email</label><input type="email" name="email" placeholder="Email*" class="form-control email required" id="dpst__email" required aria-label="Email"><span class="form-group-message"></span></div>
         <div class="form-group choicefield select country_code required"><label for="dpst__country_code">Country Code</label><select name="country_code" class="form-control custom-select country_code required" id="dpst__country_code" aria-label="Country Code"><option value="+1">US</option><option value="+52">MX</option></select><span class="form-group-message"></span></div>
         <div class="form-group charfield textinput primary_phone"><label for="dpst__primary_phone">Primary Phone</label><input type="text" name="primary_phone" placeholder="Phone*" class="form-control primary_phone" id="dpst__primary_phone" aria-label="Primary Phone"><span class="form-group-message"></span></div>
-        <div class="form-group datefield dateinput preferred_date required"><label for="dpst__preferred_date">Date*</label><input type="date" name="preferred_date" class="form-control preferred_date required" id="dpst__preferred_date" aria-label="Date*"><span class="form-group-message"></span></div>
-        <div class="form-group timefield timeinput preferred_time required"><label for="dpst__preferred_time">Time*</label><input type="time" name="preferred_time" class="form-control preferred_time required" id="dpst__preferred_time" aria-label="Time*"><span class="form-group-message"></span></div>
+        <div class="form-group datefield dateinput preferred_date required"><label for="dpst__preferred_date">Date*</label><input type="date" name="preferred_date" class="form-control preferred_date required" id="dpst__preferred_date" required aria-label="Date*"><span class="form-group-message"></span></div>
+        <div class="form-group timefield timeinput preferred_time required"><label for="dpst__preferred_time">Time*</label><input type="time" name="preferred_time" class="form-control preferred_time required" id="dpst__preferred_time" required aria-label="Time*"><span class="form-group-message"></span></div>
         <div class="form-group custom-control form-checkbox booleanfield checkboxinput opt_in "><input type="checkbox" name="opt_in" class="form-check-input opt_in" id="dpst__opt_in" checked><label for="dpst__opt_in" class="custom-control-label"> &nbsp; Opt-in to receive text messages</label><span class="form-group-message"></span></div>
         <div class="form-row opt-in-text"><p>I agree to receive communications by text message regarding informational (appointment details, account notifications, marketing, etc. ) from Esperanza Homes.</p><p>You may opt out by replying STOP or ask for more information by replying HELP. Message frequency varies. Message and data rates may apply.</p><p>You may review our <a href="/privacy-policy/">Privacy Policy</a> to learn how your data is used.</p></div>
+        <input type="hidden" name="oi_form_id" value="detailpagescheduletourform" class="oi_form_id" aria-label="oi form_id">
+        <input type="hidden" name="lead_routing" value="OSC" class="lead_routing" aria-label="lead routing">
+        <input type="hidden" name="item_of_interest_type" value="location" class="item_of_interest_type" aria-label="item of_interest_type">
+        <input type="hidden" name="item_of_interest_title" value="${esc(address)}" class="item_of_interest_title" aria-label="item of_interest_title">
     </div>
     <div class="row g-3"><div class="form-group"><button type="submit" class="btn btn-primary mt-4 xsmall-btn overpass">Submit</button></div></div>
 </form>`;
