@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
+import { freshBannerHtml } from './rewrite.mjs';
 
 // Harvested live-site facts (mortgage rate, per-community taxmultiplier, per-home
 // promo badges) — see harvest-live-facts.mjs. Build-time read; {} if missing.
@@ -419,9 +420,15 @@ export function setHead(html, m) {
   return html;
 }
 
+// The shell template ships a hidden EMPTY promo ticker (its slides were home-specific
+// crawl bait); live renders the rotating community ticker on every detail page. Swap
+// in the harvested slide set so the theme's Swiper init picks it up like O'Neill's.
+const EMPTY_BANNER_RE = /<div class="alert-banner" style="display:none">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/;
 export function finalizePage(shell, { content, head, page, islands }) {
   let html = setHead(shell, head);
   html = html.replace('<!--CONTENT-->', content);
+  const slides = FACTS.bannerSlidesCommunity || FACTS.bannerSlides;
+  if (slides && slides.length) html = html.replace(EMPTY_BANNER_RE, freshBannerHtml(slides));
   html = disableOilib(html);
   const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: STYLE_COMMON_URL, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: STYLE_COMMON_URL };
   const scripts = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};window.__ESPERANZA_PAGE=${JSON.stringify(page)};</script>\n`

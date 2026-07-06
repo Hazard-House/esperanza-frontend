@@ -93,7 +93,33 @@ export function resizeImages(html) {
       (_m, attr, path) => `${attr}//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/${path}"`);
 }
 
+// The crawl captured HYDRATED map containers: a dead <canvas> + control DOM inside
+// every data-oi-map-autoload div (plus the runtime mapboxgl-map class). oilib then
+// initializes a SECOND map into the same container at runtime — two stacked canvases,
+// doubled attribution, and the marker pin hidden behind the dead baked canvas. Empty
+// the container so oilib builds the one real map, like the live original's clean SSR.
+export function stripBakedMapbox(html) {
+  let out = '', pos = 0;
+  const re = /<div\b[^>]*data-oi-map-autoload[^>]*>/g;
+  let m;
+  while ((m = re.exec(html))) {
+    const open = m[0].replace(/(class="[^"]*?)\s*mapboxgl-map([^"]*")/, '$1$2');
+    const start = m.index + m[0].length;
+    // depth-scan to the container's matching </div>
+    const tag = /<\/?div\b/g;
+    tag.lastIndex = start;
+    let depth = 1, end = start, t;
+    while (depth > 0 && (t = tag.exec(html))) { depth += t[0][1] === '/' ? -1 : 1; end = t.index; }
+    if (depth !== 0) continue; // unbalanced — leave untouched
+    out += html.slice(pos, m.index) + open;
+    pos = end; // keep the closing </div>
+    re.lastIndex = end;
+  }
+  return out + html.slice(pos);
+}
+
 export function rewriteCommon(html) {
+  html = stripBakedMapbox(html);
   html = html
     .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
     // Blog category <option value>s are absolute live-domain URLs HTTrack left alone.
@@ -145,11 +171,18 @@ export function rewriteCommon(html) {
 }
 
 // Disable oilib's map/filter/form init + stub `oi` so orphaned inline calls are silent.
+// oilib also owned the header-search autocomplete, so every oilib-disabled page gets
+// the sitesearch-live.js island as its replacement (same /sitesearch.json data).
 export function disableOilib(html) {
   html = html.replace(/<script[^>]*\/static\/assets\/js\/oilib[^>]*><\/script>/g, '<!-- oilib removed for islands -->');
   if (!html.includes('window.oi=')) {
     const stub = '<script>window.oi=new Proxy(function(){},{get:function(){return window.oi},apply:function(){return window.oi}});</script>';
     html = html.replace(/<head([^>]*)>/i, `<head$1>\n${stub}`);
+  }
+  if (!html.includes('src="/sitesearch-live.js"')) {
+    const tag = '\n<script src="/sitesearch-live.js" defer></script>\n';
+    const i = html.lastIndexOf('</body>');
+    html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
   }
   return html;
 }
@@ -192,6 +225,10 @@ function demo() {
   console.assert(s('<head></head>').includes('window.ganalyticsLoaded||'), 'tracker stub injected');
   console.assert(s('<option value="https://www.esperanzahomes.com/blog/category/news/">') === '<option value="/blog/category/news/">', 'option value same-origin');
   console.assert(s('<input type="hidden" value="https://www.esperanzahomes.com/blog/">').includes('www.esperanzahomes.com'), 'non-option values untouched (forms PR owns those)');
+  // baked hydrated map innards stripped; container + siblings preserved
+  const mb = stripBakedMapbox('<div id="oi-map" class="gmap mapboxgl-map" data-oi-map-autoload="single"><div class="mapboxgl-canary"></div><div class="mapboxgl-canvas-container"><canvas class="mapboxgl-canvas"></canvas></div><div class="mapboxgl-control-container"><div class="mapboxgl-ctrl"><button>+</button></div></div></div><div class="after">x</div>');
+  console.assert(mb === '<div id="oi-map" class="gmap" data-oi-map-autoload="single"></div><div class="after">x</div>', 'stripBakedMapbox: ' + mb);
+  console.assert(stripBakedMapbox('<div data-oi-map-autoload="single"></div>') === '<div data-oi-map-autoload="single"></div>', 'stripBakedMapbox empty container idempotent');
   const links = s('<a href="design-studio/index.html">a</a><a href="index.html">home</a><a href="../new-homes/index.html?x=1">q</a><a href="/static/style.css">keep</a>');
   console.assert(links === '<a href="design-studio/">a</a><a href="./">home</a><a href="../new-homes/?x=1">q</a><a href="/static/style.css">keep</a>', 'index.html strip: ' + links);
   const tr = stripTrackers('<script src="../js.hs-analytics.net/x.js"></script><script src="/static/esperanza_homes/js/vendor.header.min.js"></script><script>fbq("init","123")</script><script>new Swiper(".x")</script><script async src="firstparty/abc.js"></script>');

@@ -66,6 +66,14 @@ export default {
     // Homefiniti analytics beacons — 204 so the client stops chasing a dead 302.
     if (p.startsWith("/hfa/")) return new Response("", { status: 204 });
 
+    // oilib's gallery keyword search fetches /sitesearch.json?scope=tag (the live
+    // server filters by scope; static assets ignore queries). Serve the harvested
+    // tag index for that scope; the frozen default file already covers the header
+    // search scopes (location,plan,spec,lot,blogpost).
+    if (p === "/sitesearch.json" && (url.searchParams.get("scope") || "").startsWith("tag")) {
+      return env.ASSETS.fetch(new Request(new URL("/sitesearch-tag.json", request.url)));
+    }
+
     // Frozen-snapshot XHRs (recommend, oicheck, form posts) — benign JSON so they
     // resolve quietly instead of erroring on the dead domain.
     if (p.startsWith("/xhr/")) {
@@ -109,6 +117,20 @@ export default {
     const resp = await env.ASSETS.fetch(req);
 
     if (resp.status === 404) {
+      // HTTrack stored versioned theme files as "name﹖v=hash.ext"; some scraped
+      // templates (gallery) reference the real "name.ext?v=hash" URL. Map the query
+      // form onto the stored filename before giving up.
+      const v = url.searchParams.get("v");
+      if (p.startsWith("/static/") && v && /\.\w+$/.test(p)) {
+        const alt = p.replace(/\.(\w+)$/, (_, ext) => `﹖v=${encodeURIComponent(v)}.${ext}`);
+        const r = await env.ASSETS.fetch(new Request(new URL(alt, request.url)));
+        if (r.status === 200) {
+          const out = new Response(r.body, r);
+          for (const [k, val] of Object.entries(SEC)) out.headers.set(k, val);
+          out.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+          return out;
+        }
+      }
       if (ASSET_RE.test(p)) return new Response("Not found", { status: 404 });
       // Serve our branded 404 page (1:1 with the legacy site) with a real 404 status.
       const nf = await env.ASSETS.fetch(new Request(new URL("/404.html", request.url)));

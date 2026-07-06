@@ -42,6 +42,9 @@ var worker_default = {
       return out2;
     }
     if (p.startsWith("/hfa/")) return new Response("", { status: 204 });
+    if (p === "/sitesearch.json" && (url.searchParams.get("scope") || "").startsWith("tag")) {
+      return env.ASSETS.fetch(new Request(new URL("/sitesearch-tag.json", request.url)));
+    }
     if (p.startsWith("/xhr/")) {
       return new Response(JSON.stringify({ data: { content: "" }, success: true }), {
         status: 200,
@@ -67,12 +70,23 @@ var worker_default = {
     }
     const resp = await env.ASSETS.fetch(req);
     if (resp.status === 404) {
+      const v = url.searchParams.get("v");
+      if (p.startsWith("/static/") && v && /\.\w+$/.test(p)) {
+        const alt = p.replace(/\.(\w+)$/, (_, ext) => `\uFE56v=${encodeURIComponent(v)}.${ext}`);
+        const r = await env.ASSETS.fetch(new Request(new URL(alt, request.url)));
+        if (r.status === 200) {
+          const out2 = new Response(r.body, r);
+          for (const [k, val] of Object.entries(SEC)) out2.headers.set(k, val);
+          out2.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+          return out2;
+        }
+      }
       if (ASSET_RE.test(p)) return new Response("Not found", { status: 404 });
       const nf = await env.ASSETS.fetch(new Request(new URL("/404.html", request.url)));
       const headers = new Headers(nf.status === 200 ? nf.headers : {});
       headers.set("Content-Type", "text/html; charset=utf-8");
       headers.set("Cache-Control", "public, max-age=300");
-      for (const [k, v] of Object.entries(SEC)) headers.set(k, v);
+      for (const [k, v2] of Object.entries(SEC)) headers.set(k, v2);
       return new Response(nf.status === 200 ? nf.body : "Page not found", { status: 404, headers });
     }
     const out = new Response(resp.body, resp);

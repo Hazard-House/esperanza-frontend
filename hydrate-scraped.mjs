@@ -22,7 +22,9 @@ const RECOMMEND = {};
 for (const [kind, raw] of Object.entries(FACTS.recommendHtml || {})) {
   // live URLs use real ?v= queries; the theme snapshot's files are literally named
   // "X.svg\uFE56v=hash" (HTTrack), so map the query into the filename form.
-  RECOMMEND[kind] = rewriteCommon(raw).replace(/\/static\/([^"'?\s]+)\?v=(\w+)/g, '/static/$1%EF%B9%96v=$2');
+  // NB: the snapshot's filenames put the ext AFTER the hash ("sqft\uFE56v=64b8d65.svg"),
+  // so the ext must move: X.svg?v=H -> X\uFE56v=H.svg
+  RECOMMEND[kind] = rewriteCommon(raw).replace(/\/static\/([^"'?\s]+)\.(\w+)\?v=(\w+)/g, '/static/$1%EF%B9%96v=$3.$2');
 }
 
 // Community-scoped pages carry an extra ticker slide vs the sitewide default —
