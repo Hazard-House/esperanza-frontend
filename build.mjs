@@ -52,7 +52,12 @@ const CONTAINER_ISLANDS = [
 // fixes their style + map_pin so they render 1:1 without disabling oilib.
 // Extra scripts appended to a page (before </body>) without disabling oilib — layered
 // on top of any island. Homepage Search -> /new-homes/available/ with filter params.
-const EXTRA_SCRIPTS = { 'index.html': ['homepage-filter.js'] };
+const EXTRA_SCRIPTS = {
+  'index.html': ['homepage-filter.js'],
+  // live randomizes the design-studio testimonial strip server-side per load;
+  // shuffle the baked draw client-side (see islands/testimonial-shuffle.js).
+  'design-studio/index.html': ['testimonial-shuffle.js'],
+};
 // Classify a ship.txt path within the detail-page URL space. Scraped community /
 // plan-in-community / floor-plan pages ship 1:1 (with hydration) when their entity
 // still exists in the live API; QMI details (high churn) and utm-junk variants stay

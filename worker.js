@@ -25,6 +25,16 @@ export default {
     const url = new URL(request.url);
     const p = url.pathname;
 
+    // Cleartext http must 301 to https (live does; "Always Use HTTPS" isn't on for
+    // this hostname). Sniff the visitor's real scheme from cf-visitor/x-forwarded-proto
+    // — NOT url.protocol, which the edge (and wrangler dev's route simulation)
+    // normalizes and would loop local dev.
+    const visitor = request.headers.get("cf-visitor") || "";
+    if (visitor.includes('"scheme":"http"') || request.headers.get("x-forwarded-proto") === "http") {
+      url.protocol = "https:";
+      return Response.redirect(url.toString(), 301);
+    }
+
     // Same-origin proxy to the public API so the browser avoids CORS (the API only
     // allows the esperanzahomes.com origin). Build a clean subrequest — forwarding the
     // incoming Host header bounces the request back to this Worker instead of the API.
