@@ -188,6 +188,11 @@ async function build() {
   }
   console.log(`rewrote ${n} pages; scraped details: ${counts.community} community + ${counts.plan} plan-in-community + ${counts.floorplan} floorplan (${counts.gated} gated out by API)`);
 
+  // 2a. /thankyou/ — not in the June-8 scrape (unlinked page); captured from live on
+  // 2026-07-06 and committed to assets/. The worker 303s native (non-AJAX) lead-form
+  // POSTs here, matching the live site's conventional-form flow.
+  writeOut('thankyou/index.html', rewriteCommon(readFileSync(join(import.meta.dirname, 'assets', 'thankyou-raw.html'), 'utf8')));
+
   // 2b. Generic QMI-detail shell (for homes newer than the scrape). Served by Caddy
   // try_files at /new-homes/available/home/; qmi-detail-live.js fills it from the API.
   const shellSrc = join(WWW, SHELL.template);

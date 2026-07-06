@@ -112,7 +112,14 @@ export function rewriteCommon(html) {
     // Internal links in the June-8 scrape end in /index.html; the live site uses clean
     // trailing-slash URLs (and 404s on index.html). Strip the filename so nav matches 1:1 —
     // Caddy's try_files rewrites the trailing-slash dir back to index.html when serving.
-    .replace(/(href=")([^"]*)index\.html(?=[?#"])/g, (_m, p, path) => p + (path || './'));
+    .replace(/(href=")([^"]*)index\.html(?=[?#"])/g, (_m, p, path) => p + (path || './'))
+    // HubSpot embedded forms (vendor application, incentives lead form): the scrape
+    // rewrote the js.hsforms.net loader to a same-origin relative path that 404s, and
+    // baked the rendered — now dead — form iframe. Restore the absolute loader (a form
+    // renderer, not a tracker; TRACKER_SIG deliberately doesn't match it) and drop the
+    // stale container so hbspt.forms.create() renders a fresh form. Idempotent.
+    .replace(/(?:https:)?(?:\.\.\/)*(?:\/\/)?js\.hsforms\.net\//g, 'https://js.hsforms.net/')
+    .replace(/<div id="hbspt-form-[0-9a-f-]+" class="hbspt-form"[^>]*>[\s\S]*?<\/iframe><\/div>/g, '');
   html = stripTrackers(html);
   html = resizeImages(html);
   html = html.replace(/<head([^>]*)>/i, `<head$1>\n${PRECONNECT}`);
@@ -182,6 +189,10 @@ function demo() {
   console.assert(ri.includes('src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/a.jpg"'), 'src fallback: ' + ri);
   console.assert(ri.includes('src="//img.hazardhouse.ai/assets-media/logo.svg"'), 'svg untouched');
   console.assert(resizeImages(ri) === ri, 'resizeImages idempotent');
+  // HubSpot forms loader restored + stale baked iframe container dropped; idempotent
+  const hs = s('<script src="../../js.hsforms.net/forms/v2.js"></script><script>hbspt.forms.create({portalId:"8139268"});</script><div id="hbspt-form-2572ed83-c777-43f3-a702-65de81ec6bc1" class="hbspt-form" data-hs-forms-root="true"><iframe id="hs-form-iframe-0" class="hs-form-iframe"></iframe></div>');
+  console.assert(hs.includes('src="https://js.hsforms.net/forms/v2.js"') && hs.includes('hbspt.forms.create') && !hs.includes('hbspt-form-2572ed83'), 'hsforms restore: ' + hs);
+  console.assert(s(hs) === hs, 'hsforms idempotent');
   console.log('rewrite.mjs demo() passed');
 }
 // ponytail: compare real paths, not raw URL strings — file:// URLs percent-encode
