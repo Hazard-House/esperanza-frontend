@@ -51,6 +51,43 @@ export function resolveMedia(rawPath, prefix, map) {
   return map.get(prefix + stripExt(clean)) || (prefix + clean);
 }
 
+// Third-party analytics/pixel scripts baked into the June-8 scrape. HTTrack localized
+// their URLs to same-origin relative paths, so on the replica each one 404s ->
+// handle_errors redirects to the dead live path -> ORB-blocked: a ~60-80 request
+// redirect storm that keeps the network busy for 30-45s and blocks first paint. They
+// collect nothing (broken) and this is a noindex replica, so we drop them entirely —
+// external loaders AND their inline bootstraps. GTM gets re-wired centrally later.
+// Matched by src host or *distinctive* inline init token. Deliberately NOT matching
+// generic `dataLayer`/`gtag`: the theme bundles its own config (window.oi_preload,
+// oiVideoOnLoad) into inline scripts that also push a hfaDataLayer, so THEME_KEEP
+// vetoes removal of anything carrying theme internals — only true pixel/tag scripts go.
+// The inline GTM snippet self-injects gtm.js, so it must be dropped too (matched by GTM-).
+const TRACKER_SIG = /(hs-analytics|hs-banner|hsadspixel|hs-scripts|hs-script-loader|analytics\.tiktok\.com|clarity\.ms|static\.hotjar\.com|script\.hotjar\.com|connect\.facebook\.net|googletagmanager\.com|google-analytics\.com|googleads\.g\.doubleclick\.net|platform\.twitter\.com|firstparty\/|fbq\(|_fbq\b|ttq\.(?:load|page|track)|TiktokAnalyticsObject|_hjSettings|\bhj\(|window\.clarity|GTM-[A-Z0-9]{4,})/;
+const THEME_KEEP = /(oi_preload\s*=|oiVideoOnLoad|oiReady|new Swiper|AOS\.init|swiper-alert-banner|oilib_version|oi\.loaded)/i;
+export function stripTrackers(html) {
+  return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,
+    m => TRACKER_SIG.test(m) && !THEME_KEEP.test(m) ? '' : m);
+}
+
+// Warm up the connection to the image CDN early (detail pages pull ~270 images from
+// img.hazardhouse.ai) and the Mapbox tile/JS host.
+const PRECONNECT = '<link rel="preconnect" href="https://img.hazardhouse.ai" crossorigin>\n<link rel="preconnect" href="https://api.mapbox.com" crossorigin>';
+
+// CF Image Resizing is enabled on img.hazardhouse.ai. The scrape's srcset entries all
+// collapsed to the same full-size file once resolveMedia() stripped the old ?width=
+// proxy param, so browsers downloaded full-res everywhere (a 337KB jpg where a 400px
+// slot needed ~11KB). Route assets-media photos through /cdn-cgi/image/ so each srcset
+// width serves that size as AVIF/WebP (format=auto). Only jpg/jpeg/png (skips svg/gif/
+// already-modern and non-CDN /static images); og:image and CSS url() left raw. Idempotent:
+// the patterns require assets-media *directly* after the host, so /cdn-cgi/ URLs are skipped.
+export function resizeImages(html) {
+  return html
+    .replace(/\/\/img\.hazardhouse\.ai\/(assets-media\/[^\s",]+\.(?:jpe?g|png))(\s+)(\d+)w/gi,
+      (_m, path, sp, w) => `//img.hazardhouse.ai/cdn-cgi/image/width=${w},format=auto,quality=82/${path}${sp}${w}w`)
+    .replace(/((?:src|data-src)=")\/\/img\.hazardhouse\.ai\/(assets-media\/[^"]+\.(?:jpe?g|png))"/gi,
+      (_m, attr, path) => `${attr}//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/${path}"`);
+}
+
 export function rewriteCommon(html) {
   html = html
     .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
@@ -60,9 +97,14 @@ export function rewriteCommon(html) {
     .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.homefiniti\.com\/([^"'\s)]*)/g,
       (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, 'homefiniti/', HF_KEYS)}`)
     .replace(/(?:\.\.\/)*api\.mapbox\.com\//g, 'https://api.mapbox.com/')
-    // shim oilib-owned maps (city/filter/lot maps): branded style + map_pin sprite
-    .replace(/(<script[^>]*api\.mapbox\.com\/mapbox-gl-js[^>]*><\/script>)/,
-      '$1<script src="/mapbox-patch.js"></script>')
+    // mapbox-gl.js is ~230KB and was render-blocking in <head>. Defer it (+ our branded
+    // -style patch) so it no longer blocks first paint. Safe: island maps load deferred
+    // and ordered after it; oilib self-loads mapbox at runtime and mapbox-patch owns
+    // window.mapboxgl via an accessor, re-wrapping whichever copy wins. Drops any prior
+    // patch tag first so it's idempotent when re-applied to already-built pages.
+    .replace(/<script src="\/mapbox-patch\.js"[^>]*><\/script>/g, '')
+    .replace(/<script([^>]*api\.mapbox\.com\/mapbox-gl-js[^>]*?)\s*><\/script>/,
+      (_m, a) => `<script${a.replace(/\s*\bdefer\b/, '')} defer></script><script src="/mapbox-patch.js" defer></script>`)
     .replace(/pk\.eyJ1Ijoib25la[A-Za-z0-9._-]*/g, MAPBOX_TOKEN)
     .replace(/mapbox:\/\/styles\/oneilinteractive\/[A-Za-z0-9]+/g, PUBLIC_STYLE)
     .replace(/<div class="col-12 oneilinteractive-attribution[^>]*>[\s\S]*?<\/div>/,
@@ -71,6 +113,9 @@ export function rewriteCommon(html) {
     // trailing-slash URLs (and 404s on index.html). Strip the filename so nav matches 1:1 —
     // Caddy's try_files rewrites the trailing-slash dir back to index.html when serving.
     .replace(/(href=")([^"]*)index\.html(?=[?#"])/g, (_m, p, path) => p + (path || './'));
+  html = stripTrackers(html);
+  html = resizeImages(html);
+  html = html.replace(/<head([^>]*)>/i, `<head$1>\n${PRECONNECT}`);
   if (BANNER_SLIDES) html = html.replace(FROZEN_BANNER_RE, freshBannerHtml(BANNER_SLIDES));
   if (NOINDEX) {
     const meta = '<meta name="robots" content="noindex,nofollow">';
@@ -113,7 +158,7 @@ export function extractShell(rawHtml) {
 function demo() {
   const s = rewriteCommon;
   console.assert(s('src="../../../media.esperanzahomes.com/153/2026/5/22/LP047_Rendering.png%EF%B9%96width=848&amp;ois=8e9bec3.avif"')
-    === 'src="//img.hazardhouse.ai/assets-media/153/2026/5/22/LP047_Rendering.png"', 'media rewrite/decode');
+    === 'src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2026/5/22/LP047_Rendering.png"', 'media rewrite/decode + resize');
   console.assert(s('content="https://media.homefiniti.com/153/2022/5/16/1-14.jpg"')
     === 'content="//img.hazardhouse.ai/assets-media/homefiniti/153/2022/5/16/1-14.jpg"', 'absolute media');
   const foot = s('<div class="col-12 oneilinteractive-attribution text-center"><a href="https://oneilinteractive.com/x"><img class="oneil-icon"> Powered by Homefiniti</a>.</div>');
@@ -122,6 +167,21 @@ function demo() {
   console.assert(shell.includes('<!--CONTENT-->') && !shell.includes('HOME') && shell.includes('<footer>f</footer>'), 'extractShell');
   const links = s('<a href="design-studio/index.html">a</a><a href="index.html">home</a><a href="../new-homes/index.html?x=1">q</a><a href="/static/style.css">keep</a>');
   console.assert(links === '<a href="design-studio/">a</a><a href="./">home</a><a href="../new-homes/?x=1">q</a><a href="/static/style.css">keep</a>', 'index.html strip: ' + links);
+  const tr = stripTrackers('<script src="../js.hs-analytics.net/x.js"></script><script src="/static/esperanza_homes/js/vendor.header.min.js"></script><script>fbq("init","123")</script><script>new Swiper(".x")</script><script async src="firstparty/abc.js"></script>');
+  console.assert(tr === '<script src="/static/esperanza_homes/js/vendor.header.min.js"></script><script>new Swiper(".x")</script>', 'stripTrackers: ' + tr);
+  // theme config bundled with a dataLayer push must SURVIVE (regression: oi_preload was nuked)
+  const keep = stripTrackers('<script>window.oi_preload = {"map_key":"pk"}; window.hfaDataLayer.push({});</script><script>(function(){})(window,document,"script","dataLayer","GTM-WNGZHH3")</script>');
+  console.assert(keep === '<script>window.oi_preload = {"map_key":"pk"}; window.hfaDataLayer.push({});</script>', 'theme-keep guard: ' + keep);
+  // mapbox-gl deferred + patch appended once; idempotent (re-running keeps a single deferred patch)
+  const mb1 = s('<head><script type="text/javascript" src="../api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script></head>');
+  console.assert(mb1.includes('/mapbox-gl-js/v2.1.1/mapbox-gl.js" defer></script><script src="/mapbox-patch.js" defer></script>'), 'mapbox defer: ' + mb1.match(/<script[^>]*mapbox[^>]*>/g));
+  console.assert((s(mb1).match(/mapbox-patch/g) || []).length === 1, 'mapbox patch idempotent');
+  // image resizing: srcset per-width + src fallback, svg untouched, idempotent
+  const ri = resizeImages('<img src="//img.hazardhouse.ai/assets-media/a.jpg" srcset="//img.hazardhouse.ai/assets-media/a.jpg 300w, //img.hazardhouse.ai/assets-media/a.jpg 1920w"><img src="//img.hazardhouse.ai/assets-media/logo.svg">');
+  console.assert(ri.includes('cdn-cgi/image/width=300,format=auto,quality=82/assets-media/a.jpg 300w'), 'srcset 300w: ' + ri);
+  console.assert(ri.includes('src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/a.jpg"'), 'src fallback: ' + ri);
+  console.assert(ri.includes('src="//img.hazardhouse.ai/assets-media/logo.svg"'), 'svg untouched');
+  console.assert(resizeImages(ri) === ri, 'resizeImages idempotent');
   console.log('rewrite.mjs demo() passed');
 }
 // ponytail: compare real paths, not raw URL strings — file:// URLs percent-encode

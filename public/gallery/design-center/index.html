@@ -1,6 +1,8 @@
 <!doctype html>
 <html class="no-js" lang="en">
     <head>
+<link rel="preconnect" href="https://img.hazardhouse.ai" crossorigin>
+<link rel="preconnect" href="https://api.mapbox.com" crossorigin>
         
 
 
@@ -41,41 +43,7 @@ oiVideoOnLoad = function(el) {
 
 
 
-<script type="text/javascript">
 
-    const fetchRetailUser = () => Promise.resolve({id: window.oi_preload.user_id})
-
-    const initialUserFetch = fetchRetailUser();
-    const ganalyticsLoaded = initialUserFetch.then((userdata) => {
-        
-
-        
-            window.dataLayer=window.dataLayer||[];
-            window.gtag=function(){dataLayer.push(arguments);}
-            gtag('js',new Date());
-            if (Number.isInteger(userdata.id)) {
-                gtag('set', 'user_id', userdata.id.toString());
-            }
-            
-                gtag('config', window.oi_preload.ga.GA4id, {
-                    send_page_view: false,
-                    transport_url: 'https://www.esperanzahomes.com/firstparty/',
-                });
-            
-        
-        
-            // Google Tag Gateway
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            '/firstparty/?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','');
-        
-
-        
-        return userdata
-    })
-</script>
 
 
 
@@ -192,33 +160,7 @@ oiVideoOnLoad = function(el) {
 
 <!-- Facebook Pixel Code -->
 
-<script>
-    
 
-    const fbpixelLoaded = initialUserFetch.then((userdata) => {
-        
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        
-        const amdDLV = (dataLayer) ? dataLayer[0].FacebookAMD||{} : {}
-        const amd = userdata.fbamd || amdDLV
-        
-            
-                fbq('init', '705389823345369', amd);
-            
-        
-        
-        
-        return userdata
-    })
-</script>
 
 <!-- End Facebook Pixel Code -->
 
@@ -234,7 +176,7 @@ oiVideoOnLoad = function(el) {
     <body class="">
         
 		<div id="fb-root"></div>
-		<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v15.0" nonce="z4y4Dvnm"></script>
+		
 
         <div class="nav-wrapper sticky-top">
 	
@@ -1412,7 +1354,7 @@ oiVideoOnLoad = function(el) {
 									<div class="swiper-wrapper">
 										
 											<div class="swiper-slide">
-												<img src="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 600px, 100vw" loading="eager" class="osc-cta-image" aria-hidden="true">
+												<img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 600px, 100vw" loading="eager" class="osc-cta-image" aria-hidden="true">
 											</div>
 										
 									</div>
@@ -1512,7 +1454,7 @@ oiVideoOnLoad = function(el) {
         <section class="text-center z-2">
     <div class="oi-aspect four-three two-one-sm four-one-lg">
         
-        <img src="//img.hazardhouse.ai/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="eager" class="oi-aspect-img" alt="Design Studio Gallery">
+        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/12/30/Esperanza-Homes_Masthead-Photos_Gallery_frPIjGN.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="eager" class="oi-aspect-img" alt="Design Studio Gallery">
         
         <div class="oi-aspect-content text-white px-4">
             
@@ -1569,7 +1511,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-8 col-lg-8 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1588,7 +1530,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1598,7 +1540,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-20.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1615,7 +1557,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1623,7 +1565,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1644,7 +1586,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-8 col-lg-8 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-23.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1663,7 +1605,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-24.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1673,7 +1615,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-25.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1690,7 +1632,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-21.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1698,7 +1640,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-22.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1719,7 +1661,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-8 col-lg-8 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-28.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1738,7 +1680,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/25/1-2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1748,7 +1690,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/25/1-3.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1765,7 +1707,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-26.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1773,7 +1715,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-27.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1794,7 +1736,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-8 col-lg-8 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-13.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1813,7 +1755,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-14.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1823,7 +1765,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-10.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1840,7 +1782,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1848,7 +1790,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-15.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1869,7 +1811,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-8 col-lg-8 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-7.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1888,7 +1830,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-8.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1898,7 +1840,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-9.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1915,7 +1857,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-11.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1923,7 +1865,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-12.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1944,7 +1886,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-8 col-lg-8 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-6.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1963,7 +1905,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1973,7 +1915,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -1990,7 +1932,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-4.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -1998,7 +1940,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-5.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -2019,7 +1961,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-8 col-lg-8 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -2038,7 +1980,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -2048,7 +1990,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-12 d-flex px-0 zoom-effect">
                                     <div class="overflow-hidden d-flex oi-aspect three-two">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                         
                                         <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                                     </div>
@@ -2065,7 +2007,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-3.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -2073,7 +2015,7 @@ oiVideoOnLoad = function(el) {
                         
                         <a href="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg" data-oi-event-name="oi-image-click" data-fancybox="Design Studio Gallery Images" data-thumbs='{"autoStart":true}' class="col-md-6 col-lg-6 d-flex img-wrapper zoom-effect">
                             <div class="overflow-hidden d-flex oi-aspect three-two">
-                                <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
+                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img" alt="Design Studio Gallery">
                                 
                                 <i class="fas fa-expand position-absolute b-0 r-0 m-2 text-white fs-4"></i>
                             </div>
@@ -2102,7 +2044,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2111,7 +2053,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2120,7 +2062,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2129,7 +2071,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2138,7 +2080,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-20.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2147,7 +2089,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-21.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2156,7 +2098,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-22.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2165,7 +2107,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-23.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2174,7 +2116,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-24.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2183,7 +2125,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-25.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2192,7 +2134,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-26.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2201,7 +2143,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-27.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2210,7 +2152,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-28.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2219,7 +2161,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/25/1-2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2228,7 +2170,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/25/1-3.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2237,7 +2179,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2246,7 +2188,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-15.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2255,7 +2197,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-13.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2264,7 +2206,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-14.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2273,7 +2215,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-10.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2282,7 +2224,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-11.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2291,7 +2233,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-12.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2300,7 +2242,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-7.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2309,7 +2251,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-8.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2318,7 +2260,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-9.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2327,7 +2269,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-4.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2336,7 +2278,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-5.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2345,7 +2287,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-6.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2354,7 +2296,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2363,7 +2305,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2372,7 +2314,7 @@ oiVideoOnLoad = function(el) {
                                 
                                 <div class="swiper-slide">
                                     <div class="oi-aspect two-one image">
-                                        <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-3.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                     </div>
                                     
                                     
@@ -2395,187 +2337,187 @@ oiVideoOnLoad = function(el) {
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-17.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-17.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-18.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-18.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-19.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-19.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-20.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-20.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-20.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-21.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-21.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-21.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-22.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-22.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-22.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-23.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-23.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-23.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-24.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-24.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-24.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-25.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-25.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-25.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-26.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-26.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-26.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-27.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-27.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-27.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/9/27/1-28.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/9/27/1-28.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/9/27/1-28.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/25/1-2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/25/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/25/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/25/1-3.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/25/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-16.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-15.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-15.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-15.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-13.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-13.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-13.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-14.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-14.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-14.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-10.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-10.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-10.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-11.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-11.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-11.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-12.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-12.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-12.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-7.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-7.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-7.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-8.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-8.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-8.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-9.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-9.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-9.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-4.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-4.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-4.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-5.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-5.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-5.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-6.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-6.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-6.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
                             <div class="swiper-slide gallery-thumb">
                                 <div class="oi-aspect one-one">
-                                    <img src="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/8/26/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
+                                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/8/26/1-3.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/8/26/1-3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img">
                                 </div>
                             </div>
                             
@@ -2635,7 +2577,7 @@ oiVideoOnLoad = function(el) {
             
             <div class="col-12 col-md-6 col-lg-4 mb-4 position-relative gal-card">
                 <div class="oi-aspect one-one">
-                    <img src="//img.hazardhouse.ai/assets-media/153/2024/6/19/1-3_vosnNFK.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img" alt="Living Room Gallery">
+                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/6/19/1-3_vosnNFK.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/6/19/1-3_vosnNFK.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img" alt="Living Room Gallery">
                     <div class="oi-aspect-content px-3 text-center">
                         <h2 class="fs-3 bodoni text-white">Living Room Gallery</h2>
                         <div class="white-bar m-auto"></div>
@@ -2654,7 +2596,7 @@ oiVideoOnLoad = function(el) {
             
             <div class="col-12 col-md-6 col-lg-4 mb-4 position-relative gal-card">
                 <div class="oi-aspect one-one">
-                    <img src="//img.hazardhouse.ai/assets-media/153/2023/8/28/1-2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2023/8/28/1-2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2023/8/28/1-2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2023/8/28/1-2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2023/8/28/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img" alt="Outdoor Living Gallery">
+                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2023/8/28/1-2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2023/8/28/1-2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2023/8/28/1-2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2023/8/28/1-2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2023/8/28/1-2.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img" alt="Outdoor Living Gallery">
                     <div class="oi-aspect-content px-3 text-center">
                         <h2 class="fs-3 bodoni text-white">Outdoor Living Gallery</h2>
                         <div class="white-bar m-auto"></div>
@@ -2673,7 +2615,7 @@ oiVideoOnLoad = function(el) {
             
             <div class="col-12 col-md-6 col-lg-4 mb-4 position-relative gal-card">
                 <div class="oi-aspect one-one">
-                    <img src="//img.hazardhouse.ai/assets-media/153/2023/8/28/1-26.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2023/8/28/1-26.jpg 300w, //img.hazardhouse.ai/assets-media/153/2023/8/28/1-26.jpg 400w, //img.hazardhouse.ai/assets-media/153/2023/8/28/1-26.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2023/8/28/1-26.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img" alt="Bathroom Gallery">
+                    <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2023/8/28/1-26.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2023/8/28/1-26.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2023/8/28/1-26.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2023/8/28/1-26.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2023/8/28/1-26.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img" alt="Bathroom Gallery">
                     <div class="oi-aspect-content px-3 text-center">
                         <h2 class="fs-3 bodoni text-white">Bathroom Gallery</h2>
                         <div class="white-bar m-auto"></div>
@@ -3189,7 +3131,7 @@ oiVideoOnLoad = function(el) {
                 
                     <div class="col-3">
                         <div class="oi-aspect one-one">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img">
                         </div>
                     </div>
                 
