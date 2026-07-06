@@ -7,8 +7,8 @@
 const LIVE = "https://www.esperanzahomes.com";
 const API = "https://esperanza-api.round-base-ed8c.workers.dev";
 
-// Real assets fail fast on 404; only page misses fall through to the live O'Neill site
-// (a mangled asset URL must not 404 -> redirect -> redirect and storm the network).
+// Real assets fail fast on 404; page misses serve our branded 404 page (a mangled asset
+// URL must not fall through and pull down a full HTML page for every missing image).
 const ASSET_RE = /\.(js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|eot|map|mp4|json|xml|txt|pdf)$/i;
 
 // Site-wide security headers. No CSP on purpose: the scrape carries many third-party
@@ -65,7 +65,13 @@ export default {
 
     if (resp.status === 404) {
       if (ASSET_RE.test(p)) return new Response("Not found", { status: 404 });
-      return Response.redirect(LIVE + p + url.search, 302);
+      // Serve our branded 404 page (1:1 with the legacy site) with a real 404 status.
+      const nf = await env.ASSETS.fetch(new Request(new URL("/404.html", request.url)));
+      const headers = new Headers(nf.status === 200 ? nf.headers : {});
+      headers.set("Content-Type", "text/html; charset=utf-8");
+      headers.set("Cache-Control", "public, max-age=300");
+      for (const [k, v] of Object.entries(SEC)) headers.set(k, v);
+      return new Response(nf.status === 200 ? nf.body : "Page not found", { status: 404, headers });
     }
 
     const out = new Response(resp.body, resp);
