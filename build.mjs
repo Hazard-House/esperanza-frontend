@@ -10,6 +10,7 @@
 // a stable shape; regex is enough and adding jsdom for 3 files is overkill.
 
 import assert from 'node:assert';
+import { execSync } from 'node:child_process';
 import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
@@ -52,7 +53,12 @@ const CONTAINER_ISLANDS = [
 // fixes their style + map_pin so they render 1:1 without disabling oilib.
 // Extra scripts appended to a page (before </body>) without disabling oilib — layered
 // on top of any island. Homepage Search -> /new-homes/available/ with filter params.
-const EXTRA_SCRIPTS = { 'index.html': ['homepage-filter.js'] };
+const EXTRA_SCRIPTS = {
+  'index.html': ['homepage-filter.js'],
+  // client-side stand-in for Homefiniti's server-side /blog/?search= (needs
+  // public/blog-index.json — scripts/gen-blog-index.mjs runs at the end of build()).
+  'blog/index.html': ['blog-search.js'],
+};
 // Classify a ship.txt path within the detail-page URL space. Scraped community /
 // plan-in-community / floor-plan pages ship 1:1 (with hydration) when their entity
 // still exists in the live API; QMI details (high churn) and utm-junk variants stay
@@ -198,6 +204,8 @@ async function build() {
   // pre-launch crawl block (NOINDEX): belt-and-suspenders with the per-page noindex meta.
   if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   await generateDetails(d, { skipCommunities: scrapedCommunities, skipFloorplans: scrapedFloorplans });
+  // blog search island's index (scans the shipped post pages, so it runs last)
+  execSync('node scripts/gen-blog-index.mjs', { cwd: import.meta.dirname, stdio: 'inherit' });
   console.log(`public/ assembled at ${OUT}`);
 }
 
