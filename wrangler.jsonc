@@ -1,0 +1,30 @@
+{
+  // Esperanza static site on Cloudflare Workers Static Assets (replaces Railway + Caddy).
+  // Build with `node build.mjs` (writes ./public), then `wrangler deploy`.
+  "name": "esperanzahomes",
+  "main": "worker.js",
+  "compatibility_date": "2026-07-01",
+  "routes": [
+    { "pattern": "esperanzahomes.hazardhouse.ai", "custom_domain": true }
+  ],
+  // Keep the *.workers.dev URL live too, as a staging/side-by-side URL.
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // Serve /contact -> /contact/index.html, matching the old Caddy try_files.
+    "html_handling": "auto-trailing-slash",
+    // Let the Worker own the 404 fallback (redirect pages to the live site).
+    "not_found_handling": "none",
+    // Worker runs first so it controls headers, the API proxy, and the 404 logic.
+    "run_worker_first": true
+  },
+  // Direct binding to the public API Worker — a plain fetch() to its workers.dev URL is
+  // blocked (CF error 1042: same-zone Worker-to-Worker loop protection).
+  "services": [
+    { "binding": "API", "service": "esperanza-api" }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
