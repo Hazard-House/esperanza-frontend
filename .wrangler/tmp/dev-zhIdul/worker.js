@@ -8,8 +8,6 @@ var ASSET_RE = /\.(js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|eot|map|mp4
 var REDIRECTS = {
   // live QMI slug is "5315-moses-lp"; the generated mirror page uses the full street name
   "/new-homes/tx/laredo/wolf-creek/5315-moses-lp/": "/new-homes/tx/laredo/wolf-creek/5315-moses-loop/",
-  // D1 community slug carries literal parens; live (and our shipped page) use the clean form
-  "/new-homes/tx/mission/retama-village-(55-)-at-bentsen-palm/": "/new-homes/tx/mission/retama-village-55-at-bentsen-palm/",
   // retired blog slugs — live 301s both to the blog index
   "/blog/vista-verde-groundbreaking-new-homes-coming-to-laredo-tx/": "/blog/",
   "/blog/vista-verde-groundbreaking-ceremony-celebrates-new-community-coming-to-laredo/": "/blog/"
@@ -53,6 +51,9 @@ var worker_default = {
     const slashed = p.endsWith("/") ? p : p + "/";
     const dest = REDIRECTS[p] || REDIRECTS[slashed];
     if (dest) return Response.redirect(url.origin + dest, 301);
+    if (p.includes("/retama-village-(55-)-at-bentsen-palm")) {
+      return Response.redirect(url.origin + p.replace("retama-village-(55-)-at-bentsen-palm", "retama-village-55-at-bentsen-palm"), 301);
+    }
     if (slashed.startsWith("/available/")) {
       return Response.redirect(url.origin + "/new-homes" + p + url.search, 301);
     }

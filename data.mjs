@@ -58,7 +58,9 @@ function normQmi(h) {
 function normCommunity(c) {
   const p = c.coordinates ? String(c.coordinates).split(',') : [];
   return {
-    id: c.id, name: c.name, slug: c.slug, city: c.town,
+    // Re-slugify: D1 slugs can carry literal punctuation ("retama-village-(55-)-...");
+    // live URLs (and the scrape's own page tree) use the clean form.
+    id: c.id, name: c.name, slug: c.slug && slugify(c.slug), city: c.town,
     lat: p[0] != null && p[0] !== '' ? Number(p[0]) : null,
     lng: p[1] != null && p[1] !== '' ? Number(p[1]) : null,
     address: c.address, image: c.image, secondaryImage: c.secondaryImage,
