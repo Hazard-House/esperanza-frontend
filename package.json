@@ -6,6 +6,6 @@
   "scripts": {
     "build": "node build.mjs",
     "generate": "node generate-details.mjs",
-    "check": "node build.mjs --check && node data.mjs --check && node paths.mjs --check && node sections.mjs --check && node render-qmi.mjs --check && node render-community.mjs --check && node render-floorplan.mjs --check && node islands/detail-extras.js --check"
+    "check": "node build.mjs --check && node data.mjs --check && node paths.mjs --check && node sections.mjs --check && node hydrate-scraped.mjs --check && node render-qmi.mjs --check && node render-community.mjs --check && node render-floorplan.mjs --check && node islands/detail-extras.js --check"
   }
 }

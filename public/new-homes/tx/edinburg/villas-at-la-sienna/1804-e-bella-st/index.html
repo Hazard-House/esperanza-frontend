@@ -1,6 +1,4 @@
 <!DOCTYPE html><html class="no-js" lang="en" style="--nav-height: 149px; --subnav-height: 40px;"><head>
-<link rel="preconnect" href="https://img.hazardhouse.ai" crossorigin>
-<link rel="preconnect" href="https://api.mapbox.com" crossorigin>
 <script>window.oi=new Proxy(function(){},{get:function(){return window.oi},apply:function(){return window.oi}});</script>
         
 
@@ -9,7 +7,7 @@
 
 
 
-<script>
+<script type="text/javascript" async="" src="../../../../../../../firstparty/xA5UeAqkknLUx8TQ057NfRkQ8V7nn0a3Sr45TK6vWPSeqVggBqhskQ.js" nonce="z4y4Dvnm"></script><script type="text/javascript" async="" src="../../../../../../../firstparty/xA5UeAqkknLUwMLW1pPCexUQ4gy5wV2sTuwzBff3WqebrgMgbJE.js" nonce="z4y4Dvnm"></script><script type="text/javascript" async="" src="../../../../../../../../analytics.tiktok.com/i18n/pixel/static/identify_5cff1caf.js"></script><script type="text/javascript" async="" src="../../../../../../../../analytics.tiktok.com/i18n/pixel/static/main.MTc5ZjUxNDU4OQ.js" data-id="D871H3BC77U62R5TGE50"></script><script async="" src="../../../../../../../../scripts.clarity.ms/0.8.65/clarity.js"></script><script src="../../../../../../../../js.hs-analytics.net/analytics/1780931700000/8139268.js" type="text/javascript" id="hs-analytics"></script><script src="../../../../../../../../js.hs-banner.com/v2/8139268/banner.js" type="text/javascript" id="cookieBanner-8139268" data-cookieconsent="ignore" data-hs-ignore="true" data-loader="hs-scriptloader" data-hsjs-portal="8139268" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="../../../../../../../../js.hsadspixel.net/pixels.js" type="text/javascript" id="hs-ads-pixel-8139268" data-ads-portal-id="8139268" data-ads-env="prod" data-loader="hs-scriptloader" data-hsjs-portal="8139268" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script type="text/javascript" async="" src="../../../../../../../../analytics.tiktok.com/i18n/pixel/events%EF%B9%96sdkid=D871H3BC77U62R5TGE50&amp;lib=ttq.js"></script><script type="text/javascript" async="" src="../../../../../../../../www.clarity.ms/tag/v3z2icw01b%EF%B9%96ref=gtm.js" nonce="z4y4Dvnm"></script><script type="text/javascript" async="" src="../../../../../../../firstparty/xA5UeAqklAjKsaKvt-C3eG0S4gy5wV2sTuwzBff3WqebrgMgbJE.js" nonce="z4y4Dvnm"></script><script src="../../../../../../../../connect.facebook.net/signals/config/1315184166667090%EF%B9%96v=2.9.334&amp;r=stable&amp;domain=www.esperanzahomes.com&amp;hme=d9eb83ce5750216745fae8e2064a8c1ed2255ecaf2468f800b2a146e6168b65e&amp;ex_m=105,208,156,22,73,74,147,69,68,11,165,91,16,139,128,39,76,79,135,161,167,8,4,5,7,6,3,92,102,168_eea4a17303ea53e3.js" async=""></script><script src="../../../../../../../../connect.facebook.net/signals/config/705389823345369%EF%B9%96v=2.9.334&amp;r=stable&amp;domain=www.esperanzahomes.com&amp;hme=d9eb83ce5750216745fae8e2064a8c1ed2255ecaf2468f800b2a146e6168b65e&amp;ex_m=105,208,156,22,73,74,147,69,68,11,165,91,16,139,128,39,76,79,135,161,167,8,4,5,7,6,3,92,102,168,_c4465911aaf7bac8.js" async=""></script><script src="../../../../../../../../connect.facebook.net/en_US/bundle/sdk.js/index.js" async=""></script><script async="" src="../../../../../../../../connect.facebook.net/en_US/fbevents.js"></script><script async="" src="../../../../../../../firstparty/index%EF%B9%96id=.js"></script><script>
 // hfaDataLayer
 (()=>{"use strict";var e={d:(t,o)=>{for(var r in o)e.o(o,r)&&!e.o(t,r)&&Object.defineProperty(t,r,{enumerable:!0,get:o[r]})},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t),r:e=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})}},t={};e.r(t),e.d(t,{hfaDataLayer:()=>r});let o=function(){};(o.prototype=new Array).collected=[],o.prototype.unloaded={},o.prototype.collect=function(e){if(!(e in o.prototype.collected)&&(o.prototype.collected.push(e),window.hfa)){const e=o.prototype.unload.call(this);e&&window.hfa.filter_hfadatalayer(e)}},o.prototype.unload=function(){const e=Array.prototype.shift.call(o.prototype.collected);return!!e&&(o.prototype.unloaded[e.unixtime]=e,e)},o.prototype.push=function(e){const t=Date.now();e.unixtime=t,Array.prototype.push.call(this,e),o.prototype.collect.call(this,e)};const r=new o;var l=window;for(var n in t)l[n]=t[n];t.__esModule&&Object.defineProperty(l,"__esModule",{value:!0})})();
 // End hfaDataLayer
@@ -42,7 +40,41 @@ oiVideoOnLoad = function(el) {
 
 
 
+<script type="text/javascript">
 
+    const fetchRetailUser = () => Promise.resolve({id: window.oi_preload.user_id})
+
+    const initialUserFetch = fetchRetailUser();
+    const ganalyticsLoaded = initialUserFetch.then((userdata) => {
+        
+
+        
+            window.dataLayer=window.dataLayer||[];
+            window.gtag=function(){dataLayer.push(arguments);}
+            gtag('js',new Date());
+            if (Number.isInteger(userdata.id)) {
+                gtag('set', 'user_id', userdata.id.toString());
+            }
+            
+                gtag('config', window.oi_preload.ga.GA4id, {
+                    send_page_view: false,
+                    transport_url: 'https://www.esperanzahomes.com/firstparty/',
+                });
+            
+        
+        
+            // Google Tag Gateway
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            '/firstparty/?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','');
+        
+
+        
+        return userdata
+    })
+</script>
 
 
 
@@ -169,7 +201,33 @@ oiVideoOnLoad = function(el) {
 
 <!-- Facebook Pixel Code -->
 
+<script>
+    
 
+    const fbpixelLoaded = initialUserFetch.then((userdata) => {
+        
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        const amdDLV = (dataLayer) ? dataLayer[0].FacebookAMD||{} : {}
+        const amd = userdata.fbamd || amdDLV
+        
+            
+                fbq('init', '705389823345369', amd);
+            
+        
+        
+        
+        return userdata
+    })
+</script>
 
 <!-- End Facebook Pixel Code -->
 
@@ -181,7 +239,7 @@ oiVideoOnLoad = function(el) {
         <link rel="preconnect" href="https://fonts.gstatic.com">
         <link href="../../../../../../../../fonts.googleapis.com/css2%EF%B9%96family=Arapey%EF%B9%95ital@0%EF%B9%941&amp;display=swap.css" rel="stylesheet">
 
-    <link type="text/css" rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css"><script type="text/javascript" src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js" defer></script><script src="/mapbox-patch.js" defer></script><style type="text/css" data-fbcssmodules="css:fb.css.base css:fb.css.dialog css:fb.css.iframewidget">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0px;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:lucida grande,tahoma,verdana,arial,sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:400;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}@keyframes fb_transform{0%{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}.fb_animate{animation:fb_transform .3s forwards}
+    <link type="text/css" rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css"><script type="text/javascript" src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script><script src="/mapbox-patch.js"></script><script async="" src="../../../../../../../../static.hotjar.com/c/hotjar-5353091%EF%B9%96sv=6.js"></script><script async="" src="../../../../../../../../script.hotjar.com/modules.c3d712579ef0b1b5af2a.js" charset="utf-8"></script><script async="" src="../../../../../../../../www.googletagmanager.com/gtag/js%EF%B9%96id=AW-602057653.js"></script><script type="text/javascript" async="" src="../../../../../../../../googleads.g.doubleclick.net/pagead/viewthroughconversion/602057653/f.txt.js" nonce="z4y4Dvnm"></script><script type="text/javascript" async="" src="../../../../../../../../googleads.g.doubleclick.net/pagead/viewthroughconversion/16458809351/f.txt.js" nonce="z4y4Dvnm"></script><style type="text/css" data-fbcssmodules="css:fb.css.base css:fb.css.dialog css:fb.css.iframewidget">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0px;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:lucida grande,tahoma,verdana,arial,sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:400;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}@keyframes fb_transform{0%{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}.fb_animate{animation:fb_transform .3s forwards}
 
 .fb_dialog{background:#525252b3;position:absolute;top:-10000px;z-index:10001}.fb_dialog_advanced{border-radius:8px;padding:10px}.fb_dialog_content{background:#fff;color:#373737}.fb_dialog_close_icon{background:url(../../../../../../../../connect.facebook.net/rsrc.php/v4/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 0 transparent;cursor:pointer;display:block;height:15px;position:absolute;right:18px;top:17px;width:15px}.fb_dialog_mobile .fb_dialog_close_icon{left:5px;right:auto;top:5px}.fb_dialog_padding{background-color:transparent;position:absolute;width:1px;z-index:-1}.fb_dialog_close_icon:hover{background:url(../../../../../../../../connect.facebook.net/rsrc.php/v4/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -15px transparent}.fb_dialog_close_icon:active{background:url(../../../../../../../../connect.facebook.net/rsrc.php/v4/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -30px transparent}.fb_dialog_iframe{line-height:0}.fb_dialog_content .dialog_title{background:#6d84b4;border:1px solid #365899;color:#fff;font-size:14px;font-weight:700;margin:0}.fb_dialog_content .dialog_title>span{background:url(../../../../../../../../connect.facebook.net/rsrc.php/v4/yd/r/Cou7n-nqK52.gif) no-repeat 5px 50%;float:left;padding:5px 0 7px 26px}body.fb_hidden{height:100%;left:0;margin:0;overflow:visible;position:absolute;top:-10000px;transform:none;width:100%}.fb_dialog.fb_dialog_mobile.loading{background:url(../../../../../../../../connect.facebook.net/rsrc.php/v4/ya/r/3rhSv5V8j3o.gif) #fff no-repeat 50% 50%;min-height:100%;min-width:100%;overflow:hidden;position:absolute;top:0;z-index:10001}.fb_dialog.fb_dialog_mobile.loading.centered{background:none;height:auto;min-height:initial;min-width:initial;width:auto}.fb_dialog.fb_dialog_mobile.loading.centered #fb_dialog_loader_spinner{width:100%}.fb_dialog.fb_dialog_mobile.loading.centered .fb_dialog_content{background:none}.loading.centered #fb_dialog_loader_close{clear:both;color:#fff;display:block;font-size:18px;padding-top:20px}#fb-root #fb_dialog_ipad_overlay{background:#0006;inset:0;min-height:100%;position:absolute;width:100%;z-index:10000}#fb-root #fb_dialog_ipad_overlay.hidden{display:none}.fb_dialog.fb_dialog_mobile.loading iframe{visibility:hidden}.fb_dialog_mobile .fb_dialog_iframe{position:sticky;top:0}.fb_dialog_content .dialog_header{background:linear-gradient(from(#738aba),to(#2c4987));border-bottom:1px solid;border-color:#043b87;box-shadow:#fff 0 1px 1px -1px inset;color:#fff;font:700 14px Helvetica,sans-serif;text-overflow:ellipsis;text-shadow:rgba(0,30,84,.296875) 0px -1px 0px;vertical-align:middle;white-space:nowrap}.fb_dialog_content .dialog_header table{height:43px;width:100%}.fb_dialog_content .dialog_header td.header_left{font-size:12px;padding-left:5px;vertical-align:middle;width:60px}.fb_dialog_content .dialog_header td.header_right{font-size:12px;padding-right:5px;vertical-align:middle;width:60px}.fb_dialog_content .touchable_button{background:linear-gradient(from(#4267B2),to(#2a4887));background-clip:padding-box;border:1px solid #29487d;border-radius:3px;display:inline-block;line-height:18px;margin-top:3px;max-width:85px;padding:4px 12px;position:relative}.fb_dialog_content .dialog_header .touchable_button input{background:none;border:none;color:#fff;font:700 12px Helvetica,sans-serif;margin:2px -12px;padding:2px 6px 3px;text-shadow:rgba(0,30,84,.296875) 0px -1px 0px}.fb_dialog_content .dialog_header .header_center{color:#fff;font-size:16px;font-weight:700;line-height:18px;text-align:center;vertical-align:middle}.fb_dialog_content .dialog_content{background:url(../../../../../../../../connect.facebook.net/rsrc.php/v4/y9/r/jKEcVPZFk-2.gif) no-repeat 50% 50%;border:1px solid #4A4A4A;border-bottom:0;border-top:0;height:150px}.fb_dialog_content .dialog_footer{background:#f5f6f7;border:1px solid #4A4A4A;border-top-color:#ccc;height:40px}#fb_dialog_loader_close{float:left}.fb_dialog.fb_dialog_mobile .fb_dialog_close_icon{visibility:hidden}#fb_dialog_loader_spinner{animation:rotateSpinner 1.2s linear infinite;background-color:transparent;background-image:url(../../../../../../../../connect.facebook.net/rsrc.php/v4/y2/r/onuUJj0tCqE.png);background-position:50% 50%;background-repeat:no-repeat;height:24px;width:24px}@keyframes rotateSpinner{0%{transform:rotate(0)}to{transform:rotate(360deg)}}
 
@@ -190,7 +248,7 @@ oiVideoOnLoad = function(el) {
     <body class="spec-location-status-3 spec-1751815 spec-plan-186704 spec-location-7522 spec-status-1 builder-230 spec-detail" data-aos-easing="ease" data-aos-duration="400" data-aos-delay="0">
         
 		<div id="fb-root" class=" fb_reset"><div style="position: absolute; top: -10000px; width: 0px; height: 0px;"><div></div></div></div>
-		
+		<script async="" defer="" src="../../../../../../../../connect.facebook.net/en_US/sdk.js#xfbml=1&amp;version=v15.0" nonce="z4y4Dvnm"></script>
 
         <div class="nav-wrapper sticky-top">
 	
@@ -221,7 +279,7 @@ oiVideoOnLoad = function(el) {
 
 	<nav id="site-nav" class="navbar navbar-expand-lg navbar-light">
 		<div class="container-fluid justify-content-end pe-lg-0">
-			<a href="../../../../../../../" class="navbar-brand me-auto ps-0 p-lg-0">
+			<a href="../../../../../../../index.html" class="navbar-brand me-auto ps-0 p-lg-0">
 				<img src="/static/esperanza_homes/images/nav-logo%EF%B9%96v=76f3df3.svg" alt="Esperanza Homes logo" height="72" width="187">
 			</a>
 			<div class="tooltip-espanol-mobile me-4" data-bs-toggle="tooltip" data-bs-placement="bottom" title="" data-bs-original-title="¡Hablamos español! Estamos para atenderle y responder todas sus preguntas. Llámenos hoy para más información.">
@@ -251,18 +309,18 @@ oiVideoOnLoad = function(el) {
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <a href="../../../../../../" class="dropdown-item">
+                                        <a href="../../../../../../index.html" class="dropdown-item">
                                             View Communities<i class="fa-regular fa-arrow-right ms-auto" aria-hidden="true"></i>
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="../../../../../../../floorplan-collections/" class="dropdown-item">
+                                        <a href="../../../../../../../floorplan-collections/index.html" class="dropdown-item">
                                             View Floor Plans<i class="fa-regular fa-arrow-right ms-auto" aria-hidden="true"></i>
                                         </a>
                                     </li>
                                     
                                         <li>
-                                            <a href="../../../../../../../incentives/" class="dropdown-item">
+                                            <a href="../../../../../../../incentives/index.html" class="dropdown-item">
                                                 Esperanza Savings<i class="fa-regular fa-arrow-right ms-auto" aria-hidden="true"></i>
                                             </a>
                                         </li>
@@ -275,7 +333,7 @@ oiVideoOnLoad = function(el) {
                                 </ul>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../available/" class="nav-link">Quick Move-Ins</a>
+                                <a href="../../../../../../available/index.html" class="nav-link">Quick Move-Ins</a>
                             </li>
                             
                                 <li class="nav-item dropdown">
@@ -287,7 +345,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../brownsville/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../brownsville/index.html" class="accordion-submarket nav-link">
                                                             Brownsville, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-1" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-1">
@@ -299,17 +357,15 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../" class="nav-link">
+                                                                        <a href="../../index.html" class="nav-link">
                                                                             Palo Alto Groves
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../villas-las-lagunas/17778/" class="nav-link">
+                                                                        <a href="../../../../villas-las-lagunas/17778/index.html" class="nav-link">
                                                                             Villas Las Lagunas
-                                                                            
-                                                                                <span class="badge bg-green">Coming Soon</span>
                                                                             
                                                                         </a>
                                                                     </li>
@@ -321,7 +377,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../corpus-christi/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../corpus-christi/index.html" class="accordion-submarket nav-link">
                                                             Corpus Christi, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-2" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-2">
@@ -333,7 +389,7 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../calallen/meadow-ridge/19662/" class="nav-link">
+                                                                        <a href="../../../../../calallen/meadow-ridge/19662/index.html" class="nav-link">
                                                                             Meadow Ridge
                                                                             
                                                                                 <span class="badge bg-green">Coming Soon</span>
@@ -348,7 +404,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../edinburg/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../edinburg/index.html" class="accordion-submarket nav-link">
                                                             Edinburg, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-3" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-3">
@@ -360,7 +416,7 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/mccoll-groves/18250/" class="nav-link">
+                                                                        <a href="../../../../../edinburg/mccoll-groves/18250/index.html" class="nav-link">
                                                                             McColl Groves
                                                                             
                                                                                 <span class="badge bg-green">Coming Soon</span>
@@ -369,28 +425,28 @@ oiVideoOnLoad = function(el) {
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/rogers-coves/9937/" class="nav-link">
+                                                                        <a href="../../../../../edinburg/rogers-coves/9937/index.html" class="nav-link">
                                                                             Rogers Coves
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/sapphire-at-la-sienna/17540/" class="nav-link">
+                                                                        <a href="../../../../../edinburg/sapphire-at-la-sienna/17540/index.html" class="nav-link">
                                                                             Sapphire at La Sienna
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/silos-at-la-sienna/8657/" class="nav-link">
+                                                                        <a href="../../../../../edinburg/silos-at-la-sienna/8657/index.html" class="nav-link">
                                                                             Silos at La Sienna
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/villas-at-la-sienna/17541/" class="nav-link">
+                                                                        <a href="../../../../../edinburg/villas-at-la-sienna/17541/index.html" class="nav-link">
                                                                             Villas at La Sienna
                                                                             
                                                                         </a>
@@ -403,7 +459,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../harlingen/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../harlingen/index.html" class="accordion-submarket nav-link">
                                                             Harlingen, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-4" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-4">
@@ -415,7 +471,7 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../harlingen/los-arroyos/19575/" class="nav-link">
+                                                                        <a href="../../../../../harlingen/los-arroyos/19575/index.html" class="nav-link">
                                                                             Los Arroyos
                                                                             
                                                                                 <span class="badge bg-green">Coming Soon</span>
@@ -424,7 +480,7 @@ oiVideoOnLoad = function(el) {
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../harlingen/paso-real/10204/" class="nav-link">
+                                                                        <a href="../../../../../harlingen/paso-real/10204/index.html" class="nav-link">
                                                                             Paso Real
                                                                             
                                                                         </a>
@@ -437,7 +493,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../laredo/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../laredo/index.html" class="accordion-submarket nav-link">
                                                             Laredo, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-5" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-5">
@@ -449,51 +505,49 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/antlers-crossing/15460/" class="nav-link">
+                                                                        <a href="../../../../../laredo/antlers-crossing/15460/index.html" class="nav-link">
                                                                             Antlers Crossing
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/aquero/19788/" class="nav-link">
+                                                                        <a href="../../../../../laredo/aquero/19788/index.html" class="nav-link">
                                                                             Aquero
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/cielo-vista/17475/" class="nav-link">
+                                                                        <a href="../../../../../laredo/cielo-vista/17475/index.html" class="nav-link">
                                                                             Cielo Vista
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/el-eden/16164/" class="nav-link">
+                                                                        <a href="../../../../../laredo/el-eden/16164/index.html" class="nav-link">
                                                                             El Eden
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/vista-verde/18489/" class="nav-link">
+                                                                        <a href="../../../../../laredo/vista-verde/18489/index.html" class="nav-link">
                                                                             Vista Verde
-                                                                            
-                                                                                <span class="badge bg-green">Coming Soon</span>
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/wolf-creek/15462/" class="nav-link">
+                                                                        <a href="../../../../../laredo/wolf-creek/15462/index.html" class="nav-link">
                                                                             Wolf Creek
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/wright-ranch/15463/" class="nav-link">
+                                                                        <a href="../../../../../laredo/wright-ranch/15463/index.html" class="nav-link">
                                                                             Wright Ranch
                                                                             
                                                                         </a>
@@ -506,7 +560,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../mcallen/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../mcallen/index.html" class="accordion-submarket nav-link">
                                                             McAllen, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-6" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-6">
@@ -518,56 +572,56 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/anaqua-at-tres-lagos/17178/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/anaqua-at-tres-lagos/17178/index.html" class="nav-link">
                                                                             Anaqua at Tres Lagos
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/aqualina-at-tres-lagos/8658/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/aqualina-at-tres-lagos/8658/index.html" class="nav-link">
                                                                             Aqualina at Tres Lagos
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/cascada-at-tres-lagos/7147/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/cascada-at-tres-lagos/7147/index.html" class="nav-link">
                                                                             Cascada at Tres Lagos
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/harvest-coves/15176/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/harvest-coves/15176/index.html" class="nav-link">
                                                                             Harvest Coves
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/las-brisas-at-tres-lagos/16126/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/las-brisas-at-tres-lagos/16126/index.html" class="nav-link">
                                                                             Las Brisas at Tres Lagos
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/tres-lagos-master-planned-community/12091/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/tres-lagos-master-planned-community/12091/index.html" class="nav-link">
                                                                             Tres Lagos Master Planned Community
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/villas-at-tres-lagos/18249/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/villas-at-tres-lagos/18249/index.html" class="nav-link">
                                                                             Villas at Tres Lagos
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/villas-on-freddy/5529/" class="nav-link">
+                                                                        <a href="../../../../../mcallen/villas-on-freddy/5529/index.html" class="nav-link">
                                                                             Villas On Freddy
                                                                             
                                                                         </a>
@@ -580,7 +634,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../mercedes/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../mercedes/index.html" class="accordion-submarket nav-link">
                                                             Mercedes, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-7" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-7">
@@ -592,7 +646,7 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mercedes/los-prados/17616/" class="nav-link">
+                                                                        <a href="../../../../../mercedes/los-prados/17616/index.html" class="nav-link">
                                                                             Los Prados
                                                                             
                                                                         </a>
@@ -605,7 +659,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../mission/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../mission/index.html" class="accordion-submarket nav-link">
                                                             Mission, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-8" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-8">
@@ -617,28 +671,28 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mission/bentsen-palm-master-planned-community/12092/" class="nav-link">
+                                                                        <a href="../../../../../mission/bentsen-palm-master-planned-community/12092/index.html" class="nav-link">
                                                                             Bentsen Palm Master Planned Community
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mission/retama-village-55-at-bentsen-palm/4105/" class="nav-link">
+                                                                        <a href="../../../../../mission/retama-village-55-at-bentsen-palm/4105/index.html" class="nav-link">
                                                                             Retama Village (55+) at Bentsen Palm
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mission/sendero-at-bentsen-palm/9628/" class="nav-link">
+                                                                        <a href="../../../../../mission/sendero-at-bentsen-palm/9628/index.html" class="nav-link">
                                                                             Sendero at Bentsen Palm
                                                                             
                                                                         </a>
                                                                     </li>
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mission/tanglewood-at-bentsen-palm/4106/" class="nav-link">
+                                                                        <a href="../../../../../mission/tanglewood-at-bentsen-palm/4106/index.html" class="nav-link">
                                                                             Tanglewood at Bentsen Palm
                                                                             
                                                                         </a>
@@ -651,7 +705,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../san-juan/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../san-juan/index.html" class="accordion-submarket nav-link">
                                                             San Juan, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-9" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-9">
@@ -663,7 +717,7 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../san-juan/stewart-coves/14791/" class="nav-link">
+                                                                        <a href="../../../../../san-juan/stewart-coves/14791/index.html" class="nav-link">
                                                                             Stewart Coves
                                                                             
                                                                         </a>
@@ -676,7 +730,7 @@ oiVideoOnLoad = function(el) {
                                             
                                                 <div class="accordion-item">
                                                     <h2 class="accordion-header">
-                                                        <a href="../../../../../../../weslaco/" class="accordion-submarket nav-link">
+                                                        <a href="../../../../../../../weslaco/index.html" class="accordion-submarket nav-link">
                                                             Weslaco, TX<i class="fa-regular fa-arrow-right ms-3" aria-label="View city"></i>
                                                         </a>
                                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-submarkets-mobile-10" aria-expanded="false" aria-controls="flush-collapse-submarkets-mobile-10">
@@ -688,7 +742,7 @@ oiVideoOnLoad = function(el) {
                                                             <ul class="list-unstyled">
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../weslaco/texas-heights/9122/" class="nav-link">
+                                                                        <a href="../../../../../weslaco/texas-heights/9122/index.html" class="nav-link">
                                                                             Texas Heights
                                                                             
                                                                         </a>
@@ -704,7 +758,7 @@ oiVideoOnLoad = function(el) {
                                 </li>
                             
                             <li class="nav-item">
-                                <a href="../../../../../../../design-studio/" class="nav-link">Design Studio</a>
+                                <a href="../../../../../../../design-studio/index.html" class="nav-link">Design Studio</a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -712,40 +766,40 @@ oiVideoOnLoad = function(el) {
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><h6 class="dropdown-header">The E-Difference</h6></li>
-                                    <li><a href="../../../../../../../e-connected/" class="dropdown-item">E-Connected</a></li>
-                                    <li><a href="../../../../../../../e-efficient/" class="dropdown-item">E-Efficient</a></li>
-                                    <li><a href="../../../../../../../e-simplicity/" class="dropdown-item">E-Simplicity</a></li>
-                                    <li><a href="../../../../../../../design-studio/" class="dropdown-item">E-Customization</a></li>
+                                    <li><a href="../../../../../../../e-connected/index.html" class="dropdown-item">E-Connected</a></li>
+                                    <li><a href="../../../../../../../e-efficient/index.html" class="dropdown-item">E-Efficient</a></li>
+                                    <li><a href="../../../../../../../e-simplicity/index.html" class="dropdown-item">E-Simplicity</a></li>
+                                    <li><a href="../../../../../../../design-studio/index.html" class="dropdown-item">E-Customization</a></li>
                                     <li><h6 class="dropdown-header">Our Process</h6></li>
-                                    <li><a href="../../../../../../../our-process/" class="dropdown-item">10 Step Home Buying Process</a></li>
-                                    <li><a href="../../../../../../../financing/#lenders" class="dropdown-item">Pre-Qualify</a></li>
+                                    <li><a href="../../../../../../../our-process/index.html" class="dropdown-item">10 Step Home Buying Process</a></li>
+                                    <li><a href="../../../../../../../financing/index.html#lenders" class="dropdown-item">Pre-Qualify</a></li>
                                     <li><h6 class="dropdown-header">Our Story</h6></li>
-                                    <li><a href="../../../../../../../our-story/" class="dropdown-item">Who We Are</a></li>
-                                    <li><a href="../../../../../../../our-story/#awards" class="dropdown-item">Awards</a></li>
-                                    <li><a href="../../../../../../../testimonials/" class="dropdown-item">Testimonials</a></li>
-                                    <li><a href="../../../../../../../blog/" class="dropdown-item">Blog</a></li>
+                                    <li><a href="../../../../../../../our-story/index.html" class="dropdown-item">Who We Are</a></li>
+                                    <li><a href="../../../../../../../our-story/index.html#awards" class="dropdown-item">Awards</a></li>
+                                    <li><a href="../../../../../../../testimonials/index.html" class="dropdown-item">Testimonials</a></li>
+                                    <li><a href="../../../../../../../blog/index.html" class="dropdown-item">Blog</a></li>
                                 </ul>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../../events/" class="nav-link">Events</a>
+                                <a href="../../../../../../../events/index.html" class="nav-link">Events</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../../financing/" class="nav-link">Financing</a>
+                                <a href="../../../../../../../financing/index.html" class="nav-link">Financing</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../../gallery/" class="nav-link">Galleries</a>
+                                <a href="../../../../../../../gallery/index.html" class="nav-link">Galleries</a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     Connect
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="../../../../../../../contact/" class="dropdown-item">Contact Us</a></li>
-                                    <li><a href="../../../../../../../customer-care/" class="dropdown-item">Customer Care</a></li>
+                                    <li><a href="../../../../../../../contact/index.html" class="dropdown-item">Contact Us</a></li>
+                                    <li><a href="../../../../../../../customer-care/index.html" class="dropdown-item">Customer Care</a></li>
                                     <li><a href="https://www.rhodes.com/careers/?__hstc=256984532.dc6e02fcb9c043d75104208fa3b139ff.1780931569708.1780931569708.1780931569708.1&amp;__hssc=256984532.229.1780931569708&amp;__hsfp=9486f90162218163b38ac5ebe0ab7aef" class="dropdown-item" target="_blank">Careers</a></li>
-                                    <li><a href="../../../../../../../realtors/" class="dropdown-item">Realtors</a></li>
-                                    <li><a href="../../../../../../../operational-trades-vendors/" class="dropdown-item">Trades &amp; Vendors</a></li>
-                                    <li><a href="../../../../../../../referral-reward-program/" class="dropdown-item">Referral Reward Program</a></li>
+                                    <li><a href="../../../../../../../realtors/index.html" class="dropdown-item">Realtors</a></li>
+                                    <li><a href="../../../../../../../operational-trades-vendors/index.html" class="dropdown-item">Trades &amp; Vendors</a></li>
+                                    <li><a href="../../../../../../../referral-reward-program/index.html" class="dropdown-item">Referral Reward Program</a></li>
                                     <li><a href="https://esp.ihmsweb.com/cgi-bin/ihmsweb.exe?pgm=loginHandler&amp;page=2" class="dropdown-item" target="_blank"><i class="far fa-home-alt me-1"></i>Homeowner Portal</a></li>
                                     <li><a href="https://info.rhodeshomeservice.com/?__hstc=256984532.dc6e02fcb9c043d75104208fa3b139ff.1780931569708.1780931569708.1780931569708.1&amp;__hssc=256984532.229.1780931569708&amp;__hsfp=9486f90162218163b38ac5ebe0ab7aef" class="dropdown-item" target="_blank">Rhodes Home Service</a></li>
                                 </ul>
@@ -760,23 +814,23 @@ oiVideoOnLoad = function(el) {
                                         <div class="row">
                                             <div class="col-sidebar col-3 px-0">
                                                 <li>
-                                                    <a href="../../../../../../" class="dropdown-item text-white bodoni ls-sm">
+                                                    <a href="../../../../../../index.html" class="dropdown-item text-white bodoni ls-sm">
                                                         View Communities<i class="fa-regular fa-arrow-right ms-3 me-2" aria-hidden="true"></i>
                                                     </a>
                                                 </li>
                                                 <li>
-                                                    <a href="../../../../../../available/" class="dropdown-item text-white bodoni ls-sm">
+                                                    <a href="../../../../../../available/index.html" class="dropdown-item text-white bodoni ls-sm">
                                                         View Quick Move-Ins<i class="fa-regular fa-arrow-right ms-3 me-2" aria-hidden="true"></i>
                                                     </a>
                                                 </li>
                                                 <li>
-                                                    <a href="../../../../../../../floorplan-collections/" class="dropdown-item text-white bodoni ls-sm">
+                                                    <a href="../../../../../../../floorplan-collections/index.html" class="dropdown-item text-white bodoni ls-sm">
                                                         View Floor Plans<i class="fa-regular fa-arrow-right ms-3 me-2" aria-hidden="true"></i>
                                                     </a>
                                                 </li>
                                                 
                                                     <li>
-                                                        <a href="../../../../../../../incentives/" class="dropdown-item text-white bodoni ls-sm">
+                                                        <a href="../../../../../../../incentives/index.html" class="dropdown-item text-white bodoni ls-sm">
                                                             Esperanza Savings<i class="fa-regular fa-arrow-right ms-3 me-2" aria-hidden="true"></i>
                                                         </a>
                                                     </li>
@@ -790,13 +844,13 @@ oiVideoOnLoad = function(el) {
                                             <div class="col-cities col p-lg-4">
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../brownsville/" class="link-light">Brownsville, TX</a></h2>
+                                                        <h2><a href="../../../../../../../brownsville/index.html" class="link-light">Brownsville, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../">
+                                                                        <a href="../../index.html">
                                                                             Palo Alto Groves
                                                                             
                                                                         </a>
@@ -805,10 +859,8 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../villas-las-lagunas/17778/">
+                                                                        <a href="../../../../villas-las-lagunas/17778/index.html">
                                                                             Villas Las Lagunas
-                                                                            
-                                                                                <span class="small badge bg-green d-inline-block ms-2 pt-1 align-top">Coming Soon</span>
                                                                             
                                                                         </a>
                                                                     </li>
@@ -818,13 +870,13 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../corpus-christi/" class="link-light">Corpus Christi, TX</a></h2>
+                                                        <h2><a href="../../../../../../../corpus-christi/index.html" class="link-light">Corpus Christi, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../calallen/meadow-ridge/19662/">
+                                                                        <a href="../../../../../calallen/meadow-ridge/19662/index.html">
                                                                             Meadow Ridge
                                                                             
                                                                                 <span class="small badge bg-green d-inline-block ms-2 pt-1 align-top">Coming Soon</span>
@@ -837,13 +889,13 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../edinburg/" class="link-light">Edinburg, TX</a></h2>
+                                                        <h2><a href="../../../../../../../edinburg/index.html" class="link-light">Edinburg, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/mccoll-groves/18250/">
+                                                                        <a href="../../../../../edinburg/mccoll-groves/18250/index.html">
                                                                             McColl Groves
                                                                             
                                                                                 <span class="small badge bg-green d-inline-block ms-2 pt-1 align-top">Coming Soon</span>
@@ -854,7 +906,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/rogers-coves/9937/">
+                                                                        <a href="../../../../../edinburg/rogers-coves/9937/index.html">
                                                                             Rogers Coves
                                                                             
                                                                         </a>
@@ -863,7 +915,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/sapphire-at-la-sienna/17540/">
+                                                                        <a href="../../../../../edinburg/sapphire-at-la-sienna/17540/index.html">
                                                                             Sapphire at La Sienna
                                                                             
                                                                         </a>
@@ -872,7 +924,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/silos-at-la-sienna/8657/">
+                                                                        <a href="../../../../../edinburg/silos-at-la-sienna/8657/index.html">
                                                                             Silos at La Sienna
                                                                             
                                                                         </a>
@@ -881,7 +933,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../edinburg/villas-at-la-sienna/17541/">
+                                                                        <a href="../../../../../edinburg/villas-at-la-sienna/17541/index.html">
                                                                             Villas at La Sienna
                                                                             
                                                                         </a>
@@ -892,13 +944,13 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../harlingen/" class="link-light">Harlingen, TX</a></h2>
+                                                        <h2><a href="../../../../../../../harlingen/index.html" class="link-light">Harlingen, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../harlingen/los-arroyos/19575/">
+                                                                        <a href="../../../../../harlingen/los-arroyos/19575/index.html">
                                                                             Los Arroyos
                                                                             
                                                                                 <span class="small badge bg-green d-inline-block ms-2 pt-1 align-top">Coming Soon</span>
@@ -909,7 +961,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../harlingen/paso-real/10204/">
+                                                                        <a href="../../../../../harlingen/paso-real/10204/index.html">
                                                                             Paso Real
                                                                             
                                                                         </a>
@@ -920,13 +972,13 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../laredo/" class="link-light">Laredo, TX</a></h2>
+                                                        <h2><a href="../../../../../../../laredo/index.html" class="link-light">Laredo, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/antlers-crossing/15460/">
+                                                                        <a href="../../../../../laredo/antlers-crossing/15460/index.html">
                                                                             Antlers Crossing
                                                                             
                                                                         </a>
@@ -935,7 +987,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/aquero/19788/">
+                                                                        <a href="../../../../../laredo/aquero/19788/index.html">
                                                                             Aquero
                                                                             
                                                                         </a>
@@ -944,7 +996,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/cielo-vista/17475/">
+                                                                        <a href="../../../../../laredo/cielo-vista/17475/index.html">
                                                                             Cielo Vista
                                                                             
                                                                         </a>
@@ -953,7 +1005,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/el-eden/16164/">
+                                                                        <a href="../../../../../laredo/el-eden/16164/index.html">
                                                                             El Eden
                                                                             
                                                                         </a>
@@ -962,10 +1014,8 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/vista-verde/18489/">
+                                                                        <a href="../../../../../laredo/vista-verde/18489/index.html">
                                                                             Vista Verde
-                                                                            
-                                                                                <span class="small badge bg-green d-inline-block ms-2 pt-1 align-top">Coming Soon</span>
                                                                             
                                                                         </a>
                                                                     </li>
@@ -973,7 +1023,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/wolf-creek/15462/">
+                                                                        <a href="../../../../../laredo/wolf-creek/15462/index.html">
                                                                             Wolf Creek
                                                                             
                                                                         </a>
@@ -982,7 +1032,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../laredo/wright-ranch/15463/">
+                                                                        <a href="../../../../../laredo/wright-ranch/15463/index.html">
                                                                             Wright Ranch
                                                                             
                                                                         </a>
@@ -993,7 +1043,7 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../mcallen/" class="link-light">McAllen, TX</a></h2>
+                                                        <h2><a href="../../../../../../../mcallen/index.html" class="link-light">McAllen, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
@@ -1005,7 +1055,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/harvest-coves/15176/">
+                                                                        <a href="../../../../../mcallen/harvest-coves/15176/index.html">
                                                                             Harvest Coves
                                                                             
                                                                         </a>
@@ -1018,7 +1068,7 @@ oiVideoOnLoad = function(el) {
                                                                     
                                                                         
                                                                             <li class="parent">
-                                                                                <a href="../../../../../mcallen/tres-lagos-master-planned-community/12091/">
+                                                                                <a href="../../../../../mcallen/tres-lagos-master-planned-community/12091/index.html">
                                                                                     Tres Lagos Master Planned Community
                                                                                     
                                                                                 </a>
@@ -1026,35 +1076,35 @@ oiVideoOnLoad = function(el) {
                                                                             <ul class="ps-3">
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mcallen/anaqua-at-tres-lagos/17178/">
+                                                                                        <a href="../../../../../mcallen/anaqua-at-tres-lagos/17178/index.html">
                                                                                             Anaqua at Tres Lagos
                                                                                             
                                                                                         </a>
                                                                                     </li>
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mcallen/aqualina-at-tres-lagos/8658/">
+                                                                                        <a href="../../../../../mcallen/aqualina-at-tres-lagos/8658/index.html">
                                                                                             Aqualina at Tres Lagos
                                                                                             
                                                                                         </a>
                                                                                     </li>
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mcallen/cascada-at-tres-lagos/7147/">
+                                                                                        <a href="../../../../../mcallen/cascada-at-tres-lagos/7147/index.html">
                                                                                             Cascada at Tres Lagos
                                                                                             
                                                                                         </a>
                                                                                     </li>
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mcallen/las-brisas-at-tres-lagos/16126/">
+                                                                                        <a href="../../../../../mcallen/las-brisas-at-tres-lagos/16126/index.html">
                                                                                             Las Brisas at Tres Lagos
                                                                                             
                                                                                         </a>
                                                                                     </li>
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mcallen/villas-at-tres-lagos/18249/">
+                                                                                        <a href="../../../../../mcallen/villas-at-tres-lagos/18249/index.html">
                                                                                             Villas at Tres Lagos
                                                                                             
                                                                                         </a>
@@ -1071,7 +1121,7 @@ oiVideoOnLoad = function(el) {
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mcallen/villas-on-freddy/5529/">
+                                                                        <a href="../../../../../mcallen/villas-on-freddy/5529/index.html">
                                                                             Villas On Freddy
                                                                             
                                                                         </a>
@@ -1082,13 +1132,13 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../mercedes/" class="link-light">Mercedes, TX</a></h2>
+                                                        <h2><a href="../../../../../../../mercedes/index.html" class="link-light">Mercedes, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../mercedes/los-prados/17616/">
+                                                                        <a href="../../../../../mercedes/los-prados/17616/index.html">
                                                                             Los Prados
                                                                             
                                                                         </a>
@@ -1099,7 +1149,7 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../mission/" class="link-light">Mission, TX</a></h2>
+                                                        <h2><a href="../../../../../../../mission/index.html" class="link-light">Mission, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
@@ -1109,7 +1159,7 @@ oiVideoOnLoad = function(el) {
                                                                     
                                                                         
                                                                             <li class="parent">
-                                                                                <a href="../../../../../mission/bentsen-palm-master-planned-community/12092/">
+                                                                                <a href="../../../../../mission/bentsen-palm-master-planned-community/12092/index.html">
                                                                                     Bentsen Palm Master Planned Community
                                                                                     
                                                                                 </a>
@@ -1117,21 +1167,21 @@ oiVideoOnLoad = function(el) {
                                                                             <ul class="ps-3">
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mission/retama-village-55-at-bentsen-palm/4105/">
+                                                                                        <a href="../../../../../mission/retama-village-55-at-bentsen-palm/4105/index.html">
                                                                                             Retama Village (55+) at Bentsen Palm
                                                                                             
                                                                                         </a>
                                                                                     </li>
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mission/sendero-at-bentsen-palm/9628/">
+                                                                                        <a href="../../../../../mission/sendero-at-bentsen-palm/9628/index.html">
                                                                                             Sendero at Bentsen Palm
                                                                                             
                                                                                         </a>
                                                                                     </li>
                                                                                 
                                                                                     <li class="child">
-                                                                                        <a href="../../../../../mission/tanglewood-at-bentsen-palm/4106/">
+                                                                                        <a href="../../../../../mission/tanglewood-at-bentsen-palm/4106/index.html">
                                                                                             Tanglewood at Bentsen Palm
                                                                                             
                                                                                         </a>
@@ -1152,13 +1202,13 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../san-juan/" class="link-light">San Juan, TX</a></h2>
+                                                        <h2><a href="../../../../../../../san-juan/index.html" class="link-light">San Juan, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../san-juan/stewart-coves/14791/">
+                                                                        <a href="../../../../../san-juan/stewart-coves/14791/index.html">
                                                                             Stewart Coves
                                                                             
                                                                         </a>
@@ -1169,13 +1219,13 @@ oiVideoOnLoad = function(el) {
                                                     </div>
                                                 
                                                     <div class="city">
-                                                        <h2><a href="../../../../../../../weslaco/" class="link-light">Weslaco, TX</a></h2>
+                                                        <h2><a href="../../../../../../../weslaco/index.html" class="link-light">Weslaco, TX</a></h2>
                                                         <div class="light-green-bar mt-1 mb-3"></div>
                                                         <ul>
                                                             
                                                                 
                                                                     <li>
-                                                                        <a href="../../../../../weslaco/texas-heights/9122/">
+                                                                        <a href="../../../../../weslaco/texas-heights/9122/index.html">
                                                                             Texas Heights
                                                                             
                                                                         </a>
@@ -1191,7 +1241,7 @@ oiVideoOnLoad = function(el) {
                                 </ul>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../../design-studio/" class="nav-link">Design Studio</a>
+                                <a href="../../../../../../../design-studio/index.html" class="nav-link">Design Studio</a>
                             </li>
                             <li class="nav-item dropdown mega-menu">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Why Esperanza</a>
@@ -1202,28 +1252,28 @@ oiVideoOnLoad = function(el) {
                                                 <h2>The E-Difference</h2>
                                                 <div class="light-green-bar my-3"></div>
                                                 <ul>
-                                                    <li><a href="../../../../../../../e-connected/">E-Connected</a></li>
-                                                    <li><a href="../../../../../../../e-efficient/">E-Efficient</a></li>
-                                                    <li><a href="../../../../../../../e-simplicity/">E-Simplicity</a></li>
-                                                    <li><a href="../../../../../../../design-studio/">E-Customization</a></li>
+                                                    <li><a href="../../../../../../../e-connected/index.html">E-Connected</a></li>
+                                                    <li><a href="../../../../../../../e-efficient/index.html">E-Efficient</a></li>
+                                                    <li><a href="../../../../../../../e-simplicity/index.html">E-Simplicity</a></li>
+                                                    <li><a href="../../../../../../../design-studio/index.html">E-Customization</a></li>
                                                 </ul>
                                             </div>
                                             <div class="col-12 col-md-6 col-lg-4 col-xl-3">
                                                 <h2>Our Process</h2>
                                                 <div class="light-green-bar my-3"></div>
                                                 <ul>
-                                                    <li><a href="../../../../../../../our-process/">10 Step Home Buying Process</a></li>
-                                                    <li><a href="../../../../../../../financing/#lenders">Pre-Qualify</a></li>
+                                                    <li><a href="../../../../../../../our-process/index.html">10 Step Home Buying Process</a></li>
+                                                    <li><a href="../../../../../../../financing/index.html#lenders">Pre-Qualify</a></li>
                                                 </ul>
                                             </div>
                                             <div class="col-12 col-md-6 col-lg-4 col-xl-3">
                                                 <h2>Our Story</h2>
                                                 <div class="light-green-bar my-3"></div>
                                                 <ul>
-                                                    <li><a href="../../../../../../../our-story/">Who We Are</a></li>
-                                                    <li><a href="../../../../../../../our-story/#awards">Awards</a></li>
-                                                    <li><a href="../../../../../../../testimonials/">Testimonials</a></li>
-                                                    <li><a href="../../../../../../../blog/">Blog</a></li>
+                                                    <li><a href="../../../../../../../our-story/index.html">Who We Are</a></li>
+                                                    <li><a href="../../../../../../../our-story/index.html#awards">Awards</a></li>
+                                                    <li><a href="../../../../../../../testimonials/index.html">Testimonials</a></li>
+                                                    <li><a href="../../../../../../../blog/index.html">Blog</a></li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -1231,13 +1281,13 @@ oiVideoOnLoad = function(el) {
                                 </ul>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../../events/" class="nav-link">Events</a>
+                                <a href="../../../../../../../events/index.html" class="nav-link">Events</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../../financing/" class="nav-link">Financing</a>
+                                <a href="../../../../../../../financing/index.html" class="nav-link">Financing</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../../../../../../../gallery/" class="nav-link">Gallery</a>
+                                <a href="../../../../../../../gallery/index.html" class="nav-link">Gallery</a>
                             </li>
                             <li class="nav-item dropdown mega-menu">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Connect</a>
@@ -1250,10 +1300,10 @@ oiVideoOnLoad = function(el) {
                                                 <ul>
                                                     <div class="row">
                                                         <div class="col-12 col-lg-6">
-                                                            <li><a href="../../../../../../../contact/">Contact Us</a></li>
+                                                            <li><a href="../../../../../../../contact/index.html">Contact Us</a></li>
                                                         </div>
                                                         <div class="col-12 col-lg-6">
-                                                            <li><a href="../../../../../../../customer-care/">Customer Care</a></li>
+                                                            <li><a href="../../../../../../../customer-care/index.html">Customer Care</a></li>
                                                         </div>
                                                     </div>
                                                     <div class="row">
@@ -1261,15 +1311,15 @@ oiVideoOnLoad = function(el) {
                                                             <li><a href="https://www.rhodes.com/careers/?__hstc=256984532.dc6e02fcb9c043d75104208fa3b139ff.1780931569708.1780931569708.1780931569708.1&amp;__hssc=256984532.229.1780931569708&amp;__hsfp=9486f90162218163b38ac5ebe0ab7aef" target="_blank">Careers</a></li>
                                                         </div>
                                                         <div class="col-12 col-lg-6">
-                                                            <li><a href="../../../../../../../realtors/">Realtors</a></li>
+                                                            <li><a href="../../../../../../../realtors/index.html">Realtors</a></li>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-12 col-lg-6">
-                                                            <li><a href="../../../../../../../operational-trades-vendors/">Trades &amp; Vendors</a></li>
+                                                            <li><a href="../../../../../../../operational-trades-vendors/index.html">Trades &amp; Vendors</a></li>
                                                         </div>
                                                         <div class="col-12 col-lg-6">
-                                                            <li><a href="../../../../../../../referral-reward-program/">Referral Reward Program</a></li>
+                                                            <li><a href="../../../../../../../referral-reward-program/index.html">Referral Reward Program</a></li>
                                                         </div>
                                                     </div>
                                                     <div class="row">
@@ -1307,7 +1357,7 @@ oiVideoOnLoad = function(el) {
 									<div class="swiper-wrapper">
 										
 											<div class="swiper-slide">
-												<img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 600px, 100vw" loading="eager" class="osc-cta-image" aria-hidden="true" alt="3br New Home in Brownsville, TX">
+												<img src="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 600px, 100vw" loading="eager" class="osc-cta-image" aria-hidden="true" alt="3br New Home in Brownsville, TX">
 											</div>
 										
 									</div>
@@ -1324,7 +1374,7 @@ oiVideoOnLoad = function(el) {
 <div id="navbar-bottom-mobile" class="container-fluid">
     <div class="row">
         <div class="col text-center">
-            <a href="../../../../../../available/" class="text-white">
+            <a href="../../../../../../available/index.html" class="text-white">
                 <div class="mt-2 fs-1 text-white">
                     <i class="fas fa-map-marked-alt"></i>
                 </div>
@@ -1454,22 +1504,22 @@ oiVideoOnLoad = function(el) {
 							  Where We Build
 							</button>
 							<ul class="dropdown-menu dropup-content">
-								<li><a href="../../../../../../brownsville/communities/">Brownsville</a></li>
-								<li><a href="../../../../../../edinburg/communities/">Edinburg</a></li>
-								<li><a href="../../../../../../harlingen/communities/">Harlingen</a></li>
-								<li><a href="../../../../../../laredo/communities/">Laredo</a></li>
-								<li><a href="../../../../../../mcallen/communities/">McALLEN</a></li>
-								<li><a href="../../../../../../mission/communities/">Mission</a></li>
-								<li><a href="../../../../../../san-juan/communities/">San Juan</a></li>
-								<li><a href="../../../../../../weslaco/communities/">Weslaco</a></li>
+								<li><a href="../../../../../../brownsville/communities/index.html">Brownsville</a></li>
+								<li><a href="../../../../../../edinburg/communities/index.html">Edinburg</a></li>
+								<li><a href="../../../../../../harlingen/communities/index.html">Harlingen</a></li>
+								<li><a href="../../../../../../laredo/communities/index.html">Laredo</a></li>
+								<li><a href="../../../../../../mcallen/communities/index.html">McALLEN</a></li>
+								<li><a href="../../../../../../mission/communities/index.html">Mission</a></li>
+								<li><a href="../../../../../../san-juan/communities/index.html">San Juan</a></li>
+								<li><a href="../../../../../../weslaco/communities/index.html">Weslaco</a></li>
 							</ul>
 						</div>
 					</li>
-					<li><a href="../../../../../../">Find A Home</a></li>
-					<li><a href="../../../../../../../design-studio/">Design Your Home</a></li>
-					<li><a href="../../../../../../../our-process/#difference">The E Difference</a></li>
-					<li><a href="../../../../../../../our-story/">About Us</a></li>
-					<li><a href="../../../../../../../contact/">Contact Us</a></li>
+					<li><a href="../../../../../../index.html">Find A Home</a></li>
+					<li><a href="../../../../../../../design-studio/index.html">Design Your Home</a></li>
+					<li><a href="../../../../../../../our-process/index.html#difference">The E Difference</a></li>
+					<li><a href="../../../../../../../our-story/index.html">About Us</a></li>
+					<li><a href="../../../../../../../contact/index.html">Contact Us</a></li>
 				</ul>
 				<hr>
 				<ul class="social-links pt-lg-2">
@@ -1498,9 +1548,9 @@ oiVideoOnLoad = function(el) {
 				<ul class="bottom-links mb-0">
 					<li><a href="https://www.rhodes.com/careers/?__hstc=256984532.dc6e02fcb9c043d75104208fa3b139ff.1780931569708.1780931569708.1780931569708.1&amp;__hssc=256984532.229.1780931569708&amp;__hsfp=9486f90162218163b38ac5ebe0ab7aef" rel="noopener" target="_blank">Careers</a></li>
 					<li><a href="https://esp.ihmsweb.com/cgi-bin/ihmsweb.exe" rel="noopener" target="_blank">Warranty</a></li>
-					<li><a href="../../../../../../../realtors/">For Realtors</a></li>
-					<li><a href="../../../../../../../blog/">Blog</a></li>
-					<li><a href="../../../../../../../privacy-policy/">Privacy Policy</a></li>
+					<li><a href="../../../../../../../realtors/index.html">For Realtors</a></li>
+					<li><a href="../../../../../../../blog/index.html">Blog</a></li>
+					<li><a href="../../../../../../../privacy-policy/index.html">Privacy Policy</a></li>
 					<li><img class="eho" src="/static/esperanza_homes/images/eho%EF%B9%96v=acd4ee2.svg" width="28" loading="lazy" alt="Equal Housing Opportunity"></li>
 				</ul>
 			</div>
@@ -1710,7 +1760,7 @@ oiVideoOnLoad = function(el) {
                             <div class="form-row opt-in-text">
                                 <p>I agree to receive communications by text message regarding informational (appointment details, account notifications, marketing, etc. ) from Esperanza Homes.</p>
                                 <p>You may opt out by replying STOP or ask for more information by replying HELP. Message frequency varies. Message and data rates may apply.</p>
-                                <p>You may review our <a href="../../../../../../../privacy-policy/">Privacy Policy</a> to learn how your data is used.</p>
+                                <p>You may review our <a href="../../../../../../../privacy-policy/index.html">Privacy Policy</a> to learn how your data is used.</p>
                             </div>
                         
 
@@ -1826,7 +1876,7 @@ oiVideoOnLoad = function(el) {
                 
                     <div class="col-3">
                         <div class="oi-aspect one-one">
-                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img" alt="1,483sf New Home in Brownsville, TX">
+                            <img src="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img" alt="1,483sf New Home in Brownsville, TX">
                         </div>
                     </div>
                 
@@ -2015,7 +2065,7 @@ oiVideoOnLoad = function(el) {
                             <div class="form-row opt-in-text">
                                 <p>I agree to receive communications by text message regarding informational (appointment details, account notifications, marketing, etc. ) from Esperanza Homes.</p>
                                 <p>You may opt out by replying STOP or ask for more information by replying HELP. Message frequency varies. Message and data rates may apply.</p>
-                                <p>You may review our <a href="../../../../../../../privacy-policy/">Privacy Policy</a> to learn how your data is used.</p>
+                                <p>You may review our <a href="../../../../../../../privacy-policy/index.html">Privacy Policy</a> to learn how your data is used.</p>
                             </div>
                         
 
@@ -2312,7 +2362,7 @@ oiVideoOnLoad = function(el) {
                             <div class="form-row opt-in-text">
                                 <p>I agree to receive communications by text message regarding informational (appointment details, account notifications, marketing, etc. ) from Esperanza Homes.</p>
                                 <p>You may opt out by replying STOP or ask for more information by replying HELP. Message frequency varies. Message and data rates may apply.</p>
-                                <p>You may review our <a href="../../../../../../../privacy-policy/">Privacy Policy</a> to learn how your data is used.</p>
+                                <p>You may review our <a href="../../../../../../../privacy-policy/index.html">Privacy Policy</a> to learn how your data is used.</p>
                             </div>
                         
 
@@ -2494,9 +2544,11 @@ oiVideoOnLoad = function(el) {
     
 
 <iframe scrolling="no" frameborder="0" allowtransparency="true" src="https://platform.twitter.com/widgets/widget_iframe.1227a5674072e080ffb1ba14ac0c1079.html?origin=https%3A%2F%2Fwww.esperanzahomes.com" title="Twitter settings iframe" style="display: none;"></iframe>
-
-
-
+<script type="text/javascript" id="" charset="">(function(a,c,e,f,d,b){a.hj=a.hj||function(){(a.hj.q=a.hj.q||[]).push(arguments)};a._hjSettings={hjid:5353091,hjsv:6};d=c.getElementsByTagName("head")[0];b=c.createElement("script");b.async=1;b.src=e+a._hjSettings.hjid+f+a._hjSettings.hjsv;d.appendChild(b)})(window,document,"https://static.hotjar.com/c/hotjar-",".js?sv\x3d");</script>
+<script id="hs-script-loader" text="" charset="" type="text/javascript" src="../../../../../../../../js.hs-scripts.com/8139268%EF%B9%96businessUnitId=95662.js" nonce="z4y4Dvnm"></script>
+<script type="text/javascript" id="" charset="">!function(d,h,e){d.TiktokAnalyticsObject=e;var a=d[e]=d[e]||[];a.methods="page track identify instances debug on off once ready alias group enableCookie disableCookie holdConsent revokeConsent grantConsent".split(" ");a.setAndDefer=function(b,c){b[c]=function(){b.push([c].concat(Array.prototype.slice.call(arguments,0)))}};for(d=0;d<a.methods.length;d++)a.setAndDefer(a,a.methods[d]);a.instance=function(b){b=a._i[b]||[];for(var c=0;c<a.methods.length;c++)a.setAndDefer(b,a.methods[c]);return b};a.load=
+function(b,c){var f="https://analytics.tiktok.com/i18n/pixel/events.js",g=c&&c.partner;a._i=a._i||{};a._i[b]=[];a._i[b]._u=f;a._i[b]._partner=g||"GoogleTagManagerClient";a._t=a._t||{};a._t[b]=+new Date;a._o=a._o||{};a._o[b]=c||{};a._partner=a._partner||"GoogleTagManagerClient";c=document.createElement("script");c.type="text/javascript";c.async=!0;c.src=f+"?sdkid\x3d"+b+"\x26lib\x3d"+e;b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(c,b)};a.load("D871H3BC77U62R5TGE50");a.page()}(window,
+document,"ttq");</script>
 
 <iframe id="_hjSafeContext_74983323" title="_hjSafeContext" tabindex="-1" aria-hidden="true" src="about:blank" style="display: none !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important;"></iframe><iframe id="rufous-sandbox" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" style="position: absolute; visibility: hidden; display: none; width: 0px; height: 0px; padding: 0px; border: medium;" title="Twitter analytics iframe"></iframe>
 <script>window.__ESPERANZA={"API_BASE":"/api/public","MAPBOX_TOKEN":"pk.eyJ1IjoiaGF6YXJkaG91c2UiLCJhIjoiY21kdG1xMWwwMTFvbDJqb2h1bXgxYmw3ZyJ9.ER4JhSJ2bl89WJ-3Xv5erA","MAPBOX_STYLE":"/esperanza-common.json","MAPBOX_STYLE_HOME":"mapbox://styles/hazardhouse/cmfxyvjas00bh01qsf8ok5bcg","MAPBOX_STYLE_COMMON":"/esperanza-common.json"};window.__ESPERANZA_PAGE={"type":"qmi","id":"recovKX6fzWcPavv6","communitySlug":"villas-at-la-sienna"};</script>

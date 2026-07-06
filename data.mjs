@@ -62,7 +62,7 @@ function normCommunity(c) {
     lat: p[0] != null && p[0] !== '' ? Number(p[0]) : null,
     lng: p[1] != null && p[1] !== '' ? Number(p[1]) : null,
     address: c.address, image: c.image, secondaryImage: c.secondaryImage,
-    priceFrom: c.priceFrom, sqft: c.sqft, beds: c.beds, baths: c.baths,
+    priceFrom: c.priceFrom, comingSoon: !!c.comingSoon, sqft: c.sqft, beds: c.beds, baths: c.baths,
     description: c.description, amenities: c.amenities, promo: c.promoBannerText,
     officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
   };

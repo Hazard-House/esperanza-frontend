@@ -16,7 +16,8 @@ import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOI
 import { generateDetails } from './generate-details.mjs';
 import { loadData } from './data.mjs';
 import { communityPath, floorplanPath } from './paths.mjs';
-import { hydrateCommunity, hydrateFloorplan, swapCommunityBanner, bakeRecommend } from './hydrate-scraped.mjs';
+import { hydrateCommunity, hydrateFloorplan, swapCommunityBanner, bakeRecommend, hydrateCommunityStatus } from './hydrate-scraped.mjs';
+import { renderCommunity } from './render-community.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -87,7 +88,11 @@ function buildShellHtml(raw) {
   return injectIsland(html, SHELL.island);
 }
 
+// Set once in build(); every written page gets its frozen nav "Coming Soon" badges
+// and infowindow from-prices refreshed against the API (hydrateCommunityStatus).
+let LIVE_DATA = null;
 function writeOut(rel, html) {
+  if (LIVE_DATA) html = hydrateCommunityStatus(html, LIVE_DATA);
   const dst = join(OUT, rel);
   mkdirSync(dirname(dst), { recursive: true });
   writeFileSync(dst, html);
@@ -99,6 +104,8 @@ async function build() {
 
   // Live data, loaded ONCE (generateDetails reuses it below).
   const d = await loadData();
+  LIVE_DATA = d;
+  const detailShell = readFileSync(join(import.meta.dirname, 'templates', 'detail-shell.html'), 'utf8');
   const communityBySlug = new Map(d.communities.map(c => [c.slug, c]));
   const fpBySlug = new Map(d.floorplans.map(fp => [fp.slug, fp]));
   // Clean paths of entities shipped from the scrape — generateDetails skips these.
@@ -107,6 +114,12 @@ async function build() {
 
   // 1. Theme bundle -> /static (preserve the ﹖v=hash filenames verbatim).
   cpSync(THEME, join(OUT, 'static'), { recursive: true });
+  // Branded 404 page + its hero image (localized from live in the CF-move PR; not
+  // part of the scrape). Build wipes public/, so re-seed them every rebuild —
+  // writeOut also refreshes the 404 page's frozen nav from the API.
+  writeOut('404.html', readFileSync(join(import.meta.dirname, 'assets', '404.html'), 'utf8'));
+  cpSync(join(import.meta.dirname, 'assets', 'error_bg﹖v=f46ea32.jpg'),
+    join(OUT, 'static', 'esperanza_homes', 'images', 'error_bg﹖v=f46ea32.jpg'));
 
   // 2. Ship every page in the manifest; islands for the LIVE_PAGES.
   let n = 0;
@@ -123,7 +136,20 @@ async function build() {
       if (det.type === 'community') {
         const c = communityBySlug.get(det.slug);
         if (!c) { counts.gated++; continue; } // gone from API -> Caddy 404->302, like the original's removal
-        const html = bakeRecommend(swapCommunityBanner(hydrateCommunity(rewriteCommon(readFileSync(src, 'utf8')), c, d), rel), rel);
+        const raw = readFileSync(src, 'utf8');
+        // The June-8 scrape froze some pages as the priceless "Coming Soon" variant
+        // (no hero price, no plans section); once the API opens the community the
+        // variant can't be hydrated into the live shape — render the standard
+        // generated page instead (same renderer as communities with no scraped page).
+        // Excluded: communities the API still flags comingSoon, and master-planned
+        // portfolio pages (live never shows "Starting at" on those).
+        const staleVariant = c.priceFrom > 0 && !c.comingSoon
+          && !/master-planned/.test(c.slug || '')
+          && !raw.includes('Starting at $');
+        if (staleVariant) console.log(`community ${c.slug}: scraped page is the coming-soon variant but API prices it — using generated page`);
+        const html = staleVariant
+          ? renderCommunity(c, detailShell)
+          : bakeRecommend(swapCommunityBanner(hydrateCommunity(rewriteCommon(raw), c, d), rel), rel);
         writeOut(rel, html); // scraped ID path
         writeOut(communityPath(c).replace(/^\//, '') + 'index.html', html); // clean path
         scrapedCommunities.add(communityPath(c));
@@ -166,9 +192,7 @@ async function build() {
   // try_files at /new-homes/available/home/; qmi-detail-live.js fills it from the API.
   const shellSrc = join(WWW, SHELL.template);
   if (existsSync(shellSrc)) {
-    const shellDst = join(OUT, SHELL.out);
-    mkdirSync(dirname(shellDst), { recursive: true });
-    writeFileSync(shellDst, buildShellHtml(readFileSync(shellSrc, 'utf8')));
+    writeOut(SHELL.out, buildShellHtml(readFileSync(shellSrc, 'utf8')));
     console.log(`shell: ${SHELL.out}`);
   } else {
     console.warn(`skip shell (template missing): ${SHELL.template}`);

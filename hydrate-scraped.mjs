@@ -67,6 +67,40 @@ const num = n => Number(n).toLocaleString('en-US');
 const money = n => '$' + num(n);
 const miss = (page, step) => console.warn(`hydrate: ${step} missed on ${page}`);
 
+// Sitewide community status, refreshed from the API on EVERY page (the header
+// mega-menu, footer community lists and map-infowindow cards were frozen with the
+// June-8 scrape — communities that have since opened kept "Coming Soon" labels and
+// stale/missing from-prices).
+// Nav anchor shapes covered: header `<a href="…/<slug>/<id>/" class="nav-link">`,
+// footer (same, no class), detail-shell (`…/<slug>/<id>/index.html`).
+const NAV_BADGE_RE = /(<a href="[^"]*\/([^/"]+)\/\d+\/(?:index\.html)?"[^>]*>\s*[^<]*?)\s*<span class="[^"]*\bbadge bg-green\b[^"]*"[^>]*>\s*Coming Soon\s*<\/span>(\s*<\/a>)/g;
+const MAP_ITEM_RE = /<div class="card oi-map-item"[^>]*data-listing-type="location"[\s\S]*?<\/a>\s*<\/div>\s*<\/div>\s*<\/div>/g;
+export function hydrateCommunityStatus(html, d) {
+  if (!d || !d.communities) return html;
+  const bySlug = new Map(d.communities.map(c => [c.slug, c]));
+  // 1. Drop the "Coming Soon" badge for communities the API says are active.
+  // ponytail: removal only — every community the API flags comingSoon today is
+  // already badged in the frozen nav; nav MEMBERSHIP stays frozen with the scrape.
+  html = html.replace(NAV_BADGE_RE, (m, pre, slug, close) => {
+    const c = bySlug.get(slug);
+    return c && !c.comingSoon ? pre + close : m;
+  });
+  // 2. Map-infowindow community cards (homepage Find-Your-Home etc.): refresh the
+  // "From $X" price from the API, injecting the price column when the frozen card
+  // was the priceless coming-soon variant.
+  html = html.replace(MAP_ITEM_RE, block => {
+    const m = block.match(/href="[^"]*new-homes\/tx\/[^/"]+\/([^/"]+)\/\d+\//);
+    const c = m && bySlug.get(m[1]);
+    if (!c || !(c.priceFrom > 0)) return block; // unknown / unpriced -> frozen
+    if (/<div class="price mt-1">\$[\d,]+<\/div>/.test(block)) {
+      return block.replace(/(<div class="price mt-1">)\$[\d,]+(<\/div>)/, (_x, a, b) => a + money(c.priceFrom) + b);
+    }
+    const col = `<div class="col-auto px-2 my-auto"><div class="price-title">From</div><div class="price mt-1">${money(c.priceFrom)}</div></div>`;
+    return block.replace(/(\s*<\/div>\s*<\/a>)/, col + '$1');
+  });
+  return html;
+}
+
 // Replace-or-warn: apply re once; warn (and keep html) when it doesn't match.
 // (Match-test, not output-compare: the fresh value often equals the frozen one.)
 function sub(html, re, fn, page, step) {
@@ -208,6 +242,28 @@ function demo() {
   const frozen = hydrateFloorplan(fpage, { slug: 'x', communityPrices: { Nowhere: 1 } }, d);
   assert(frozen.includes('Starting at $421,990') && frozen.includes('$419,990'), 'no-match page fully frozen');
   assert(!fout.includes('undefined') && !fout.includes('$NaN'), 'no undefined/$NaN');
+
+  // hydrateCommunityStatus: nav badges + infowindow prices
+  const dd = { communities: [
+    { slug: 'vista-verde', name: 'Vista Verde', priceFrom: 248990, comingSoon: false },
+    { slug: 'meadow-ridge', name: 'Meadow Ridge', priceFrom: null, comingSoon: true },
+    { slug: 'silos-at-la-sienna', name: 'Silos', priceFrom: 272990, comingSoon: false },
+  ] };
+  const nav = '<a href="../new-homes/tx/laredo/vista-verde/18489/" class="nav-link">\n Vista Verde \n<span class="badge bg-green">Coming Soon</span>\n</a>'
+    + '<a href="../new-homes/tx/calallen/meadow-ridge/19662/">Meadow Ridge <span class="small badge bg-green d-inline-block ms-2 pt-1 align-top">Coming Soon</span></a>'
+    + '<a href="../../../../../laredo/vista-verde/18489/index.html" class="nav-link"> Vista Verde <span class="badge bg-green">Coming Soon</span></a>'
+    + '<a href="../new-homes/tx/x/unknown-comm/1/">Unknown <span class="badge bg-green">Coming Soon</span></a>';
+  const nout = hydrateCommunityStatus(nav, dd);
+  assert((nout.match(/Coming Soon/g) || []).length === 2, 'active-community badges removed (header + footer + shell forms)');
+  assert(/meadow-ridge[\s\S]*Coming Soon/.test(nout) && /unknown-comm[\s\S]*Coming Soon/.test(nout), 'comingSoon + unknown stay frozen');
+  const iw = (slug, priceHtml) => `<div class="card oi-map-item" data-listing-type="location" data-listing-id="1">`
+    + `<div class="oi-infowindow-content"><div class="oi-infowindow"><a href="new-homes/tx/laredo/${slug}/18489/">`
+    + `<div class="row my-2 g-0"><div class="col px-2 my-auto"><div class="card-title">X</div></div>${priceHtml}</div>\n</a>\n</div>\n</div>\n</div>`;
+  const mout = hydrateCommunityStatus(iw('vista-verde', '') + iw('silos-at-la-sienna', '<div class="col-auto"><div class="price-title">From</div><div class="price mt-1">$279,990</div></div>'), dd);
+  assert(mout.includes('<div class="price mt-1">$248,990</div>'), 'priceless infowindow gets injected price col');
+  assert(mout.includes('<div class="price mt-1">$272,990</div>') && !mout.includes('$279,990'), 'stale infowindow price refreshed');
+  const spec = '<div class="card oi-map-item" data-listing-type="spec"><a href="new-homes/tx/laredo/vista-verde/18489/1-a-st/99/">x</a>\n</div>\n</div>\n</div>';
+  assert(hydrateCommunityStatus(spec, dd) === spec, 'spec (QMI) infowindows untouched');
   console.log('hydrate-scraped.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
