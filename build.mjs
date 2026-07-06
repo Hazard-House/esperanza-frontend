@@ -10,13 +10,22 @@
 // a stable shape; regex is enough and adding jsdom for 3 files is overkill.
 
 import assert from 'node:assert';
-import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
+import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland, addFontDisplaySwap } from './rewrite.mjs';
 import { generateDetails } from './generate-details.mjs';
 import { loadData } from './data.mjs';
 import { communityPath, floorplanPath } from './paths.mjs';
 import { hydrateCommunity, hydrateFloorplan, swapCommunityBanner, bakeRecommend } from './hydrate-scraped.mjs';
+
+const cssFiles = (dir, out = []) => {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) cssFiles(p, out);
+    else if (e.name.endsWith('.css')) out.push(p);
+  }
+  return out;
+};
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -107,6 +116,8 @@ async function build() {
 
   // 1. Theme bundle -> /static (preserve the ﹖v=hash filenames verbatim).
   cpSync(THEME, join(OUT, 'static'), { recursive: true });
+  // 1b. font-display:swap on theme @font-face (LCP: don't block text on font downloads).
+  for (const f of cssFiles(join(OUT, 'static'))) writeFileSync(f, addFontDisplaySwap(readFileSync(f, 'utf8')));
 
   // 2. Ship every page in the manifest; islands for the LIVE_PAGES.
   let n = 0;

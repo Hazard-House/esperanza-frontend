@@ -88,6 +88,15 @@ export function resizeImages(html) {
       (_m, attr, path) => `${attr}//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/${path}"`);
 }
 
+// Add font-display:swap to any @font-face missing it so text paints with a fallback
+// instead of blocking on font downloads (~395ms FCP per Chrome's FontDisplay insight).
+// Runs over the theme CSS at build time (build.mjs) — @font-face bodies have no nested
+// braces, so [^}]* is a safe block match. Idempotent (skips faces that already set it).
+export function addFontDisplaySwap(css) {
+  return css.replace(/@font-face\s*\{([^}]*)\}/gi,
+    (m, body) => /font-display\s*:/i.test(body) ? m : `@font-face{font-display:swap;${body}}`);
+}
+
 export function rewriteCommon(html) {
   html = html
     .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
@@ -115,6 +124,12 @@ export function rewriteCommon(html) {
     .replace(/(href=")([^"]*)index\.html(?=[?#"])/g, (_m, p, path) => p + (path || './'));
   html = stripTrackers(html);
   html = resizeImages(html);
+  // LCP: the hero gallery image is discovered late (deep in Swiper markup, after the 870KB
+  // render-blocking CSS). Mark the first eager oi-aspect-img high priority so it fetches
+  // ahead of the ~270 lazy gallery images. Guard on absence so it's fully idempotent.
+  if (!/fetchpriority/i.test(html))
+    html = html.replace(/<img\b(?=[^>]*oi-aspect-img)(?=[^>]*loading="eager")([^>]*)>/i,
+      '<img fetchpriority="high"$1>');
   html = html.replace(/<head([^>]*)>/i, `<head$1>\n${PRECONNECT}`);
   if (BANNER_SLIDES) html = html.replace(FROZEN_BANNER_RE, freshBannerHtml(BANNER_SLIDES));
   if (NOINDEX) {
@@ -182,6 +197,13 @@ function demo() {
   console.assert(ri.includes('src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/a.jpg"'), 'src fallback: ' + ri);
   console.assert(ri.includes('src="//img.hazardhouse.ai/assets-media/logo.svg"'), 'svg untouched');
   console.assert(resizeImages(ri) === ri, 'resizeImages idempotent');
+  // font-display: add to bare @font-face, keep existing
+  console.assert(addFontDisplaySwap('@font-face{font-family:X;src:url(a.woff2)}') === '@font-face{font-display:swap;font-family:X;src:url(a.woff2)}', 'font-display add');
+  console.assert(addFontDisplaySwap('@font-face{font-display:optional;src:url(b)}') === '@font-face{font-display:optional;src:url(b)}', 'font-display keep');
+  // hero fetchpriority: first eager oi-aspect-img only, idempotent
+  const fp = s('<body><img class="oi-aspect-img" loading="eager" src="//img.hazardhouse.ai/assets-media/a.jpg"><img class="oi-aspect-img" loading="lazy" src="//img.hazardhouse.ai/assets-media/b.jpg"></body>');
+  console.assert((fp.match(/fetchpriority="high"/g) || []).length === 1 && /fetchpriority="high"[^>]*loading="eager"/.test(fp), 'hero fetchpriority: ' + fp);
+  console.assert(s(fp) === fp || (s(fp).match(/fetchpriority/g) || []).length === 1, 'fetchpriority idempotent');
   console.log('rewrite.mjs demo() passed');
 }
 // ponytail: compare real paths, not raw URL strings — file:// URLs percent-encode
