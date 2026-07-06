@@ -119,6 +119,20 @@ export function hydrateCommunity(html, c, d) {
     if (c.priceFrom) html = sub(html, /(Starting at \$)[\d,]+/, (_, a) => a + num(c.priceFrom), page, 'hero price');
   } catch (e) { miss(page, `hero price (${e.message})`); }
 
+  // Overview stat block (beds/baths/sqft ranges) go stale as plans open/close.
+  // First stats/<icon> match = the community block: it precedes the QMI/plan
+  // cards, whose rows say "Bed"/"Bath" — not the full word we anchor on.
+  try {
+    const stat = (icon, val, word) => {
+      if (!val) return;
+      html = sub(html, new RegExp(`(stats/${icon}[^"]*"[^>]*>\\s*)[^<]+?(\\s*${word})`),
+        (_, a, b) => a + val + b, page, word.replace(/\\/g, ''));
+    };
+    stat('bedroom', c.beds, 'Bedrooms');
+    stat('bathroom', c.baths, 'Bathrooms');
+    stat('sqft', c.sqft, 'Sq\\. Ft\\.');
+  } catch (e) { miss(page, `stat block (${e.message})`); }
+
   try {
     const homes = c.homes || [];
     const secStart = html.indexOf('<section id="specs"');
@@ -206,15 +220,21 @@ function demo() {
   const home = { address: '3706 Westway Court', community: 'Harvest Coves', city: 'McAllen', slug: '3706-westway-court', price: 289990, beds: 3, floorPlan: 'Indigo' };
   const c = {
     slug: 'harvest-coves', name: 'Harvest Coves', priceFrom: 250990, homes: [home],
+    beds: '3 - 5', baths: '2.5 - 4.5',
     plans: [{ slug: 'indigo', communityPrices: { 'Harvest Coves': 249990 } }],
   };
   const page = '<h1>Harvest Coves</h1>Starting at $244,990'
+    + '<div class="stat-group"><div class="item detail pb-4"><img src="/static/esperanza_homes/images/stats/bedroom.svg" width="24">\n3 - 5 Bedrooms\n</div>'
+    + '<div class="item detail pb-4"><img src="/static/esperanza_homes/images/stats/bathroom.svg" width="24">\n2.5 - 5 Bathrooms\n</div></div>'
+    + '<div class="item"><img src="/static/esperanza_homes/images/stats/bathroom.svg" width="18">2 Bath</div>'
     + '<section id="specs"><div class="container-lg"><div class="row">head</div>'
     + '<div class="row oi-listings mt-3 g-2"><div class="col-12">OLD CARD 9999 Stale St</div></div></div></section>'
     + '<section id="plans"><div class="card plan-card" data-price="244990"><div class="price"></div><div class="price">$244,990</div>'
     + '<a href="../indigo/231384/index.html">View Details</a></div></section><footer>f</footer>';
   let out = hydrateCommunity(page, c, {});
   assert(out.includes('Starting at $250,990'), 'hero price updated');
+  assert(out.includes('\n2.5 - 4.5 Bathrooms\n') && out.includes('\n3 - 5 Bedrooms\n'), 'community bath/bed ranges refreshed');
+  assert(out.includes('width="18">2 Bath</div>'), 'per-home card Bath row untouched');
   assert(out.includes('3706 Westway Court') && !out.includes('9999 Stale St'), 'qmi cards replaced');
   assert(out.includes('data-price="249990"') && out.includes('<div class="price">$249,990</div>'), 'plan row price updated');
   assert(out.includes('<div class="price"></div>'), 'empty price div untouched');
