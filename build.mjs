@@ -59,6 +59,9 @@ const EXTRA_SCRIPTS = {
   // client-side stand-in for Homefiniti's server-side /blog/?search= (needs
   // public/blog-index.json — scripts/gen-blog-index.mjs runs at the end of build()).
   'blog/index.html': ['blog-search.js'],
+  // live randomizes the design-studio testimonial strip server-side per load;
+  // shuffle the baked draw client-side (see islands/testimonial-shuffle.js).
+  'design-studio/index.html': ['testimonial-shuffle.js'],
 };
 // Classify a ship.txt path within the detail-page URL space. Scraped community /
 // plan-in-community / floor-plan pages ship 1:1 (with hydration) when their entity

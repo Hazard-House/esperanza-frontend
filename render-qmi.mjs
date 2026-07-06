@@ -1,7 +1,7 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage, fmtLot, homeBadge } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage, fmtLot, homeBadge } from './sections.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -27,7 +27,8 @@ export function qmiContent(h) {
   // --- Overview: description | stat-group + share + osc-callout; CTA row spans below ---
   const stats = [
     h.beds != null && statItem(ICON.bed, esc(h.beds) + ' Bed'),
-    h.garage != null && statItem(ICON.garage, esc(h.garage) + ' Car Garage'),
+    // live omits the garage row entirely when garage is 0 (same rule as qmiCardHtml)
+    h.garage != null && String(h.garage) !== '0' && statItem(ICON.garage, esc(h.garage) + ' Car Garage'),
     h.baths != null && statItem(ICON.bath, Number(h.baths).toFixed(1) + ' Bath'),
     h.stories != null && statItem(ICON.story, esc(h.stories) + (h.stories == 1 ? ' Story' : ' Stories')),
     h.totalSqft != null && statItem(ICON.total, num(h.totalSqft) + ' Total Sq. Ft.'),
@@ -45,9 +46,12 @@ export function qmiContent(h) {
     `<a href="https://www.houseloan.com/" target="_blank" rel="noopener" class="btn btn-primary small-btn px-3 light-opacity mt-2 mt-lg-4 me-lg-2">GET PREQUALIFIED</a>`,
     (dLat && dLng) && `<a href="https://maps.google.com/maps?q=${dLat},${dLng}" target="_blank" rel="noopener" class="btn btn-primary small-btn px-3 light-opacity mt-2 mt-lg-4 me-lg-2 oi-directions-click">GET DIRECTIONS</a>`,
   ].filter(Boolean).join('');
-  const overview = `<section id="overview" class="pt-4 pt-lg-5 bg-tan-white reverse pagejump pb-4"><div class="container-lg pt-3"><div class="row mb-3"><div class="col-12 col-md-7">${descHtml(h.description)}</div><div class="col-12 col-md-5 col-lg-4 offset-lg-1 mt-4 mt-md-2 mt-lg-3"><div class="row stat-group mt-4 py-2">${stats}</div>${share}${osc}</div></div><div class="row"><div class="col-12">${ctas}</div></div></div></section>`;
+  const overview = `<section id="overview" class="pt-4 pt-lg-5 bg-tan-white reverse pagejump pb-4"><div class="container-lg pt-3"><div class="row mb-3"><div class="col-12 col-md-7">${descHtml(h.description, descWantsUl(h.slug))}</div><div class="col-12 col-md-5 col-lg-4 offset-lg-1 mt-4 mt-md-2 mt-lg-3"><div class="row stat-group mt-4 py-2">${stats}</div>${share}${osc}</div></div><div class="row"><div class="col-12">${ctas}</div></div></div></section>`;
 
-  const anchors = [['overview', 'Overview'], has.tour && ['virtualtour', 'Virtual Tour'], has.elev && ['elevations', 'Elevations'], has.plans && ['plans', 'Floor Plans'], ['photos', 'Photo Gallery'], has.comm && ['community', 'Community'], has.sales && ['sales', 'Contact']].filter(Boolean);
+  // live drops the Photo Gallery anchor (and the whole gallery affordance) when the
+  // home has <2 photos — see galleryHtml.
+  const hasPhotos = h.gallery.length >= 2;
+  const anchors = [['overview', 'Overview'], has.tour && ['virtualtour', 'Virtual Tour'], has.elev && ['elevations', 'Elevations'], has.plans && ['plans', 'Floor Plans'], hasPhotos && ['photos', 'Photo Gallery'], has.comm && ['community', 'Community'], has.sales && ['sales', 'Contact']].filter(Boolean);
 
   // Recommended For You = other floor plans offered in this home's community
   // (excluding its own plan); fall back to same-collection plans from the plan's
@@ -68,7 +72,7 @@ export function qmiContent(h) {
     header,
     galleryHtml(h.gallery, h.image, h.address),
     subnavHtml(anchors),
-    mobileGalleryBarHtml(h.gallery.length > 0),
+    mobileGalleryBarHtml(hasPhotos),
     overview,
     has.tour && tourHtml(h.virtualTourUrl, h),
     has.elev && elevationHtml(h.elevation, h.image),
@@ -84,7 +88,8 @@ export function qmiContent(h) {
 
 export function renderQmi(h, shell) {
   const head = {
-    title: `${h.address}, ${h.city || 'TX'} | Esperanza Homes`,
+    // live pattern: "10341 N 15th Street, McAllen, TX New Home for Sale | Esperanza Homes"
+    title: `${h.address}, ${h.city ? h.city + ', ' : ''}TX New Home for Sale | Esperanza Homes`,
     description: `${h.floorPlan || ''} home for sale in ${h.community}, ${h.city}, TX — ${money(h.price)}.`.trim(),
     canonical: qmiPath(h), image: (h.gallery[0] && h.gallery[0].url) || h.image, url: qmiPath(h),
   };
@@ -124,8 +129,14 @@ function demo() {
   const formSec = out.slice(out.indexOf('id="request-a-tour"'));
   assert(formSec.includes('/2.jpg') && !formSec.includes('/c.jpg'), 'form interior thumbnail');
   assert(!out.includes('<!--CONTENT-->') && !/undefined|NaN/.test(out), 'no leftover markers/undefined/NaN');
+  // garage 0 -> overview spec row omitted (live rule); 1-photo home -> no gallery affordance
+  const g0 = qmiContent({ ...h, garage: 0 });
+  assert(!g0.slice(g0.indexOf('id="overview"'), g0.indexOf('id="virtualtour"')).includes('Car Garage'), 'garage 0 omitted');
+  const one = qmiContent({ ...h, gallery: [{ url: '/1.jpg', alt: '' }] });
+  assert(!one.includes('Photo Gallery') && !one.includes('data-fancybox="photos"') && !one.includes('View Photo Gallery'), '1-photo home hides gallery + anchor');
   const page = renderQmi(h, '<head><title>x</title></head><body><!--CONTENT--></body>');
   assert(page.includes('hydrate-live.js') && page.includes('community-maps-live.js') && page.includes('__ESPERANZA_PAGE'), 'islands+config');
+  assert(page.includes('<title>5131 Carambola Ln, Laredo, TX New Home for Sale | Esperanza Homes</title>'), 'live-format SEO title');
   console.log('render-qmi.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

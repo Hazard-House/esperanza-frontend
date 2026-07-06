@@ -2820,7 +2820,7 @@
 153/2025/4/10/HarlingenSee3_MdRV83m.jpg
 153/2025/4/10/HarlingenShop.jpg
 153/2025/4/10/knowledge_sharing.png
-153/2025/4/10/marketplace_hub.jpg
+153/2025/4/10/marketplace_hub.png
 153/2025/4/10/McAllen_shop.jpg
 153/2025/4/10/McAllenEat_1.jpg
 153/2025/4/10/McAllenEat2_1.jpg
@@ -2923,7 +2923,7 @@
 153/2025/4/9/BrownsvilleShop2_1.jpg
 153/2025/4/9/firework_explosion.png
 153/2025/4/9/forest.png
-153/2025/4/9/growing_money.jpg
+153/2025/4/9/growing_money.png
 153/2025/4/9/structural.png
 153/2025/5/1/Adam_Luna.jpg
 153/2025/5/1/Emerson__Dennise_Grellman.jpeg

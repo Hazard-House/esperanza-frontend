@@ -107,7 +107,12 @@ export async function loadData() {
     // over D1 image_url, and the original's full gallery wins when D1's is shorter.
     const qm = (QMI_MEDIA.homes || {})[h.slug || slugify(h.address)];
     if (qm) {
-      if (qm.hero) h.image = qm.hero;
+      // A floor-plan DRAWING must never be the hero: the June-8 harvest predates many
+      // exterior renders (O'Neill showed the drawing pre-render), so a harvested hero
+      // that is also one of the home's plan drawings only wins when D1 has no image
+      // (live today shows the exterior render first, drawing in the plan viewer only).
+      const heroIsDrawing = qm.hero && (qm.planImages || []).includes(qm.hero);
+      if (qm.hero && (!heroIsDrawing || !h.image)) h.image = qm.hero;
       if ((qm.photos || []).length > h.gallery.length) h.gallery = qm.photos.map(u => ({ url: u, alt: h.address }));
     }
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is

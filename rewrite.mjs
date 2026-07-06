@@ -118,8 +118,52 @@ export function stripBakedMapbox(html) {
   return out + html.slice(pos);
 }
 
+// The June-8 crawl captured HYDRATED calculator output: `.oi-calc-results` containers
+// were saved WITH the JS-rendered payment breakdown inside (live serves them EMPTY and
+// the theme calc fills them on init), so on the mirror the widget renders a second copy
+// — stacked "Estimated monthly Payment" on /financing/, a third .calc-results-row clone
+// on plan detail pages. Empty them back to live's pre-hydration state (opacity style
+// was hydration-applied too).
+export function stripBakedCalcResults(html) {
+  // exact class TOKEN — .oi-calc-results-form-group must keep its (empty) <p> child
+  const TOKEN = 'class="(?:[^"]* )?oi-calc-results(?: [^"]*)?"';
+  // <p class="oi-calc-results …"> variant (financing form) — content has no nested </p>
+  html = html.replace(new RegExp(`(<p\\b[^>]*${TOKEN}[^>]*>)[\\s\\S]*?<\\/p>`, 'g'),
+    (_m, open) => open.replace(/\s*style="opacity: 1;"/, '') + '</p>');
+  // <div> variant — depth-scan to the matching </div> (breakdown rows are nested divs)
+  let out = '', pos = 0;
+  const re = new RegExp(`<div\\b[^>]*${TOKEN}[^>]*>`, 'g');
+  let m;
+  while ((m = re.exec(html))) {
+    const open = m[0].replace(/\s*style="opacity: 1;"/, '');
+    const start = m.index + m[0].length;
+    const tag = /<\/?div\b/g;
+    tag.lastIndex = start;
+    let depth = 1, end = start, t;
+    while (depth > 0 && (t = tag.exec(html))) { depth += t[0][1] === '/' ? -1 : 1; end = t.index; }
+    if (depth !== 0) continue; // unbalanced — leave untouched
+    out += html.slice(pos, m.index) + open;
+    pos = end; // keep the closing </div>
+    re.lastIndex = end;
+  }
+  return out + html.slice(pos);
+}
+
+// Community sidebars ship an Education accordion the theme AUTO-OPENS on
+// DOMContentLoaded (toggleElement('school-list','one-icon')). The crawl captured the
+// post-open state, so the load-time toggle now CLOSES it — opposite of live. Restore
+// the pre-hydration state (d-none + chevron-down) so the auto-open lands like live.
+export function restorePrehydratedAccordion(html) {
+  if (!html.includes("toggleElement('school-list', 'one-icon')")) return html;
+  return html
+    .replace(/(id="school-list" class=")(?!d-none)/, '$1d-none ')
+    .replace(/(id="one-icon" class="[^"]*?)fa-chevron-up([^"]*")/, '$1fa-chevron-down$2');
+}
+
 export function rewriteCommon(html) {
   html = stripBakedMapbox(html);
+  html = stripBakedCalcResults(html);
+  html = restorePrehydratedAccordion(html);
   html = html
     .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
     // Blog category <option value>s are absolute live-domain URLs HTTrack left alone.
@@ -131,6 +175,15 @@ export function rewriteCommon(html) {
     // was never shipped; restore the live external URL (theme fonts stay vendored).
     .replace(/href="[^"]*fonts\.googleapis\.com\/css2[^"]*"/g,
       'href="https://fonts.googleapis.com/css2?family=Arapey:ital@0;1&amp;display=swap"')
+    // HTTrack localized the Vimeo Player API loader to a relative path that 404s
+    // (/events/, /testimonials/); restore the live external URL (same treatment as
+    // Google Fonts). oilib's own absolute copy in /static JS is untouched (HTML only).
+    .replace(/src="[^"]*player\.vimeo\.com\/api\/player\.js[^"]*"/g,
+      'src="https://player.vimeo.com/api/player.js"')
+    // /referral-reward-program/: the crawl baked the JS-injected "CUSTOMER INFORMATION"
+    // heading into the HTML; the page script insertAdjacentHTML()s it again on load →
+    // doubled heading. Drop the baked copy, keep the one inside the script string.
+    .replace(/(?<!['"])<div class="mt-3 mt-lg-5"><div class="overpass bold text-dark-green fs-7">CUSTOMER INFORMATION<\/div><div class="green-bar-light my-2"><\/div><\/div>/g, '')
     // Legacy promo button label serialized as literal "None" in the June-8 scrape.
     .replace(/(data-bs-target="#promo-form">)\s*None(?=<)/g, '$1Learn More')
     // Collection-list PDF: the 86MB scraped file can't ship (25MiB asset cap); keep the
@@ -236,6 +289,21 @@ function demo() {
   const mb = stripBakedMapbox('<div id="oi-map" class="gmap mapboxgl-map" data-oi-map-autoload="single"><div class="mapboxgl-canary"></div><div class="mapboxgl-canvas-container"><canvas class="mapboxgl-canvas"></canvas></div><div class="mapboxgl-control-container"><div class="mapboxgl-ctrl"><button>+</button></div></div></div><div class="after">x</div>');
   console.assert(mb === '<div id="oi-map" class="gmap" data-oi-map-autoload="single"></div><div class="after">x</div>', 'stripBakedMapbox: ' + mb);
   console.assert(stripBakedMapbox('<div data-oi-map-autoload="single"></div>') === '<div data-oi-map-autoload="single"></div>', 'stripBakedMapbox empty container idempotent');
+  // baked calculator output emptied back to live's pre-hydration shape
+  const calc = stripBakedCalcResults('<div id="mort-calc-total" class="oi-calc-results calc-results" style="opacity: 1;"><div class="pandi-results-row calc-results-row"><div class="calc-results-label">P&amp;I</div>1175.81</div></div><div class="oi-calc-results-form-group text-center"><p class="oi-calc-results calc-results mb-0" style="opacity: 1;"><div class="total-results-row"><span class="dollars">1,529</span></div></p></div><div class="other">keep</div>');
+  console.assert(calc === '<div id="mort-calc-total" class="oi-calc-results calc-results"></div><div class="oi-calc-results-form-group text-center"><p class="oi-calc-results calc-results mb-0"></p></div><div class="other">keep</div>', 'stripBakedCalcResults: ' + calc);
+  console.assert(stripBakedCalcResults(calc) === calc, 'stripBakedCalcResults idempotent');
+  // baked CUSTOMER INFORMATION heading dropped; the copy inside the JS string survives
+  const ci = '<div class="mt-3 mt-lg-5"><div class="overpass bold text-dark-green fs-7">CUSTOMER INFORMATION</div><div class="green-bar-light my-2"></div></div>';
+  const ciOut = s('X' + ci + `<script>subhead.insertAdjacentHTML('beforeend', '${ci}');</script>`);
+  console.assert((ciOut.match(/CUSTOMER INFORMATION/g) || []).length === 1 && ciOut.includes('insertAdjacentHTML'), 'referral baked heading: ' + (ciOut.match(/CUSTOMER INFORMATION/g) || []).length);
+  // education accordion restored to pre-hydration (auto-open script present)
+  const edu = restorePrehydratedAccordion('<div id="school-list" class="fs-8 px-3">x</div><i id="one-icon" class="fas text-green fa-chevron-up y"></i><script>document.addEventListener("DOMContentLoaded", function() { toggleElement(\'school-list\', \'one-icon\'); });</script>');
+  console.assert(edu.includes('id="school-list" class="d-none fs-8') && edu.includes('fa-chevron-down'), 'education pre-hydration: ' + edu.slice(0, 80));
+  console.assert(restorePrehydratedAccordion(edu) === edu, 'education idempotent');
+  console.assert(restorePrehydratedAccordion('<div id="school-list" class="fs-8">x</div>') === '<div id="school-list" class="fs-8">x</div>', 'education untouched without auto-open script');
+  // Vimeo Player API loader restored to the live external URL
+  console.assert(s('<script type="text/javascript" src="../../player.vimeo.com/api/player.js"></script>').includes('src="https://player.vimeo.com/api/player.js"'), 'vimeo player.js restore');
   const links = s('<a href="design-studio/index.html">a</a><a href="index.html">home</a><a href="../new-homes/index.html?x=1">q</a><a href="/static/style.css">keep</a>');
   console.assert(links === '<a href="design-studio/">a</a><a href="./">home</a><a href="../new-homes/?x=1">q</a><a href="/static/style.css">keep</a>', 'index.html strip: ' + links);
   const tr = stripTrackers('<script src="../js.hs-analytics.net/x.js"></script><script src="/static/esperanza_homes/js/vendor.header.min.js"></script><script>fbq("init","123")</script><script>new Swiper(".x")</script><script async src="firstparty/abc.js"></script>');
