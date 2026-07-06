@@ -51,6 +51,28 @@ export function resolveMedia(rawPath, prefix, map) {
   return map.get(prefix + stripExt(clean)) || (prefix + clean);
 }
 
+// Third-party analytics/pixel scripts baked into the June-8 scrape. HTTrack localized
+// their URLs to same-origin relative paths, so on the replica each one 404s ->
+// handle_errors redirects to the dead live path -> ORB-blocked: a ~60-80 request
+// redirect storm that keeps the network busy for 30-45s and blocks first paint. They
+// collect nothing (broken) and this is a noindex replica, so we drop them entirely —
+// external loaders AND their inline bootstraps. GTM gets re-wired centrally later.
+// Matched by src host or *distinctive* inline init token. Deliberately NOT matching
+// generic `dataLayer`/`gtag`: the theme bundles its own config (window.oi_preload,
+// oiVideoOnLoad) into inline scripts that also push a hfaDataLayer, so THEME_KEEP
+// vetoes removal of anything carrying theme internals — only true pixel/tag scripts go.
+// The inline GTM snippet self-injects gtm.js, so it must be dropped too (matched by GTM-).
+const TRACKER_SIG = /(hs-analytics|hs-banner|hsadspixel|hs-scripts|hs-script-loader|analytics\.tiktok\.com|clarity\.ms|static\.hotjar\.com|script\.hotjar\.com|connect\.facebook\.net|googletagmanager\.com|google-analytics\.com|googleads\.g\.doubleclick\.net|platform\.twitter\.com|firstparty\/|fbq\(|_fbq\b|ttq\.(?:load|page|track)|TiktokAnalyticsObject|_hjSettings|\bhj\(|window\.clarity|GTM-[A-Z0-9]{4,})/;
+const THEME_KEEP = /(oi_preload\s*=|oiVideoOnLoad|oiReady|new Swiper|AOS\.init|swiper-alert-banner|oilib_version|oi\.loaded)/i;
+export function stripTrackers(html) {
+  return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,
+    m => TRACKER_SIG.test(m) && !THEME_KEEP.test(m) ? '' : m);
+}
+
+// Warm up the connection to the image CDN early (detail pages pull ~270 images from
+// img.hazardhouse.ai) and the Mapbox tile/JS host.
+const PRECONNECT = '<link rel="preconnect" href="https://img.hazardhouse.ai" crossorigin>\n<link rel="preconnect" href="https://api.mapbox.com" crossorigin>';
+
 export function rewriteCommon(html) {
   html = html
     .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
@@ -71,6 +93,8 @@ export function rewriteCommon(html) {
     // trailing-slash URLs (and 404s on index.html). Strip the filename so nav matches 1:1 —
     // Caddy's try_files rewrites the trailing-slash dir back to index.html when serving.
     .replace(/(href=")([^"]*)index\.html(?=[?#"])/g, (_m, p, path) => p + (path || './'));
+  html = stripTrackers(html);
+  html = html.replace(/<head([^>]*)>/i, `<head$1>\n${PRECONNECT}`);
   if (BANNER_SLIDES) html = html.replace(FROZEN_BANNER_RE, freshBannerHtml(BANNER_SLIDES));
   if (NOINDEX) {
     const meta = '<meta name="robots" content="noindex,nofollow">';
@@ -122,6 +146,11 @@ function demo() {
   console.assert(shell.includes('<!--CONTENT-->') && !shell.includes('HOME') && shell.includes('<footer>f</footer>'), 'extractShell');
   const links = s('<a href="design-studio/index.html">a</a><a href="index.html">home</a><a href="../new-homes/index.html?x=1">q</a><a href="/static/style.css">keep</a>');
   console.assert(links === '<a href="design-studio/">a</a><a href="./">home</a><a href="../new-homes/?x=1">q</a><a href="/static/style.css">keep</a>', 'index.html strip: ' + links);
+  const tr = stripTrackers('<script src="../js.hs-analytics.net/x.js"></script><script src="/static/esperanza_homes/js/vendor.header.min.js"></script><script>fbq("init","123")</script><script>new Swiper(".x")</script><script async src="firstparty/abc.js"></script>');
+  console.assert(tr === '<script src="/static/esperanza_homes/js/vendor.header.min.js"></script><script>new Swiper(".x")</script>', 'stripTrackers: ' + tr);
+  // theme config bundled with a dataLayer push must SURVIVE (regression: oi_preload was nuked)
+  const keep = stripTrackers('<script>window.oi_preload = {"map_key":"pk"}; window.hfaDataLayer.push({});</script><script>(function(){})(window,document,"script","dataLayer","GTM-WNGZHH3")</script>');
+  console.assert(keep === '<script>window.oi_preload = {"map_key":"pk"}; window.hfaDataLayer.push({});</script>', 'theme-keep guard: ' + keep);
   console.log('rewrite.mjs demo() passed');
 }
 // ponytail: compare real paths, not raw URL strings — file:// URLs percent-encode

@@ -1,6 +1,8 @@
 <!doctype html>
 <html class="no-js" lang="en">
     <head>
+<link rel="preconnect" href="https://img.hazardhouse.ai" crossorigin>
+<link rel="preconnect" href="https://api.mapbox.com" crossorigin>
         
 
 
@@ -41,41 +43,7 @@ oiVideoOnLoad = function(el) {
 
 
 
-<script type="text/javascript">
 
-    const fetchRetailUser = () => Promise.resolve({id: window.oi_preload.user_id})
-
-    const initialUserFetch = fetchRetailUser();
-    const ganalyticsLoaded = initialUserFetch.then((userdata) => {
-        
-
-        
-            window.dataLayer=window.dataLayer||[];
-            window.gtag=function(){dataLayer.push(arguments);}
-            gtag('js',new Date());
-            if (Number.isInteger(userdata.id)) {
-                gtag('set', 'user_id', userdata.id.toString());
-            }
-            
-                gtag('config', window.oi_preload.ga.GA4id, {
-                    send_page_view: false,
-                    transport_url: 'https://www.esperanzahomes.com/firstparty/',
-                });
-            
-        
-        
-            // Google Tag Gateway
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            '/firstparty/?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','');
-        
-
-        
-        return userdata
-    })
-</script>
 
 
 
@@ -192,33 +160,7 @@ oiVideoOnLoad = function(el) {
 
 <!-- Facebook Pixel Code -->
 
-<script>
-    
 
-    const fbpixelLoaded = initialUserFetch.then((userdata) => {
-        
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        
-        const amdDLV = (dataLayer) ? dataLayer[0].FacebookAMD||{} : {}
-        const amd = userdata.fbamd || amdDLV
-        
-            
-                fbq('init', '705389823345369', amd);
-            
-        
-        
-        
-        return userdata
-    })
-</script>
 
 <!-- End Facebook Pixel Code -->
 
@@ -234,7 +176,7 @@ oiVideoOnLoad = function(el) {
     <body class="gallery-list-page">
         
 		<div id="fb-root"></div>
-		<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v15.0" nonce="z4y4Dvnm"></script>
+		
 
         <div class="nav-wrapper sticky-top">
 	

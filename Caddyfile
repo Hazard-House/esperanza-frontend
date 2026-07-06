@@ -61,6 +61,15 @@
 	# Unmigrated paths (blog archives, JS-only floorplans catalog, the media/PDF
 	# library) fall through to the still-live O'Neill site so nav stays clickable.
 	handle_errors {
+		# Missing *assets* must fail fast, not redirect to the live site: a mangled
+		# asset URL (e.g. a scrape that localized a tracker/CDN path) would otherwise
+		# 404 -> redirect -> redirect and storm the network. Only real page 404s fall
+		# through to the live O'Neill site.
+		@asset404 {
+			expression {err.status_code} == 404
+			path *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.webp *.avif *.ico *.woff *.woff2 *.ttf *.map *.mp4 *.json
+		}
+		respond @asset404 404
 		@notfound expression {err.status_code} == 404
 		redir @notfound https://www.esperanzahomes.com{uri} 302
 	}
