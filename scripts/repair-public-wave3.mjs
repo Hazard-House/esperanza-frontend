@@ -12,6 +12,9 @@ import { stripBakedCalcResults, restorePrehydratedAccordion } from '../rewrite.m
 const ROOT = join(import.meta.dirname, '..');
 const files = execSync("find public -name '*.html' -type f", { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   .split('\n').filter(Boolean);
+// the rebuild PR re-seeds public/404.html from assets/404.html on every build — repair
+// the source copy too so rebuilds keep the Hazard House footer (see comment above).
+if (existsSync(join(ROOT, 'assets', '404.html'))) files.push('assets/404.html');
 
 // rewriteCommon's Hazard House attribution block (public/404.html was hand-placed and
 // never went through the footer swap; the sibling rebuild PR moves its source to

@@ -9,12 +9,15 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadData } from '../data.mjs';
+import { hydrateCommunityStatus } from '../hydrate-scraped.mjs';
 import { qmiPath } from '../paths.mjs';
 import { renderQmi } from '../render-qmi.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
-const shell = readFileSync(join(ROOT, 'templates', 'detail-shell.html'), 'utf8');
 const d = await loadData();
+// shell nav carries frozen June-8 "Coming Soon" badges — refresh from the API
+// (same as generate-details.mjs) so regenerated pages keep the rebuild's fresh nav.
+const shell = hydrateCommunityStatus(readFileSync(join(ROOT, 'templates', 'detail-shell.html'), 'utf8'), d);
 
 let regen = 0, skipped = 0;
 for (const h of d.qmis) {
