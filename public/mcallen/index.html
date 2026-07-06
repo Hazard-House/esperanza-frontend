@@ -170,7 +170,7 @@ oiVideoOnLoad = function(el) {
         <link rel="preconnect" href="https://fonts.gstatic.com">
         <link href="../../fonts.googleapis.com/css2%EF%B9%96family=Arapey%EF%B9%95ital@0%EF%B9%941&amp;display=swap.css" rel="stylesheet">
 
-    <link type="text/css" rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css"><script type="text/javascript" src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script><script src="/mapbox-patch.js"></script><style type="text/css" data-fbcssmodules="css:fb.css.base css:fb.css.dialog css:fb.css.iframewidget">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0px;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:lucida grande,tahoma,verdana,arial,sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:400;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}@keyframes fb_transform{0%{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}.fb_animate{animation:fb_transform .3s forwards}
+    <link type="text/css" rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css"><script type="text/javascript" src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js" defer></script><script src="/mapbox-patch.js" defer></script><style type="text/css" data-fbcssmodules="css:fb.css.base css:fb.css.dialog css:fb.css.iframewidget">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0px;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:lucida grande,tahoma,verdana,arial,sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:400;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}@keyframes fb_transform{0%{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}.fb_animate{animation:fb_transform .3s forwards}
 
 .fb_dialog{background:#525252b3;position:absolute;top:-10000px;z-index:10001}.fb_dialog_advanced{border-radius:8px;padding:10px}.fb_dialog_content{background:#fff;color:#373737}.fb_dialog_close_icon{background:url(../../connect.facebook.net/rsrc.php/v4/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 0 transparent;cursor:pointer;display:block;height:15px;position:absolute;right:18px;top:17px;width:15px}.fb_dialog_mobile .fb_dialog_close_icon{left:5px;right:auto;top:5px}.fb_dialog_padding{background-color:transparent;position:absolute;width:1px;z-index:-1}.fb_dialog_close_icon:hover{background:url(../../connect.facebook.net/rsrc.php/v4/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -15px transparent}.fb_dialog_close_icon:active{background:url(../../connect.facebook.net/rsrc.php/v4/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -30px transparent}.fb_dialog_iframe{line-height:0}.fb_dialog_content .dialog_title{background:#6d84b4;border:1px solid #365899;color:#fff;font-size:14px;font-weight:700;margin:0}.fb_dialog_content .dialog_title>span{background:url(../../connect.facebook.net/rsrc.php/v4/yd/r/Cou7n-nqK52.gif) no-repeat 5px 50%;float:left;padding:5px 0 7px 26px}body.fb_hidden{height:100%;left:0;margin:0;overflow:visible;position:absolute;top:-10000px;transform:none;width:100%}.fb_dialog.fb_dialog_mobile.loading{background:url(../../connect.facebook.net/rsrc.php/v4/ya/r/3rhSv5V8j3o.gif) #fff no-repeat 50% 50%;min-height:100%;min-width:100%;overflow:hidden;position:absolute;top:0;z-index:10001}.fb_dialog.fb_dialog_mobile.loading.centered{background:none;height:auto;min-height:initial;min-width:initial;width:auto}.fb_dialog.fb_dialog_mobile.loading.centered #fb_dialog_loader_spinner{width:100%}.fb_dialog.fb_dialog_mobile.loading.centered .fb_dialog_content{background:none}.loading.centered #fb_dialog_loader_close{clear:both;color:#fff;display:block;font-size:18px;padding-top:20px}#fb-root #fb_dialog_ipad_overlay{background:#0006;inset:0;min-height:100%;position:absolute;width:100%;z-index:10000}#fb-root #fb_dialog_ipad_overlay.hidden{display:none}.fb_dialog.fb_dialog_mobile.loading iframe{visibility:hidden}.fb_dialog_mobile .fb_dialog_iframe{position:sticky;top:0}.fb_dialog_content .dialog_header{background:linear-gradient(from(#738aba),to(#2c4987));border-bottom:1px solid;border-color:#043b87;box-shadow:#fff 0 1px 1px -1px inset;color:#fff;font:700 14px Helvetica,sans-serif;text-overflow:ellipsis;text-shadow:rgba(0,30,84,.296875) 0px -1px 0px;vertical-align:middle;white-space:nowrap}.fb_dialog_content .dialog_header table{height:43px;width:100%}.fb_dialog_content .dialog_header td.header_left{font-size:12px;padding-left:5px;vertical-align:middle;width:60px}.fb_dialog_content .dialog_header td.header_right{font-size:12px;padding-right:5px;vertical-align:middle;width:60px}.fb_dialog_content .touchable_button{background:linear-gradient(from(#4267B2),to(#2a4887));background-clip:padding-box;border:1px solid #29487d;border-radius:3px;display:inline-block;line-height:18px;margin-top:3px;max-width:85px;padding:4px 12px;position:relative}.fb_dialog_content .dialog_header .touchable_button input{background:none;border:none;color:#fff;font:700 12px Helvetica,sans-serif;margin:2px -12px;padding:2px 6px 3px;text-shadow:rgba(0,30,84,.296875) 0px -1px 0px}.fb_dialog_content .dialog_header .header_center{color:#fff;font-size:16px;font-weight:700;line-height:18px;text-align:center;vertical-align:middle}.fb_dialog_content .dialog_content{background:url(../../connect.facebook.net/rsrc.php/v4/y9/r/jKEcVPZFk-2.gif) no-repeat 50% 50%;border:1px solid #4A4A4A;border-bottom:0;border-top:0;height:150px}.fb_dialog_content .dialog_footer{background:#f5f6f7;border:1px solid #4A4A4A;border-top-color:#ccc;height:40px}#fb_dialog_loader_close{float:left}.fb_dialog.fb_dialog_mobile .fb_dialog_close_icon{visibility:hidden}#fb_dialog_loader_spinner{animation:rotateSpinner 1.2s linear infinite;background-color:transparent;background-image:url(../../connect.facebook.net/rsrc.php/v4/y2/r/onuUJj0tCqE.png);background-position:50% 50%;background-repeat:no-repeat;height:24px;width:24px}@keyframes rotateSpinner{0%{transform:rotate(0)}to{transform:rotate(360deg)}}
 
@@ -1296,7 +1296,7 @@ oiVideoOnLoad = function(el) {
 									<div class="swiper-wrapper">
 										
 											<div class="swiper-slide">
-												<img src="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 600px, 100vw" loading="eager" class="osc-cta-image" aria-hidden="true">
+												<img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 600px, 100vw" loading="eager" class="osc-cta-image" aria-hidden="true">
 											</div>
 										
 									</div>
@@ -1398,7 +1398,7 @@ oiVideoOnLoad = function(el) {
     <div class="city-page-hero">
       <div class="oi-aspect eight-nine vh-70-lg">
         
-        <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee2_1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee2_1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee2_1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee2_1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee2_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="eager" class="oi-aspect-img" alt="McAllen">
+        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllenSee2_1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee2_1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee2_1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee2_1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee2_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="eager" class="oi-aspect-img" alt="McAllen">
         <div class="text-overlay oi-aspect-content content-bottom oi-aspect-caption">image credit:
           McAllen Public Library</div>
         
@@ -1494,7 +1494,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/anaqua-at-tres-lagos/17178/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 300w, //img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 400w, //img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Anaqua at Tres Lagos">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_23.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Anaqua at Tres Lagos">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1531,7 +1531,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/aqualina-at-tres-lagos/8658/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Aqualina at Tres Lagos">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/15/041425_Aqualina_Drone_02.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Aqualina at Tres Lagos">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1568,7 +1568,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/cascada-at-tres-lagos/7147/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 300w, //img.hazardhouse.ai/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 400w, //img.hazardhouse.ai/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Cascada at Tres Lagos">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2023/8/15/1-1_4TB2xaR.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Cascada at Tres Lagos">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1605,7 +1605,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/harvest-coves/15176/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Harvest Coves">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/6/20/062025_Harvest_Coves_Playground_Photos-01.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Harvest Coves">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1642,7 +1642,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/las-brisas-at-tres-lagos/16126/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Las Brisas at Tres Lagos">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_33.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Las Brisas at Tres Lagos">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1679,7 +1679,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/tres-lagos-master-planned-community/12091/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2024/5/6/1-15.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/5/6/1-15.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/5/6/1-15.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/5/6/1-15.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/5/6/1-15.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Tres Lagos Master Planned Community">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/5/6/1-15.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/5/6/1-15.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/5/6/1-15.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/5/6/1-15.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/5/6/1-15.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Tres Lagos Master Planned Community">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1711,7 +1711,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/villas-at-tres-lagos/18249/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 300w, //img.hazardhouse.ai/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 400w, //img.hazardhouse.ai/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Villas at Tres Lagos">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2026/1/21/062025_Portfolio_Nikola_Transitional_Stucco_01_2.jpg 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Villas at Tres Lagos">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1748,7 +1748,7 @@ oiVideoOnLoad = function(el) {
                         <a class="d-block w-auto" href="../new-homes/tx/mcallen/villas-on-freddy/5529/">
                           
                           <div class="oi-aspect two-one rounded-top">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG" srcset="//img.hazardhouse.ai/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 300w, //img.hazardhouse.ai/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 400w, //img.hazardhouse.ai/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 1000w, //img.hazardhouse.ai/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Villas On Freddy">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2023/7/26/EHI_VF_Drone_Photo_5.27.23_16.JPG 1920w" sizes="(min-width: 1400px) 800px, 100vw" loading="lazy" class="oi-aspect-img rounded-top" alt="Villas On Freddy">
                           </div>
                           
                           <div class="row my-2 g-0">
@@ -1840,7 +1840,7 @@ oiVideoOnLoad = function(el) {
           <div class="highlight-icon-wrapper mb-4 mx-auto">
             
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon" alt="Icon.">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/Frame_2021.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon" alt="Icon.">
             
             
           </div>
@@ -1852,7 +1852,7 @@ oiVideoOnLoad = function(el) {
           <div class="highlight-icon-wrapper mb-4 mx-auto">
             
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/party.png" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/party.png 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/party.png 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/party.png 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/party.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon" alt="Icon.">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/party.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/party.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/party.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/party.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/party.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon" alt="Icon.">
             
             
           </div>
@@ -1864,7 +1864,7 @@ oiVideoOnLoad = function(el) {
           <div class="highlight-icon-wrapper mb-4 mx-auto">
             
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/4/9/structural.png" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/9/structural.png 300w, //img.hazardhouse.ai/assets-media/153/2025/4/9/structural.png 400w, //img.hazardhouse.ai/assets-media/153/2025/4/9/structural.png 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/9/structural.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/9/structural.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/9/structural.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/9/structural.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/9/structural.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/9/structural.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon">
             
             
           </div>
@@ -1876,7 +1876,7 @@ oiVideoOnLoad = function(el) {
           <div class="highlight-icon-wrapper mb-4 mx-auto">
             
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/Frame_2021.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon" alt="Icon.">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/Frame_2021.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/Frame_2021.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="highlight-icon" alt="Icon.">
             
             
           </div>
@@ -1912,7 +1912,7 @@ oiVideoOnLoad = function(el) {
           
           
           <div class="oi-aspect sixteen-nine">
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat2_1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat2_1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat2_1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat2_1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat2_1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img overview-image border-rounded" alt="overview image">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllenEat2_1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat2_1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat2_1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat2_1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat2_1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img overview-image border-rounded" alt="overview image">
             
             <div class="oi-aspect-caption oi-aspect-content content-bottom">Diegos Food Truck</div>
             
@@ -1933,7 +1933,7 @@ oiVideoOnLoad = function(el) {
             
             <div class="image-primary rounded overflow-hidden ">
               <div class="oi-aspect one-one">
-                <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee3.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee3.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee3.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee3.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img border-rounded" alt="Casa De Palmas, Trademark Collection by Wyndham">
+                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllenSee3.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee3.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee3.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee3.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee3.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img border-rounded" alt="Casa De Palmas, Trademark Collection by Wyndham">
                 
 
               </div>
@@ -1944,7 +1944,7 @@ oiVideoOnLoad = function(el) {
             
             <div class="image-secondary">
               <div class="oi-aspect  one-one">
-                <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee_1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee_1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee_1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee_1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee_1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img border-rounded" alt="in depth image">
+                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllenSee_1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee_1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee_1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee_1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee_1.jpg 1920w" sizes="(min-width: 1400px) 2000px, 100vw" loading="lazy" class="oi-aspect-img border-rounded" alt="in depth image">
               </div>
             </div>
             
@@ -2021,7 +2021,7 @@ oiVideoOnLoad = function(el) {
           <div class="card-image-wrapper">
             <div class="oi-aspect one-one">
               
-              <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat_1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat_1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat_1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat_1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenEat_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Eat">
+              <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllenEat_1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat_1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat_1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat_1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllenEat_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Eat">
               
             </div>
             <div class="card-overlay">
@@ -2057,7 +2057,7 @@ oiVideoOnLoad = function(el) {
           <div class="card-image-wrapper">
             <div class="oi-aspect one-one">
               
-              <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenRelax2_1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Relax">
+              <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllenRelax2_1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllenRelax2_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Relax">
               
             </div>
             <div class="card-overlay">
@@ -2093,7 +2093,7 @@ oiVideoOnLoad = function(el) {
           <div class="card-image-wrapper">
             <div class="oi-aspect one-one">
               
-              <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee1_1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee1_1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee1_1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee1_1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllenSee1_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Play">
+              <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllenSee1_1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee1_1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee1_1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee1_1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllenSee1_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Play">
               
             </div>
             <div class="card-overlay">
@@ -2129,7 +2129,7 @@ oiVideoOnLoad = function(el) {
           <div class="card-image-wrapper">
             <div class="oi-aspect one-one">
               
-              <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllen_shop.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/McAllen_shop.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllen_shop.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllen_shop.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/McAllen_shop.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Shop">
+              <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/McAllen_shop.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/McAllen_shop.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/McAllen_shop.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/McAllen_shop.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/McAllen_shop.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Shop">
               
             </div>
             <div class="card-overlay">
@@ -2182,7 +2182,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2222,7 +2222,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/5/1/The_Trevino_Family.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/5/1/The_Trevino_Family.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/5/1/The_Trevino_Family.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -2282,7 +2282,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2322,7 +2322,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -2382,7 +2382,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/22/PRESIDIO_CONTEMPORARY_STUCCO-S-C_V02.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2422,7 +2422,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/2/9/IMG_1693.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/2/9/IMG_1693.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/2/9/IMG_1693.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/2/9/IMG_1693.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/2/9/IMG_1693.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/2/9/IMG_1693.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/2/9/IMG_1693.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/2/9/IMG_1693.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/2/9/IMG_1693.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/2/9/IMG_1693.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -2482,7 +2482,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 300w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 400w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2582,7 +2582,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 300w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 400w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2682,7 +2682,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/18/MONTE_TRADITIONAL_BRICK_S-J_V01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2782,7 +2782,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/6/29/EC_105.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2822,7 +2822,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 300w, //img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 400w, //img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2019/6/29/EC_105.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2019/6/29/EC_105.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2019/6/29/EC_105.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -2853,7 +2853,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 300w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 400w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2021/9/15/FRANCISCO_V02_Page_7.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2893,7 +2893,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/5/6/Cascada.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/5/6/Cascada.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/5/6/Cascada.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/5/6/Cascada.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/5/6/Cascada.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -2953,7 +2953,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/23/LORENZO_Contemporary_Stucco_SC_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -2993,7 +2993,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/29/Amy_Josh_Trevino_Customer_Testimonial_AQ.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3053,7 +3053,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/7/3/Encino_-_FHH.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3093,7 +3093,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/5/1/Emerson__Dennise_Grellman.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3153,7 +3153,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3193,7 +3193,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3253,7 +3253,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/4/26/Agave_Tuscan_Brick_Color_Render_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3293,7 +3293,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3353,7 +3353,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/7/3/Encino_-_FHH.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3393,7 +3393,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/5/6/Javier_Martinez_EHI.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3453,7 +3453,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3493,7 +3493,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/5/6/Santiago.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2025/5/6/Santiago.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Santiago.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Santiago.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Santiago.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/5/6/Santiago.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/5/6/Santiago.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/5/6/Santiago.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/5/6/Santiago.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/5/6/Santiago.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3553,7 +3553,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/10/26/SANTIAGO_TUSCAN_STUCCO_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3593,7 +3593,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada_EHI.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada_EHI.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada_EHI.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada_EHI.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2025/5/6/Cascada_EHI.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/5/6/Cascada_EHI.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/5/6/Cascada_EHI.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/5/6/Cascada_EHI.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/5/6/Cascada_EHI.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/5/6/Cascada_EHI.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3653,7 +3653,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/21/CAPISTRANO_CONTEMPORARY_STUCCO_SD_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3693,7 +3693,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2025/5/6/AQ.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/5/6/AQ.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/5/6/AQ.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/5/6/AQ.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/5/6/AQ.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/5/6/AQ.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/5/6/AQ.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/5/6/AQ.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/5/6/AQ.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/5/6/AQ.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3753,7 +3753,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/18/SAN_SABA_Tuscon_Stucco_S-A_V04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3793,7 +3793,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3853,7 +3853,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/4/25/Magnolia_Farmhouse_Color_Render_V01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3893,7 +3893,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -3953,7 +3953,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/4/26/Paloma_Tuscan_Stucco_Color_Render_V02.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -3993,7 +3993,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4053,7 +4053,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4093,7 +4093,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4153,7 +4153,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 300w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 400w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/7/3/Encino_-_FHH.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/7/3/Encino_-_FHH.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4193,7 +4193,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4253,7 +4253,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/18/ACUNA_Page_04.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/18/ACUNA_Page_04.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/18/ACUNA_Page_04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4293,7 +4293,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4353,7 +4353,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4393,7 +4393,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4453,7 +4453,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/4/12/BAHIA_TUSCAN_STUCCO_S-A-V04.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4493,7 +4493,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4553,7 +4553,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_FARMHOUSE_V05.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4593,7 +4593,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4653,7 +4653,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/2/21/SOLANO_CONTEMPORARY_BRICK_SF_V03.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4693,7 +4693,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4753,7 +4753,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4793,7 +4793,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4853,7 +4853,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4893,7 +4893,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -4953,7 +4953,7 @@ oiVideoOnLoad = function(el) {
                   
                   
                   
-                  <img src="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                  <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/11/8/FRANCISCO_2_FARMHOUSE_HARDIE.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                   
                   
                   
@@ -4993,7 +4993,7 @@ oiVideoOnLoad = function(el) {
                         
                         
                         
-                        <img src="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
+                        <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/1/31/Esperanza_Homes_Verified_Customer_Testimonial.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Homeowner">
                         
                         
                         
@@ -5117,7 +5117,7 @@ oiVideoOnLoad = function(el) {
       <div class="col-lg-4 p-0">
         <div class="oi-aspect one-one seven-six-lg sixteen-nine-xxl">
           
-          <img src="//img.hazardhouse.ai/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="city page live in image">
+          <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/4/10/072123_Monte_Traditional_Brick.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="city page live in image">
           
           
         </div>
@@ -5138,7 +5138,7 @@ oiVideoOnLoad = function(el) {
         <div class="amenity-tab-image">
           <div class="oi-aspect sixteen-nine">
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Anaqua at Tres Lagos">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/8/19/062225_4008_N_Sorgum_Cir_Pecan_Tuscan_Stucco_01.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Anaqua at Tres Lagos">
             
             
           </div>
@@ -5162,7 +5162,7 @@ oiVideoOnLoad = function(el) {
         <div class="amenity-tab-image">
           <div class="oi-aspect sixteen-nine">
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Las Brisas at Tres Lagos">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_16.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Las Brisas at Tres Lagos">
             
             
           </div>
@@ -5186,7 +5186,7 @@ oiVideoOnLoad = function(el) {
         <div class="amenity-tab-image">
           <div class="oi-aspect sixteen-nine">
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 300w, //img.hazardhouse.ai/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 400w, //img.hazardhouse.ai/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Cascada at Tres Lagos">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2020/1/24/Tres_Lagos_Aerial_WEB-8.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img oi-fit-cover" alt="Cascada at Tres Lagos">
             
             
           </div>
@@ -5274,7 +5274,7 @@ oiVideoOnLoad = function(el) {
           <div class="oi-aspect one-one seven-six-lg">
             
             
-            <img src="//img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 300w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 400w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="city-page-image oi-aspect-img" alt="city page">
+            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2025/11/6/110325_Las_Brisas_Model_Home_17.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="city-page-image oi-aspect-img" alt="city page">
             
             
             
@@ -5300,7 +5300,7 @@ oiVideoOnLoad = function(el) {
                                     
                                         <div class="col-5 col-md-3">
                                             <div class="oi-aspect one-one">
-                                                <img src="//img.hazardhouse.ai/assets-media/153/2022/5/17/1-4_1.jpg" srcset="//img.hazardhouse.ai/assets-media/153/2022/5/17/1-4_1.jpg 300w, //img.hazardhouse.ai/assets-media/153/2022/5/17/1-4_1.jpg 400w, //img.hazardhouse.ai/assets-media/153/2022/5/17/1-4_1.jpg 1000w, //img.hazardhouse.ai/assets-media/153/2022/5/17/1-4_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img rounded-2" alt="Schedule an Exploratory Visit">
+                                                <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2022/5/17/1-4_1.jpg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2022/5/17/1-4_1.jpg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2022/5/17/1-4_1.jpg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2022/5/17/1-4_1.jpg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2022/5/17/1-4_1.jpg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img rounded-2" alt="Schedule an Exploratory Visit">
                                             </div>
                                         </div>
                                     
@@ -5717,7 +5717,7 @@ oiVideoOnLoad = function(el) {
                     <div class="oi-aspect two-three-lg seven-eight-xl h-100">
                         <div class="gray-overlay dark"></div>
                             
-                            <img src="//img.hazardhouse.ai/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png" srcset="//img.hazardhouse.ai/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 300w, //img.hazardhouse.ai/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 400w, //img.hazardhouse.ai/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 1000w, //img.hazardhouse.ai/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img rounded-2" alt="Schedule an Exploratory Visit">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2023/4/27/1-7_tHju4Uq.1920x1440.png 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img rounded-2" alt="Schedule an Exploratory Visit">
                             
                         
                     </div>
@@ -6266,7 +6266,7 @@ oiVideoOnLoad = function(el) {
                 
                     <div class="col-3">
                         <div class="oi-aspect one-one">
-                            <img src="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img">
+                            <img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg" srcset="//img.hazardhouse.ai/cdn-cgi/image/width=300,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 300w, //img.hazardhouse.ai/cdn-cgi/image/width=400,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 400w, //img.hazardhouse.ai/cdn-cgi/image/width=1000,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1000w, //img.hazardhouse.ai/cdn-cgi/image/width=1920,format=auto,quality=82/assets-media/153/2024/5/30/6E85EA2A-0212-47E0-9465-7C23260C2D9F.jpeg 1920w" sizes="(min-width: 1400px) 3840px, 100vw" loading="lazy" class="oi-aspect-img">
                         </div>
                     </div>
                 
