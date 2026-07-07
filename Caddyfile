@@ -48,6 +48,17 @@
 	@static path /static/*
 	header @static Cache-Control "public, max-age=31536000, immutable"
 
+	# HTTrack stored versioned theme files as "name﹖v=hash.ext" but the HTML
+	# references the real "name.ext?v=hash" URL. Map the query form onto the
+	# stored filename when the plain name doesn't exist (same logic as the CF
+	# worker.js 404-retry — keep the two in sync).
+	@themeVersioned {
+		path_regexp theme ^/static/(.+)\.([A-Za-z0-9]+)$
+		query v=*
+		not file
+	}
+	rewrite @themeVersioned /static/{re.theme.1}﹖v={http.request.uri.query.v}.{re.theme.2}
+
 	# Pretty URLs, then the HTML cache header. The route block forces literal order
 	# so @html matches AFTER try_files rewrites; otherwise Caddy sorts `header` ahead
 	# of the rewrite and the pre-rewrite path misses /contact/, /new-homes/available/…
