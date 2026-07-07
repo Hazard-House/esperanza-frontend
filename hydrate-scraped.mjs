@@ -36,7 +36,7 @@ export function swapCommunityBanner(html, page) {
   if (!html.includes('class="alert-banner"')) return html; // page ships no ticker (matches its original)
   const re = /<div class="alert-banner">[\s\S]*?<!--\/fresh-banner-->/;
   if (!re.test(html)) { miss(page, 'community banner'); return html; }
-  return html.replace(re, freshBannerHtml(slides));
+  return html.replace(re, () => freshBannerHtml(slides)); // fn: slide copy may contain $-patterns
 }
 
 // Recommended For You: the original fills .recommended-content via POST
@@ -103,7 +103,10 @@ export function hydrateCommunityStatus(html, d) {
       return block.replace(/(<div class="price mt-1">)\$[\d,]+(<\/div>)/, (_x, a, b) => a + money(c.priceFrom) + b);
     }
     const col = `<div class="col-auto px-2 my-auto"><div class="price-title">From</div><div class="price mt-1">${money(c.priceFrom)}</div></div>`;
-    return block.replace(/(\s*<\/div>\s*<\/a>)/, col + '$1');
+    // Function replacement: money() yields "$1…"-prefixed prices that String.replace
+    // would parse as capture references, splicing broken markup (the homepage
+    // "wall of bars" — Bentsen Palm's $145,990 injected a stray </div></a>).
+    return block.replace(/(\s*<\/div>\s*<\/a>)/, (_x, close) => col + close);
   });
   return html;
 }
@@ -298,6 +301,12 @@ function demo() {
     + `<div class="row my-2 g-0"><div class="col px-2 my-auto"><div class="card-title">X</div></div>${priceHtml}</div>\n</a>\n</div>\n</div>\n</div>`;
   const mout = hydrateCommunityStatus(iw('vista-verde', '') + iw('silos-at-la-sienna', '<div class="col-auto"><div class="price-title">From</div><div class="price mt-1">$279,990</div></div>'), dd);
   assert(mout.includes('<div class="price mt-1">$248,990</div>'), 'priceless infowindow gets injected price col');
+  // "$1…" prices are String.replace capture patterns — must inject literally, with
+  // markup staying balanced (regression: homepage wall-of-bars, Bentsen Palm $145,990).
+  const dd1 = { communities: [{ slug: 'bentsen-palm', name: 'Bentsen Palm', priceFrom: 145990, comingSoon: false }] };
+  const d1out = hydrateCommunityStatus(iw('bentsen-palm', ''), dd1);
+  assert(d1out.includes('<div class="price mt-1">$145,990</div>'), '$1-prefixed price injected literally');
+  assert((d1out.match(/<div\b/g) || []).length === (d1out.match(/<\/div>/g) || []).length, 'injected card keeps div balance');
   assert(mout.includes('<div class="price mt-1">$272,990</div>') && !mout.includes('$279,990'), 'stale infowindow price refreshed');
   // close-out infowindow: frozen price column stripped
   const ddco = { communities: [{ slug: 'villas-on-freddy', name: 'Villas On Freddy', priceFrom: null, comingSoon: false }] };
