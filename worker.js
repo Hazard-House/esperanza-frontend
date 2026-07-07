@@ -260,7 +260,11 @@ export default {
 
     const out = new Response(resp.body, resp);
     for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
-    if (p.startsWith("/static/")) {
+    // Never stamp long-lived caching on a non-200 (ASSETS 307-normalizes the legacy
+    // "﹖v=" URLs; an immutable-cached redirect poisons that URL for a whole POP).
+    if (!resp.ok) {
+      out.headers.set("Cache-Control", "no-store");
+    } else if (p.startsWith("/static/")) {
       out.headers.set("Cache-Control", "public, max-age=31536000, immutable");
     } else if ((resp.headers.get("content-type") || "").includes("text/html")) {
       out.headers.set("Cache-Control", "public, max-age=300");
