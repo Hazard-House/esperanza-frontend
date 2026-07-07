@@ -171,6 +171,13 @@ export function rewriteCommon(html) {
     // Optional scheme: some pages (gallery template) carry ABSOLUTE static URLs; the
     // old pattern left "https:///static/…" (empty host) — 21 dead assets per page.
     .replace(/(?:https?:\/\/)?(?:\.\.\/)*static\.esperanzahomes\.com\//g, '/static/')
+    // CF Workers Static Assets refuses to serve the HTTrack "name﹖v=hash.ext" theme
+    // files directly — every such URL gets a 307 redirect hop (URL normalization), and
+    // one failed/poisoned hop kills a core script sitewide (aos.js: AOS css loads, js
+    // doesn't → every data-aos section sits at opacity 0). Reference the clean
+    // "name.ext?v=hash" form instead; worker.js maps the query form straight onto the
+    // stored file and serves 200 with no redirect.
+    .replace(/(\/static\/[^"'\s]*?)(?:%EF%B9%96|﹖)v=([A-Za-z0-9]+)\.(\w+)/g, '$1.$3?v=$2')
     // HTTrack localized the Google Fonts CSS into a ﹖/﹕-mangled relative path that
     // was never shipped; restore the live external URL (theme fonts stay vendored).
     .replace(/href="[^"]*fonts\.googleapis\.com\/css2[^"]*"/g,
@@ -280,6 +287,8 @@ function demo() {
   console.assert(s('href="https://static.esperanzahomes.com/esperanza_homes/css/style.min.css"') === 'href="/static/esperanza_homes/css/style.min.css"', 'absolute static host');
   // mangled Google Fonts localization -> restored external URL; bare preconnect untouched
   console.assert(s('href="../../fonts.googleapis.com/css2%EF%B9%96family=Arapey%EF%B9%95ital@0%EF%B9%941&amp;display=swap.css"') === 'href="https://fonts.googleapis.com/css2?family=Arapey:ital@0;1&amp;display=swap"', 'google fonts restore');
+  console.assert(s('src="/static/esperanza_homes/js/vendor/aos%EF%B9%96v=04b90de.js"') === 'src="/static/esperanza_homes/js/vendor/aos.js?v=04b90de"', 'static asset query form (encoded)');
+  console.assert(s('href="/static/esperanza_homes/css/style.min\ufe56v=85c08ef.css"') === 'href="/static/esperanza_homes/css/style.min.css?v=85c08ef"', 'static asset query form (unicode)');
   console.assert(s('href="https://fonts.googleapis.com"') === 'href="https://fonts.googleapis.com"', 'fonts preconnect untouched');
   console.assert(s('data-bs-target="#promo-form">None</button>') === 'data-bs-target="#promo-form">Learn More</button>', 'promo None -> Learn More');
   console.assert(s('<head></head>').includes('window.ganalyticsLoaded||'), 'tracker stub injected');
