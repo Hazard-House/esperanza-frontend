@@ -58,11 +58,13 @@ function normQmi(h) {
 function normCommunity(c) {
   const p = c.coordinates ? String(c.coordinates).split(',') : [];
   return {
-    id: c.id, name: c.name, slug: c.slug, city: c.town,
+    // Re-slugify: D1 slugs can carry literal punctuation ("retama-village-(55-)-...");
+    // live URLs (and the scrape's own page tree) use the clean form.
+    id: c.id, name: c.name, slug: c.slug && slugify(c.slug), city: c.town,
     lat: p[0] != null && p[0] !== '' ? Number(p[0]) : null,
     lng: p[1] != null && p[1] !== '' ? Number(p[1]) : null,
     address: c.address, image: c.image, secondaryImage: c.secondaryImage,
-    priceFrom: c.priceFrom, sqft: c.sqft, beds: c.beds, baths: c.baths,
+    priceFrom: c.priceFrom, comingSoon: !!c.comingSoon, sqft: c.sqft, beds: c.beds, baths: c.baths,
     description: c.description, amenities: c.amenities, promo: c.promoBannerText,
     officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
   };
@@ -105,7 +107,12 @@ export async function loadData() {
     // over D1 image_url, and the original's full gallery wins when D1's is shorter.
     const qm = (QMI_MEDIA.homes || {})[h.slug || slugify(h.address)];
     if (qm) {
-      if (qm.hero) h.image = qm.hero;
+      // A floor-plan DRAWING must never be the hero: the June-8 harvest predates many
+      // exterior renders (O'Neill showed the drawing pre-render), so a harvested hero
+      // that is also one of the home's plan drawings only wins when D1 has no image
+      // (live today shows the exterior render first, drawing in the plan viewer only).
+      const heroIsDrawing = qm.hero && (qm.planImages || []).includes(qm.hero);
+      if (qm.hero && (!heroIsDrawing || !h.image)) h.image = qm.hero;
       if ((qm.photos || []).length > h.gallery.length) h.gallery = qm.photos.map(u => ({ url: u, alt: h.address }));
     }
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is

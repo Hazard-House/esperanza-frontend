@@ -8,6 +8,7 @@ import { linksMap, qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
+import { hydrateCommunityStatus } from './hydrate-scraped.mjs';
 
 const OUT = join(import.meta.dirname, 'public');
 const SHELL_PATH = join(import.meta.dirname, 'templates', 'detail-shell.html');
@@ -22,8 +23,9 @@ function writePage(urlPath, html) {
 // entities it already shipped as hydrated scrape copies (clean paths in the sets).
 export async function generateDetails(data, { skipCommunities, skipFloorplans } = {}) {
   if (!existsSync(OUT)) mkdirSync(OUT, { recursive: true });
-  const shell = readFileSync(SHELL_PATH, 'utf8');
   const d = data || await loadData();
+  // shell nav carries frozen June-8 "Coming Soon" badges — refresh from the API once
+  const shell = hydrateCommunityStatus(readFileSync(SHELL_PATH, 'utf8'), d);
   const skipC = skipCommunities || new Set();
   const skipF = skipFloorplans || new Set();
   for (const h of d.qmis) writePage(qmiPath(h), renderQmi(h, shell));

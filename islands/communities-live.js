@@ -216,7 +216,22 @@
         updateMap(comms);
       }
       document.querySelectorAll('.oi-filter-change').forEach(function (el) { el.addEventListener('change', refresh); });
+      // Homepage "Find Your Home" hands its filters over as URL params (bare values,
+      // oilib prefix grammar stripped) — pre-apply them to the matching controls.
+      var params = new URLSearchParams(window.location.search);
+      var preset = false;
+      params.forEach(function (val, name) {
+        document.querySelectorAll('.oi-filter-change[name="' + name + '"]').forEach(function (el) {
+          var bare = String(el.value || '').replace(/^[=%@~]/, '');
+          if (el.type === 'checkbox') { if (bare === val || (name === 'masterPlannedCommunity' && val)) { el.checked = true; preset = true; } }
+          else if ([].some.call(el.options || [], function (o) { return String(o.value).replace(/^[=%@~]/, '') === val; })) {
+            el.value = [].filter.call(el.options, function (o) { return String(o.value).replace(/^[=%@~]/, '') === val; })[0].value;
+            preset = true;
+          }
+        });
+      });
       refresh();
+      if (preset && grid) grid.scrollIntoView({ block: 'start' });
       initMap(applyFilters(all).map(function (c) { return { c: c, coord: coordOf(c) }; }));
     }).catch(function () {});
   }

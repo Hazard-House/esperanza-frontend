@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
+import { freshBannerHtml } from './rewrite.mjs';
 
 // Harvested live-site facts (mortgage rate, per-community taxmultiplier, per-home
 // promo badges) — see harvest-live-facts.mjs. Build-time read; {} if missing.
@@ -64,16 +65,37 @@ export function statItem(icon, txt) {
   return `<div class="item detail pb-4 col-12 col-lg-6"><img class="me-2" src="${icon}" aria-hidden="true" loading="lazy" width="24">${txt}</div>`;
 }
 
-export function descHtml(raw) {
+// Slugs whose LIVE page renders the hyphen "Highlights" lines as a real <ul> (legacy
+// rich text had bullets; D1's plain-text copy lost the markup — indistinguishable from
+// homes whose legacy text really was literal "- " paragraphs). Harvested from the live
+// pages by scripts/harvest-desc-ul.mjs; [] if missing -> hyphen-paragraph default.
+const DESC_UL = (() => {
+  try { return new Set(JSON.parse(readFileSync(join(import.meta.dirname, 'assets', 'desc-ul.json'), 'utf8')).slugs); }
+  catch { return new Set(); }
+})();
+export function descWantsUl(slug) { return DESC_UL.has(slug); }
+
+export function descHtml(raw, useUl = false) {
   if (!raw) return '';
   if (/<\w+[\s>]/.test(raw)) return `<div class="wysiwyg pt-2 pt-lg-4">${raw}</div>`;
   // 1:1 with O'Neill: every line (hyphen bullets included, hyphen kept) is its own
   // <p>, blank lines between content become <p><br></p> — the wide spacing comes
-  // from the paragraph margins, NOT a <ul>.
+  // from the paragraph margins, NOT a <ul>. Exception: homes whose live page renders
+  // real bullets (useUl, see DESC_UL) get consecutive "- " lines as a <ul>.
   const lines = String(raw).split(/\r?\n/).map(l => l.trim());
   while (lines.length && !lines[0]) lines.shift();
   while (lines.length && !lines[lines.length - 1]) lines.pop();
-  const out = lines.map(t => t ? `<p>${esc(t)}</p>` : '<p><br></p>').join('');
+  let out = '';
+  for (let i = 0; i < lines.length; i++) {
+    if (useUl && /^- /.test(lines[i])) {
+      let items = '';
+      while (i < lines.length && /^- /.test(lines[i])) items += `<li>${esc(lines[i++].slice(2).trim())}</li>`;
+      i--;
+      out += `<ul>${items}</ul>`;
+    } else {
+      out += lines[i] ? `<p>${esc(lines[i])}</p>` : '<p><br></p>';
+    }
+  }
   return `<div class="wysiwyg pt-2 pt-lg-4">${out}</div>`;
 }
 
@@ -85,8 +107,12 @@ export function bannerHtml(availability, promo) {
 }
 
 export function galleryHtml(gallery, heroUrl, address) {
-  const imgs = (gallery && gallery.length) ? gallery : [];
-  const heroSrc = heroUrl || (imgs[0] && imgs[0].url);
+  const all = (gallery && gallery.length) ? gallery : [];
+  // Live hides the whole Photo Gallery affordance (side tile, "View N Photos",
+  // lightbox) when the home has fewer than 2 photos — hero renders full-width only
+  // (verified on 4102-appaloosa-dr + 1708-e-marquise-st, both 1-photo on live).
+  const imgs = all.length >= 2 ? all : [];
+  const heroSrc = heroUrl || (all[0] && all[0].url);
   if (!heroSrc) return '';
   const alt = esc(address || '');
   // 1:1 with O'Neill: lead tile = the home's elevation render (image_url, col-lg-8) +
@@ -214,26 +240,34 @@ export function mapSalesHtml(c) {
 }
 
 export function formSlotHtml(kind, ctx) {
-  // ctx = address string (legacy) or {address, image}. The .hs-form-slot contents are
-  // an INERT visual placeholder matching O'Neill's field grid 1:1; the HubSpot task
-  // replaces the inner form later. Field ids/classes are load-bearing (O'Neill's form
-  // CSS is scoped to #detailpagescheduletourform).
+  // ctx = address string (legacy) or {address, image}. Field ids/classes are
+  // load-bearing (O'Neill's form CSS is scoped to #detailpagescheduletourform).
+  // The form POSTs natively (generated pages run islands, not oilib) to the worker's
+  // /xhr/ lead endpoint, which forwards the lead to HubSpot and 303s to /thankyou/.
+  // required attrs + type="email" give browser-native validation in oilib's place.
   const c = (ctx && typeof ctx === 'object') ? ctx : { address: ctx };
   const address = c.address || '';
   const introImg = esc(c.introImage || c.image || '');
   const sideImg = esc(c.image || '');
   const sideAlt = esc(address || 'New Home');
-  const form = `<form id="detailpagescheduletourform" class="oi-form detailpagescheduletourform" novalidate onsubmit="return false">
+  const action = kind === 'general' ? '/xhr/general/' : '/xhr/tour/';
+  const event = kind === 'general' ? 'oi-contact-75' : 'oi-appointment-request';
+  const form = `<form id="detailpagescheduletourform" class="oi-form detailpagescheduletourform" data-oi-event="${event}" method="post" action="${action}">
     <div class="row g-3">
-        <div class="form-group charfield textinput first_name required"><label for="dpst__first_name">First Name</label><input type="text" name="first_name" placeholder="First Name*" class="form-control first_name required" id="dpst__first_name" aria-label="First Name"><span class="form-group-message"></span></div>
-        <div class="form-group charfield textinput last_name required"><label for="dpst__last_name">Last Name</label><input type="text" name="last_name" placeholder="Last Name*" class="form-control last_name required" id="dpst__last_name" aria-label="Last Name"><span class="form-group-message"></span></div>
-        <div class="form-group oiemailfield textinput email required"><label for="dpst__email">Email</label><input type="text" name="email" placeholder="Email*" class="form-control email required" id="dpst__email" aria-label="Email"><span class="form-group-message"></span></div>
+        <div class="form-group"><div id="detailpagescheduletourform_message" class="oi-form-message" style="display: none;"></div></div>
+        <div class="form-group charfield textinput first_name required"><label for="dpst__first_name">First Name</label><input type="text" name="first_name" placeholder="First Name*" class="form-control first_name required" id="dpst__first_name" required aria-label="First Name"><span class="form-group-message"></span></div>
+        <div class="form-group charfield textinput last_name required"><label for="dpst__last_name">Last Name</label><input type="text" name="last_name" placeholder="Last Name*" class="form-control last_name required" id="dpst__last_name" required aria-label="Last Name"><span class="form-group-message"></span></div>
+        <div class="form-group oiemailfield textinput email required"><label for="dpst__email">Email</label><input type="email" name="email" placeholder="Email*" class="form-control email required" id="dpst__email" required aria-label="Email"><span class="form-group-message"></span></div>
         <div class="form-group choicefield select country_code required"><label for="dpst__country_code">Country Code</label><select name="country_code" class="form-control custom-select country_code required" id="dpst__country_code" aria-label="Country Code"><option value="+1">US</option><option value="+52">MX</option></select><span class="form-group-message"></span></div>
         <div class="form-group charfield textinput primary_phone"><label for="dpst__primary_phone">Primary Phone</label><input type="text" name="primary_phone" placeholder="Phone*" class="form-control primary_phone" id="dpst__primary_phone" aria-label="Primary Phone"><span class="form-group-message"></span></div>
-        <div class="form-group datefield dateinput preferred_date required"><label for="dpst__preferred_date">Date*</label><input type="date" name="preferred_date" class="form-control preferred_date required" id="dpst__preferred_date" aria-label="Date*"><span class="form-group-message"></span></div>
-        <div class="form-group timefield timeinput preferred_time required"><label for="dpst__preferred_time">Time*</label><input type="time" name="preferred_time" class="form-control preferred_time required" id="dpst__preferred_time" aria-label="Time*"><span class="form-group-message"></span></div>
+        <div class="form-group datefield dateinput preferred_date required"><label for="dpst__preferred_date">Date*</label><input type="date" name="preferred_date" class="form-control preferred_date required" id="dpst__preferred_date" required aria-label="Date*"><span class="form-group-message"></span></div>
+        <div class="form-group timefield timeinput preferred_time required"><label for="dpst__preferred_time">Time*</label><input type="time" name="preferred_time" class="form-control preferred_time required" id="dpst__preferred_time" required aria-label="Time*"><span class="form-group-message"></span></div>
         <div class="form-group custom-control form-checkbox booleanfield checkboxinput opt_in "><input type="checkbox" name="opt_in" class="form-check-input opt_in" id="dpst__opt_in" checked><label for="dpst__opt_in" class="custom-control-label"> &nbsp; Opt-in to receive text messages</label><span class="form-group-message"></span></div>
         <div class="form-row opt-in-text"><p>I agree to receive communications by text message regarding informational (appointment details, account notifications, marketing, etc. ) from Esperanza Homes.</p><p>You may opt out by replying STOP or ask for more information by replying HELP. Message frequency varies. Message and data rates may apply.</p><p>You may review our <a href="/privacy-policy/">Privacy Policy</a> to learn how your data is used.</p></div>
+        <input type="hidden" name="oi_form_id" value="detailpagescheduletourform" class="oi_form_id" aria-label="oi form_id">
+        <input type="hidden" name="lead_routing" value="OSC" class="lead_routing" aria-label="lead routing">
+        <input type="hidden" name="item_of_interest_type" value="location" class="item_of_interest_type" aria-label="item of_interest_type">
+        <input type="hidden" name="item_of_interest_title" value="${esc(address)}" class="item_of_interest_title" aria-label="item of_interest_title">
     </div>
     <div class="row g-3"><div class="form-group"><button type="submit" class="btn btn-primary mt-4 xsmall-btn overpass">Submit</button></div></div>
 </form>`;
@@ -419,9 +453,15 @@ export function setHead(html, m) {
   return html;
 }
 
+// The shell template ships a hidden EMPTY promo ticker (its slides were home-specific
+// crawl bait); live renders the rotating community ticker on every detail page. Swap
+// in the harvested slide set so the theme's Swiper init picks it up like O'Neill's.
+const EMPTY_BANNER_RE = /<div class="alert-banner" style="display:none">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/;
 export function finalizePage(shell, { content, head, page, islands }) {
   let html = setHead(shell, head);
   html = html.replace('<!--CONTENT-->', content);
+  const slides = FACTS.bannerSlidesCommunity || FACTS.bannerSlides;
+  if (slides && slides.length) html = html.replace(EMPTY_BANNER_RE, freshBannerHtml(slides));
   html = disableOilib(html);
   const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: STYLE_COMMON_URL, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: STYLE_COMMON_URL };
   const scripts = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};window.__ESPERANZA_PAGE=${JSON.stringify(page)};</script>\n`
@@ -454,6 +494,14 @@ function demo() {
   const d = descHtml('Highlights:\n- Big yard\n- New roof');
   assert(d.includes('<p>- Big yard</p>') && d.includes('<p>- New roof</p>') && !d.includes('<ul>'), 'desc hyphen paragraphs (no ul)');
   assert(descHtml('Intro\n\nHighlights:').includes('<p><br></p>'), 'desc blank-line spacing');
+  // homes whose live page renders real bullets (desc-ul harvest) get a real <ul>
+  const du = descHtml('Intro line\n- Big yard\n- New roof\nOutro', true);
+  assert(du.includes('<p>Intro line</p><ul><li>Big yard</li><li>New roof</li></ul><p>Outro</p>'), 'desc ul mode: ' + du);
+  assert(descHtml('<ul><li>kept</li></ul>', true).includes('<ul><li>kept</li></ul>'), 'desc real html untouched in ul mode');
+  // <2 photos: hero full-width only — no gallery tile, no lightbox, no "View N Photos"
+  const g1 = galleryHtml([{ url: '/only.jpg', alt: '' }], '/render.jpg', 'Home');
+  assert(g1.includes('class="col-12 d-flex') && !g1.includes('photo-overlay') && !g1.includes('data-fancybox') && !g1.includes('View '), 'gallery hidden under 2 photos: ' + g1.slice(0, 120));
+  assert(galleryHtml([{ url: '/only.jpg', alt: '' }], null, 'Home').includes('/only.jpg'), 'single photo still heroes without a render');
   const head = setHead('<head><title>x</title><link rel="canonical" href="y"></head>', { title: 'T', canonical: '/c/', url: '/c/', description: 'D' });
   assert(head.includes('<title>T</title>') && head.includes('href="/c/"'), 'setHead');
   const page = finalizePage('<head></head><body><!--CONTENT--></body>', { content: '<p>hi</p>', head: { title: 'T', canonical: '/c/', url: '/c/' }, page: { type: 'qmi', id: 'rec1' }, islands: ['detail-extras.js'] });
