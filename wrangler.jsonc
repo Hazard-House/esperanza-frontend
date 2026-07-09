@@ -26,5 +26,28 @@
   ],
   "observability": {
     "enabled": true
+  },
+  // Staging environment — CI deploys this on every push to the `staging` branch.
+  // Worker name becomes `esperanzahomes-staging`; it lives ONLY on *.workers.dev
+  // (no custom domain), so staging can never affect the production site.
+  // Bindings are non-inheritable in named environments, so `assets` + `services`
+  // are repeated here. It reads from the same production API (fine for preview).
+  "env": {
+    "staging": {
+      "workers_dev": true,
+      "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "html_handling": "auto-trailing-slash",
+        "not_found_handling": "none",
+        "run_worker_first": true
+      },
+      "services": [
+        { "binding": "API", "service": "esperanza-api" }
+      ],
+      "observability": {
+        "enabled": true
+      }
+    }
   }
 }
