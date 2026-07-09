@@ -53,6 +53,7 @@ const CONTAINER_ISLANDS = [
 // Extra scripts appended to a page (before </body>) without disabling oilib — layered
 // on top of any island. Homepage Search -> /new-homes/available/ with filter params.
 const EXTRA_SCRIPTS = { 'index.html': ['homepage-filter.js'] };
+const EXTRA_STYLES = { 'index.html': ['site-overrides.css'] };
 // Classify a ship.txt path within the detail-page URL space. Scraped community /
 // plan-in-community / floor-plan pages ship 1:1 (with hydration) when their entity
 // still exists in the live API; QMI details (high churn) and utm-junk variants stay
@@ -157,6 +158,14 @@ async function build() {
         html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }
     }
+    for (const f of EXTRA_STYLES[rel] || []) {
+      if (!html.includes(`href="/${f}"`)) {
+        const tag = `    <link href="/${f}" rel="stylesheet" type="text/css">\n`;
+        const i = html.indexOf('style.min');
+        const lineEnd = i === -1 ? -1 : html.indexOf('\n', i);
+        html = lineEnd === -1 ? html + tag : html.slice(0, lineEnd + 1) + tag + html.slice(lineEnd + 1);
+      }
+    }
     writeOut(rel, html);
     n++;
   }
@@ -190,6 +199,7 @@ async function build() {
   // Frozen site-search index (oilib fetches /sitesearch.json) — served same-origin so
   // header search works and doesn't CORS-fail against the dead live domain.
   cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
+  cpSync(join(import.meta.dirname, 'assets', 'site-overrides.css'), join(OUT, 'site-overrides.css'));
   // Harvested live-site facts (mortgage rate, tax multipliers, promo badges) used by
   // available-live.js cards; regenerate with `node harvest-live-facts.mjs`.
   const facts = join(import.meta.dirname, 'assets', 'live-facts.json');

@@ -1,0 +1,19 @@
+/* Homepage Latest News carousel — soften the image corner radius. */
+.content-blog .oi-aspect-img {
+  border-radius: 0.5rem;
+}
+
+/* Pin the label to the top; don't vertically center the text column. */
+.content-blog .swiper-slide .row.h-100 > .col-md-6:first-child {
+  margin-top: 0 !important;
+  margin-bottom: auto !important;
+  align-self: flex-start;
+}
+
+/* Cap excerpt length so slides stay visually consistent. */
+.content-blog .wysiwyg {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+}
