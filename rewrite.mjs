@@ -71,7 +71,12 @@ export function stripTrackers(html) {
 
 // Warm up the connection to the image CDN early (detail pages pull ~270 images from
 // img.hazardhouse.ai) and the Mapbox tile/JS host.
-const PRECONNECT = '<link rel="preconnect" href="https://img.hazardhouse.ai" crossorigin>\n<link rel="preconnect" href="https://api.mapbox.com" crossorigin>';
+// The stub script settles two globals the theme's hfa.js awaits unguarded
+// (Promise.all([ganalyticsLoaded, fbpixelLoaded])); their real definers are the
+// analytics bootstraps stripTrackers removes, so without the stub every page throws
+// an uncaught ReferenceError that also kills hfa's init chain (header site search).
+const TRACKER_STUB = '<script>window.ganalyticsLoaded||(window.ganalyticsLoaded=Promise.resolve());window.fbpixelLoaded||(window.fbpixelLoaded=Promise.resolve());</script>';
+const PRECONNECT = '<link rel="preconnect" href="https://img.hazardhouse.ai" crossorigin>\n<link rel="preconnect" href="https://api.mapbox.com" crossorigin>\n' + TRACKER_STUB;
 
 // CF Image Resizing is enabled on img.hazardhouse.ai. The scrape's srcset entries all
 // collapsed to the same full-size file once resolveMedia() stripped the old ?width=
@@ -88,10 +93,109 @@ export function resizeImages(html) {
       (_m, attr, path) => `${attr}//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/${path}"`);
 }
 
+// The crawl captured HYDRATED map containers: a dead <canvas> + control DOM inside
+// every data-oi-map-autoload div (plus the runtime mapboxgl-map class). oilib then
+// initializes a SECOND map into the same container at runtime — two stacked canvases,
+// doubled attribution, and the marker pin hidden behind the dead baked canvas. Empty
+// the container so oilib builds the one real map, like the live original's clean SSR.
+export function stripBakedMapbox(html) {
+  let out = '', pos = 0;
+  const re = /<div\b[^>]*data-oi-map-autoload[^>]*>/g;
+  let m;
+  while ((m = re.exec(html))) {
+    const open = m[0].replace(/(class="[^"]*?)\s*mapboxgl-map([^"]*")/, '$1$2');
+    const start = m.index + m[0].length;
+    // depth-scan to the container's matching </div>
+    const tag = /<\/?div\b/g;
+    tag.lastIndex = start;
+    let depth = 1, end = start, t;
+    while (depth > 0 && (t = tag.exec(html))) { depth += t[0][1] === '/' ? -1 : 1; end = t.index; }
+    if (depth !== 0) continue; // unbalanced — leave untouched
+    out += html.slice(pos, m.index) + open;
+    pos = end; // keep the closing </div>
+    re.lastIndex = end;
+  }
+  return out + html.slice(pos);
+}
+
+// The June-8 crawl captured HYDRATED calculator output: `.oi-calc-results` containers
+// were saved WITH the JS-rendered payment breakdown inside (live serves them EMPTY and
+// the theme calc fills them on init), so on the mirror the widget renders a second copy
+// — stacked "Estimated monthly Payment" on /financing/, a third .calc-results-row clone
+// on plan detail pages. Empty them back to live's pre-hydration state (opacity style
+// was hydration-applied too).
+export function stripBakedCalcResults(html) {
+  // exact class TOKEN — .oi-calc-results-form-group must keep its (empty) <p> child
+  const TOKEN = 'class="(?:[^"]* )?oi-calc-results(?: [^"]*)?"';
+  // <p class="oi-calc-results …"> variant (financing form) — content has no nested </p>
+  html = html.replace(new RegExp(`(<p\\b[^>]*${TOKEN}[^>]*>)[\\s\\S]*?<\\/p>`, 'g'),
+    (_m, open) => open.replace(/\s*style="opacity: 1;"/, '') + '</p>');
+  // <div> variant — depth-scan to the matching </div> (breakdown rows are nested divs)
+  let out = '', pos = 0;
+  const re = new RegExp(`<div\\b[^>]*${TOKEN}[^>]*>`, 'g');
+  let m;
+  while ((m = re.exec(html))) {
+    const open = m[0].replace(/\s*style="opacity: 1;"/, '');
+    const start = m.index + m[0].length;
+    const tag = /<\/?div\b/g;
+    tag.lastIndex = start;
+    let depth = 1, end = start, t;
+    while (depth > 0 && (t = tag.exec(html))) { depth += t[0][1] === '/' ? -1 : 1; end = t.index; }
+    if (depth !== 0) continue; // unbalanced — leave untouched
+    out += html.slice(pos, m.index) + open;
+    pos = end; // keep the closing </div>
+    re.lastIndex = end;
+  }
+  return out + html.slice(pos);
+}
+
+// Community sidebars ship an Education accordion the theme AUTO-OPENS on
+// DOMContentLoaded (toggleElement('school-list','one-icon')). The crawl captured the
+// post-open state, so the load-time toggle now CLOSES it — opposite of live. Restore
+// the pre-hydration state (d-none + chevron-down) so the auto-open lands like live.
+export function restorePrehydratedAccordion(html) {
+  if (!html.includes("toggleElement('school-list', 'one-icon')")) return html;
+  return html
+    .replace(/(id="school-list" class=")(?!d-none)/, '$1d-none ')
+    .replace(/(id="one-icon" class="[^"]*?)fa-chevron-up([^"]*")/, '$1fa-chevron-down$2');
+}
+
 export function rewriteCommon(html) {
+  html = stripBakedMapbox(html);
+  html = stripBakedCalcResults(html);
+  html = restorePrehydratedAccordion(html);
   html = html
     .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
-    .replace(/(?:\.\.\/)*static\.esperanzahomes\.com\//g, '/static/')
+    // Blog category <option value>s are absolute live-domain URLs HTTrack left alone.
+    .replace(/(<option[^>]*value=")https:\/\/www\.esperanzahomes\.com\//g, '$1/')
+    // Optional scheme: some pages (gallery template) carry ABSOLUTE static URLs; the
+    // old pattern left "https:///static/…" (empty host) — 21 dead assets per page.
+    .replace(/(?:https?:\/\/)?(?:\.\.\/)*static\.esperanzahomes\.com\//g, '/static/')
+    // CF Workers Static Assets refuses to serve the HTTrack "name﹖v=hash.ext" theme
+    // files directly — every such URL gets a 307 redirect hop (URL normalization), and
+    // one failed/poisoned hop kills a core script sitewide (aos.js: AOS css loads, js
+    // doesn't → every data-aos section sits at opacity 0). Reference the clean
+    // "name.ext?v=hash" form instead; worker.js maps the query form straight onto the
+    // stored file and serves 200 with no redirect.
+    .replace(/(\/static\/[^"'\s]*?)(?:%EF%B9%96|﹖)v=([A-Za-z0-9]+)\.(\w+)/g, '$1.$3?v=$2')
+    // HTTrack localized the Google Fonts CSS into a ﹖/﹕-mangled relative path that
+    // was never shipped; restore the live external URL (theme fonts stay vendored).
+    .replace(/href="[^"]*fonts\.googleapis\.com\/css2[^"]*"/g,
+      'href="https://fonts.googleapis.com/css2?family=Arapey:ital@0;1&amp;display=swap"')
+    // HTTrack localized the Vimeo Player API loader to a relative path that 404s
+    // (/events/, /testimonials/); restore the live external URL (same treatment as
+    // Google Fonts). oilib's own absolute copy in /static JS is untouched (HTML only).
+    .replace(/src="[^"]*player\.vimeo\.com\/api\/player\.js[^"]*"/g,
+      'src="https://player.vimeo.com/api/player.js"')
+    // /referral-reward-program/: the crawl baked the JS-injected "CUSTOMER INFORMATION"
+    // heading into the HTML; the page script insertAdjacentHTML()s it again on load →
+    // doubled heading. Drop the baked copy, keep the one inside the script string.
+    .replace(/(?<!['"])<div class="mt-3 mt-lg-5"><div class="overpass bold text-dark-green fs-7">CUSTOMER INFORMATION<\/div><div class="green-bar-light my-2"><\/div><\/div>/g, '')
+    // Legacy promo button label serialized as literal "None" in the June-8 scrape.
+    .replace(/(data-bs-target="#promo-form">)\s*None(?=<)/g, '$1Learn More')
+    // Collection-list PDF: the 86MB scraped file can't ship (25MiB asset cap); keep the
+    // live URL shape — worker.js routes /floorplan-collections/pdf/ to the esperanza-pdf Worker.
+    .replace(/href="(?:\.\.\/)*pdf\/Floor-Plan-Collections\.pdf"/g, 'href="/floorplan-collections/pdf/"')
     .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.esperanzahomes\.com\/([^"'\s)]*)/g,
       (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, '', ESP_KEYS)}`)
     .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.homefiniti\.com\/([^"'\s)]*)/g,
@@ -112,7 +216,14 @@ export function rewriteCommon(html) {
     // Internal links in the June-8 scrape end in /index.html; the live site uses clean
     // trailing-slash URLs (and 404s on index.html). Strip the filename so nav matches 1:1 —
     // Caddy's try_files rewrites the trailing-slash dir back to index.html when serving.
-    .replace(/(href=")([^"]*)index\.html(?=[?#"])/g, (_m, p, path) => p + (path || './'));
+    .replace(/(href=")([^"]*)index\.html(?=[?#"])/g, (_m, p, path) => p + (path || './'))
+    // HubSpot embedded forms (vendor application, incentives lead form): the scrape
+    // rewrote the js.hsforms.net loader to a same-origin relative path that 404s, and
+    // baked the rendered — now dead — form iframe. Restore the absolute loader (a form
+    // renderer, not a tracker; TRACKER_SIG deliberately doesn't match it) and drop the
+    // stale container so hbspt.forms.create() renders a fresh form. Idempotent.
+    .replace(/(?:https:)?(?:\.\.\/)*(?:\/\/)?js\.hsforms\.net\//g, 'https://js.hsforms.net/')
+    .replace(/<div id="hbspt-form-[0-9a-f-]+" class="hbspt-form"[^>]*>[\s\S]*?<\/iframe><\/div>/g, '');
   html = stripTrackers(html);
   html = resizeImages(html);
   html = html.replace(/<head([^>]*)>/i, `<head$1>\n${PRECONNECT}`);
@@ -127,11 +238,18 @@ export function rewriteCommon(html) {
 }
 
 // Disable oilib's map/filter/form init + stub `oi` so orphaned inline calls are silent.
+// oilib also owned the header-search autocomplete, so every oilib-disabled page gets
+// the sitesearch-live.js island as its replacement (same /sitesearch.json data).
 export function disableOilib(html) {
   html = html.replace(/<script[^>]*\/static\/assets\/js\/oilib[^>]*><\/script>/g, '<!-- oilib removed for islands -->');
   if (!html.includes('window.oi=')) {
     const stub = '<script>window.oi=new Proxy(function(){},{get:function(){return window.oi},apply:function(){return window.oi}});</script>';
     html = html.replace(/<head([^>]*)>/i, `<head$1>\n${stub}`);
+  }
+  if (!html.includes('src="/sitesearch-live.js"')) {
+    const tag = '\n<script src="/sitesearch-live.js" defer></script>\n';
+    const i = html.lastIndexOf('</body>');
+    html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
   }
   return html;
 }
@@ -165,6 +283,36 @@ function demo() {
   console.assert(foot.includes('Powered by Hazard House') && !foot.includes('oneilinteractive.com'), 'footer');
   const shell = extractShell('<head></head><body><nav>n</nav><section class="header">HOME</section><section>x</section><footer>f</footer></body>');
   console.assert(shell.includes('<!--CONTENT-->') && !shell.includes('HOME') && shell.includes('<footer>f</footer>'), 'extractShell');
+  // absolute static host (gallery template) must not leave an empty-host https:///
+  console.assert(s('href="https://static.esperanzahomes.com/esperanza_homes/css/style.min.css"') === 'href="/static/esperanza_homes/css/style.min.css"', 'absolute static host');
+  // mangled Google Fonts localization -> restored external URL; bare preconnect untouched
+  console.assert(s('href="../../fonts.googleapis.com/css2%EF%B9%96family=Arapey%EF%B9%95ital@0%EF%B9%941&amp;display=swap.css"') === 'href="https://fonts.googleapis.com/css2?family=Arapey:ital@0;1&amp;display=swap"', 'google fonts restore');
+  console.assert(s('src="/static/esperanza_homes/js/vendor/aos%EF%B9%96v=04b90de.js"') === 'src="/static/esperanza_homes/js/vendor/aos.js?v=04b90de"', 'static asset query form (encoded)');
+  console.assert(s('href="/static/esperanza_homes/css/style.min\ufe56v=85c08ef.css"') === 'href="/static/esperanza_homes/css/style.min.css?v=85c08ef"', 'static asset query form (unicode)');
+  console.assert(s('href="https://fonts.googleapis.com"') === 'href="https://fonts.googleapis.com"', 'fonts preconnect untouched');
+  console.assert(s('data-bs-target="#promo-form">None</button>') === 'data-bs-target="#promo-form">Learn More</button>', 'promo None -> Learn More');
+  console.assert(s('<head></head>').includes('window.ganalyticsLoaded||'), 'tracker stub injected');
+  console.assert(s('<option value="https://www.esperanzahomes.com/blog/category/news/">') === '<option value="/blog/category/news/">', 'option value same-origin');
+  console.assert(s('<input type="hidden" value="https://www.esperanzahomes.com/blog/">').includes('www.esperanzahomes.com'), 'non-option values untouched (forms PR owns those)');
+  // baked hydrated map innards stripped; container + siblings preserved
+  const mb = stripBakedMapbox('<div id="oi-map" class="gmap mapboxgl-map" data-oi-map-autoload="single"><div class="mapboxgl-canary"></div><div class="mapboxgl-canvas-container"><canvas class="mapboxgl-canvas"></canvas></div><div class="mapboxgl-control-container"><div class="mapboxgl-ctrl"><button>+</button></div></div></div><div class="after">x</div>');
+  console.assert(mb === '<div id="oi-map" class="gmap" data-oi-map-autoload="single"></div><div class="after">x</div>', 'stripBakedMapbox: ' + mb);
+  console.assert(stripBakedMapbox('<div data-oi-map-autoload="single"></div>') === '<div data-oi-map-autoload="single"></div>', 'stripBakedMapbox empty container idempotent');
+  // baked calculator output emptied back to live's pre-hydration shape
+  const calc = stripBakedCalcResults('<div id="mort-calc-total" class="oi-calc-results calc-results" style="opacity: 1;"><div class="pandi-results-row calc-results-row"><div class="calc-results-label">P&amp;I</div>1175.81</div></div><div class="oi-calc-results-form-group text-center"><p class="oi-calc-results calc-results mb-0" style="opacity: 1;"><div class="total-results-row"><span class="dollars">1,529</span></div></p></div><div class="other">keep</div>');
+  console.assert(calc === '<div id="mort-calc-total" class="oi-calc-results calc-results"></div><div class="oi-calc-results-form-group text-center"><p class="oi-calc-results calc-results mb-0"></p></div><div class="other">keep</div>', 'stripBakedCalcResults: ' + calc);
+  console.assert(stripBakedCalcResults(calc) === calc, 'stripBakedCalcResults idempotent');
+  // baked CUSTOMER INFORMATION heading dropped; the copy inside the JS string survives
+  const ci = '<div class="mt-3 mt-lg-5"><div class="overpass bold text-dark-green fs-7">CUSTOMER INFORMATION</div><div class="green-bar-light my-2"></div></div>';
+  const ciOut = s('X' + ci + `<script>subhead.insertAdjacentHTML('beforeend', '${ci}');</script>`);
+  console.assert((ciOut.match(/CUSTOMER INFORMATION/g) || []).length === 1 && ciOut.includes('insertAdjacentHTML'), 'referral baked heading: ' + (ciOut.match(/CUSTOMER INFORMATION/g) || []).length);
+  // education accordion restored to pre-hydration (auto-open script present)
+  const edu = restorePrehydratedAccordion('<div id="school-list" class="fs-8 px-3">x</div><i id="one-icon" class="fas text-green fa-chevron-up y"></i><script>document.addEventListener("DOMContentLoaded", function() { toggleElement(\'school-list\', \'one-icon\'); });</script>');
+  console.assert(edu.includes('id="school-list" class="d-none fs-8') && edu.includes('fa-chevron-down'), 'education pre-hydration: ' + edu.slice(0, 80));
+  console.assert(restorePrehydratedAccordion(edu) === edu, 'education idempotent');
+  console.assert(restorePrehydratedAccordion('<div id="school-list" class="fs-8">x</div>') === '<div id="school-list" class="fs-8">x</div>', 'education untouched without auto-open script');
+  // Vimeo Player API loader restored to the live external URL
+  console.assert(s('<script type="text/javascript" src="../../player.vimeo.com/api/player.js"></script>').includes('src="https://player.vimeo.com/api/player.js"'), 'vimeo player.js restore');
   const links = s('<a href="design-studio/index.html">a</a><a href="index.html">home</a><a href="../new-homes/index.html?x=1">q</a><a href="/static/style.css">keep</a>');
   console.assert(links === '<a href="design-studio/">a</a><a href="./">home</a><a href="../new-homes/?x=1">q</a><a href="/static/style.css">keep</a>', 'index.html strip: ' + links);
   const tr = stripTrackers('<script src="../js.hs-analytics.net/x.js"></script><script src="/static/esperanza_homes/js/vendor.header.min.js"></script><script>fbq("init","123")</script><script>new Swiper(".x")</script><script async src="firstparty/abc.js"></script>');
@@ -182,6 +330,10 @@ function demo() {
   console.assert(ri.includes('src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/a.jpg"'), 'src fallback: ' + ri);
   console.assert(ri.includes('src="//img.hazardhouse.ai/assets-media/logo.svg"'), 'svg untouched');
   console.assert(resizeImages(ri) === ri, 'resizeImages idempotent');
+  // HubSpot forms loader restored + stale baked iframe container dropped; idempotent
+  const hs = s('<script src="../../js.hsforms.net/forms/v2.js"></script><script>hbspt.forms.create({portalId:"8139268"});</script><div id="hbspt-form-2572ed83-c777-43f3-a702-65de81ec6bc1" class="hbspt-form" data-hs-forms-root="true"><iframe id="hs-form-iframe-0" class="hs-form-iframe"></iframe></div>');
+  console.assert(hs.includes('src="https://js.hsforms.net/forms/v2.js"') && hs.includes('hbspt.forms.create') && !hs.includes('hbspt-form-2572ed83'), 'hsforms restore: ' + hs);
+  console.assert(s(hs) === hs, 'hsforms idempotent');
   console.log('rewrite.mjs demo() passed');
 }
 // ponytail: compare real paths, not raw URL strings — file:// URLs percent-encode
