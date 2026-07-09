@@ -1,0 +1,79 @@
+/* Homepage hero slider — centered copy, fixed nav */
+.homepage-slider {
+  position: relative;
+}
+
+.homepage-slider .slider-content {
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+}
+
+.homepage-slider .slider-content-copy {
+  width: 100%;
+}
+
+.homepage-slider .slider-content-copy > .row {
+  width: 100%;
+}
+
+.homepage-slider > .homepage-slider-nav {
+  bottom: 40px;
+  left: 50%;
+  pointer-events: auto;
+  position: absolute;
+  top: auto;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.homepage-slider > .homepage-slider-nav .swiper-prev,
+.homepage-slider > .homepage-slider-nav .swiper-next {
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  height: auto;
+  width: auto;
+}
+
+.homepage-slider > .homepage-slider-nav .swiper-prev:before,
+.homepage-slider > .homepage-slider-nav .swiper-next:before {
+  line-height: 1;
+}
+
+/* Homepage Latest News slider */
+.content-slider.bg-tan-100 .content-blog .swiper-slide {
+  height: auto;
+}
+
+.content-slider.bg-tan-100 .content-blog .swiper-slide > .row {
+  height: 100%;
+  min-height: 100%;
+}
+
+.content-slider.bg-tan-100 .content-blog .blog-slide-text {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+}
+
+.content-slider.bg-tan-100 .content-blog .blog-slide-text .btn-secondary {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.content-slider.bg-tan-100 .content-blog .blog-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+}
+
+.content-slider.bg-tan-100 .content-blog .blog-slide-text .fs-3 {
+  margin-bottom: 0.75rem;
+}
