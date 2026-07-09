@@ -2563,60 +2563,6 @@ oiVideoOnLoad = function(el) {
 
 
 
-<script>
-  document.addEventListener('DOMContentLoaded', function(event) {
-    const tabs = document.querySelectorAll('.amenity-tab');
-    const tabsContainer = document.querySelector('.amenity-tabs-wrapper');
-    if (!tabs.length || !tabsContainer) return;
-    updateTabsLayout();
-    tabs.forEach(tab => {
-      tab.addEventListener('click', function() {
-        if (this.classList.contains('active')) return;
-        tabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        updateTabsLayout();
-      });
-    });
-    window.addEventListener('resize', debounce(updateTabsLayout, 250));
-
-    function updateTabsLayout() {
-      const activeTab = document.querySelector('.amenity-tab.active');
-      if (!activeTab) return;
-      const totalWidth = tabsContainer.offsetWidth;
-      const tabCount = tabs.length;
-      // Adjust the active tab width ratio based on having exactly 3 tabs
-      const activeTabWidth = Math.min(totalWidth * (tabCount === 3 ? 0.5 : 0.6), 800);
-      const remainingWidth = totalWidth - activeTabWidth;
-      const inactiveTabWidth = remainingWidth / (tabCount - 1);
-      tabs.forEach(tab => {
-        if (tab.classList.contains('active')) {
-          tab.style.width = `${activeTabWidth}px`;
-        } else {
-          tab.style.width = `${inactiveTabWidth}px`;
-        }
-      });
-    }
-
-    function debounce(func, wait) {
-      let timeout;
-      return function() {
-        const context = this;
-        const args = arguments;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          func.apply(context, args);
-        }, wait);
-      };
-    }
-  });
-</script>
-
-
-
-
-
-        
-
 <footer class="bg-gray">
 	<div class="container-fluid container-xl">
 		<div class="row py-3 py-lg-5">
