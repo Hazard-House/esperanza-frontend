@@ -91,6 +91,7 @@ oiVideoOnLoad = function(el) {
         <!-- Styles loaded via enqueue_style -->
     <link href="/static/esperanza_homes/css/vendor.min.css?v=48f2938" rel="stylesheet" type="text/css">
     <link href="/static/esperanza_homes/css/style.min.css?v=85c08ef" rel="stylesheet" type="text/css">
+    <link href="/site-overrides.css" rel="stylesheet" type="text/css">
 
 
         
@@ -3945,42 +3946,7 @@ To get started, just discuss your ideas and your family's needs with one of our 
 
   
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function(event) {
-
-      new Swiper('.city-page-testimonials-slider', {
-        slidesPerView: 1,
-        spaceBetween: 15,
-        pagination: {
-          el: '.testimonials-pagination',
-          clickable: true,
-        },
-        navigation: {
-          nextEl: '.testimonials-next',
-          prevEl: '.testimonials-prev',
-        },
-        breakpoints: {
-        1200: {
-            slidesPerView: 2,
-          },
-        1400: {
-            spaceBetween: 25,
-            slidesPerView: 3,
-            slidesPerGroup: 3,
-          },
-        },
-        keyboard: {
-          enabled: true,
-        },
-        a11y: {
-          prevSlideMessage: 'Previous testimonial',
-          nextSlideMessage: 'Next testimonial',
-        }
-      });
-
-
-    });
-  </script>
+      <script src="/city-testimonials-slider.js" defer></script>
   
   
 	
