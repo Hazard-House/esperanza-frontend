@@ -32,10 +32,17 @@
 .homepage-slider > .homepage-slider-nav .swiper-prev,
 .homepage-slider > .homepage-slider-nav .swiper-next {
   background: transparent;
+  color: #fff;
   cursor: pointer;
   display: inline-flex;
   height: auto;
   width: auto;
+}
+
+.homepage-slider > .homepage-slider-nav .swiper-prev.swiper-button-disabled,
+.homepage-slider > .homepage-slider-nav .swiper-next.swiper-button-disabled {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .homepage-slider > .homepage-slider-nav .swiper-prev:before,
