@@ -84,3 +84,62 @@
 .content-slider.bg-tan-100 .content-blog .blog-slide-text .fs-3 {
   margin-bottom: 0.75rem;
 }
+
+/* City page testimonials slider — 1 / 2 / 3 full cards, no partial clips */
+.testimonials-section > .container.overflow-hidden {
+  overflow: visible;
+}
+
+.testimonials-section .city-page-testimonials-slider {
+  overflow: hidden;
+  padding: 12px 10px 8px;
+}
+
+.testimonials-section .city-page-testimonials-slider .swiper-slide {
+  box-sizing: border-box;
+  height: auto;
+}
+
+.testimonials-section .city-page-testimonials-slider .testimonial-card {
+  height: 100%;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.testimonials-section .city-page-testimonials-slider .testimonial-content {
+  min-width: 0;
+}
+
+.testimonials-section .city-page-testimonials-slider .stat-wrapper {
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.testimonials-section .city-page-testimonials-slider .swiper-controls {
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.testimonials-section .city-page-testimonials-slider .testimonials-pagination {
+  display: none;
+}
+
+.testimonials-section .city-page-testimonials-slider .testimonials-prev,
+.testimonials-section .city-page-testimonials-slider .testimonials-next {
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  height: auto;
+  position: static;
+  transform: none;
+  width: auto;
+}
+
+.testimonials-section .city-page-testimonials-slider .testimonials-prev.swiper-button-disabled,
+.testimonials-section .city-page-testimonials-slider .testimonials-next.swiper-button-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
