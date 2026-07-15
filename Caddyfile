@@ -52,6 +52,13 @@
 	# so @html matches AFTER try_files rewrites; otherwise Caddy sorts `header` ahead
 	# of the rewrite and the pre-rewrite path misses /contact/, /new-homes/available/…
 	route {
+		# HTTrack stored versioned theme files as "name﹖v=hash.ext"; HTML references
+		# the clean "name.ext?v=hash" form (worker.js maps this on CF; Caddy needs it
+		# locally and on Railway).
+		@static_v path /static/* query v=*
+		uri @static_v path_regexp \.([^.]+)$ ﹖v={query.v}.$1
+		uri @static_v query -v
+
 		try_files {path} {path}/index.html {path}.html
 		@html path *.html
 		header @html Cache-Control "public, max-age=300"
@@ -61,16 +68,18 @@
 	# Unmigrated paths (blog archives, JS-only floorplans catalog, the media/PDF
 	# library) fall through to the still-live O'Neill site so nav stays clickable.
 	handle_errors {
-		# Missing *assets* must fail fast, not redirect to the live site: a mangled
-		# asset URL (e.g. a scrape that localized a tracker/CDN path) would otherwise
-		# 404 -> redirect -> redirect and storm the network. Only real page 404s fall
-		# through to the live O'Neill site.
-		@asset404 {
-			expression {err.status_code} == 404
-			path *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.webp *.avif *.ico *.woff *.woff2 *.ttf *.map *.mp4 *.json
+		route {
+			# Missing *assets* must fail fast, not redirect to the live site: a mangled
+			# asset URL (e.g. a scrape that localized a tracker/CDN path) would otherwise
+			# 404 -> redirect -> redirect and storm the network. Only real page 404s fall
+			# through to the live O'Neill site.
+			@asset404 {
+				expression {err.status_code} == 404
+				path_regexp asset \.(js|css|png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2|ttf|map|mp4|json)$
+			}
+			respond @asset404 404
+			@notfound expression {err.status_code} == 404
+			redir @notfound https://www.esperanzahomes.com{uri} 302
 		}
-		respond @asset404 404
-		@notfound expression {err.status_code} == 404
-		redir @notfound https://www.esperanzahomes.com{uri} 302
 	}
 }
