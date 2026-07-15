@@ -103,7 +103,8 @@ export function hydrateCommunityStatus(html, d) {
       return block.replace(/(<div class="price mt-1">)\$[\d,]+(<\/div>)/, (_x, a, b) => a + money(c.priceFrom) + b);
     }
     const col = `<div class="col-auto px-2 my-auto"><div class="price-title">From</div><div class="price mt-1">${money(c.priceFrom)}</div></div>`;
-    return block.replace(/(\s*<\/div>\s*<\/a>)/, col + '$1');
+    // Callback form — a string replacement would treat "$145,990" as "$1" + "45,990".
+    return block.replace(/(\s*<\/div>\s*<\/a>)/, tail => col + tail);
   });
   return html;
 }
@@ -299,6 +300,9 @@ function demo() {
   const mout = hydrateCommunityStatus(iw('vista-verde', '') + iw('silos-at-la-sienna', '<div class="col-auto"><div class="price-title">From</div><div class="price mt-1">$279,990</div></div>'), dd);
   assert(mout.includes('<div class="price mt-1">$248,990</div>'), 'priceless infowindow gets injected price col');
   assert(mout.includes('<div class="price mt-1">$272,990</div>') && !mout.includes('$279,990'), 'stale infowindow price refreshed');
+  const dd145 = { communities: [{ slug: 'bentsen-palm-master-planned-community', name: 'Bentsen Palm', priceFrom: 145990, comingSoon: false }] };
+  const bentsenOut = hydrateCommunityStatus(iw('bentsen-palm-master-planned-community', ''), dd145);
+  assert(bentsenOut.includes('<div class="price mt-1">$145,990</div>') && !bentsenOut.includes('</a>45,990'), 'price injection survives $1 in amount');
   // close-out infowindow: frozen price column stripped
   const ddco = { communities: [{ slug: 'villas-on-freddy', name: 'Villas On Freddy', priceFrom: null, comingSoon: false }] };
   const coCard = iw('villas-on-freddy', '<div class="col-auto px-2 my-auto">\n<div class="price-title">From</div>\n<div class="price mt-1">$224,990</div>\n</div>');
