@@ -7,7 +7,7 @@
 }
 
 :{$PORT:8080} {
-	root * /srv/public
+	root * {$STATIC_ROOT:/srv/public}
 	encode zstd gzip
 
 	# Security headers, site-wide. No CSP on purpose: the scrape carries many
