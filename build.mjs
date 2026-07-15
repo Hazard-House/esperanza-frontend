@@ -238,6 +238,7 @@ async function build() {
   await generateDetails(d, { skipCommunities: scrapedCommunities, skipFloorplans: scrapedFloorplans });
   // blog search island's index (scans the shipped post pages, so it runs last)
   execSync('node scripts/gen-blog-index.mjs', { cwd: import.meta.dirname, stdio: 'inherit' });
+  execSync('node scripts/link-static-assets.mjs', { cwd: import.meta.dirname, stdio: 'inherit' });
   console.log(`public/ assembled at ${OUT}`);
 }
 

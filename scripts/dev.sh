@@ -15,6 +15,18 @@ if [[ ! -f public/index.html ]]; then
   exit 1
 fi
 
+node scripts/link-static-assets.mjs
+
+# Avoid duplicate Caddy listeners on the same port (causes flaky asset responses).
+if command -v fuser >/dev/null 2>&1; then
+  fuser -k "${PORT}/tcp" 2>/dev/null || true
+elif command -v lsof >/dev/null 2>&1; then
+  lsof -ti:"${PORT}" | xargs -r kill 2>/dev/null || true
+fi
+pkill -f "caddy run --config $(pwd)/Caddyfile" 2>/dev/null || true
+sleep 0.5
+
 echo "Serving ${STATIC_ROOT} at http://localhost:${PORT}"
 echo "Rebuild after edits: npm run build"
+echo "If styles look missing, hard-refresh (Ctrl+Shift+R) to clear old cached redirects."
 exec caddy run --config Caddyfile --adapter caddyfile

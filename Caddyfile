@@ -44,17 +44,14 @@
 		respond `{"data":{"content":""},"success":true}` 200
 	}
 
-	# Long cache for the immutable theme.
-	@static path /static/*
-	header @static Cache-Control "public, max-age=31536000, immutable"
-
 	# Pretty URLs, then the HTML cache header. The route block forces literal order
 	# so @html matches AFTER try_files rewrites; otherwise Caddy sorts `header` ahead
 	# of the rewrite and the pre-rewrite path misses /contact/, /new-homes/available/…
 	route {
 		# HTTrack stored versioned theme files as "name﹖v=hash.ext"; HTML references
 		# the clean "name.ext?v=hash" form (worker.js maps this on CF; Caddy needs it
-		# locally and on Railway).
+		# locally and on Railway). Symlinks from scripts/link-static-assets.mjs are the
+		# primary fix; this rewrite is a fallback.
 		@static_v path /static/* query v=*
 		uri @static_v path_regexp \.([^.]+)$ ﹖v={query.v}.$1
 		uri @static_v query -v
@@ -62,6 +59,12 @@
 		try_files {path} {path}/index.html {path}.html
 		@html path *.html
 		header @html Cache-Control "public, max-age=300"
+		# Only cache theme assets that actually exist — never stamp immutable on 404/302.
+		@static_ok {
+			path /static/*
+			file
+		}
+		header @static_ok Cache-Control "public, max-age=31536000, immutable"
 		file_server
 	}
 
@@ -79,6 +82,7 @@
 			}
 			respond @asset404 404
 			@notfound expression {err.status_code} == 404
+			header @notfound Cache-Control "no-store"
 			redir @notfound https://www.esperanzahomes.com{uri} 302
 		}
 	}
