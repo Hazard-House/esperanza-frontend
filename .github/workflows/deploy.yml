@@ -32,5 +32,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # main -> production; staging branch -> --env staging
-          command: ${{ github.ref == 'refs/heads/main' && 'deploy' || 'deploy --env staging' }}
+          wranglerVersion: "4"
+          # main -> production top-level env; staging branch -> named staging env
+          command: ${{ github.ref == 'refs/heads/main' && 'deploy --env=""' || 'deploy --env staging' }}
