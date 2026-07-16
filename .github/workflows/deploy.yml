@@ -16,6 +16,7 @@ name: Deploy (Cloudflare)
 on:
   push:
     branches: [main, staging]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -33,5 +34,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
-          # main -> production top-level env; staging branch -> named staging env
-          command: ${{ github.ref == 'refs/heads/main' && 'deploy --env=""' || 'deploy --env staging' }}
+          command: deploy
+        env:
+          # main/workflow_dispatch on main -> top-level config; staging branch -> staging env
+          CLOUDFLARE_ENV: ${{ github.ref == 'refs/heads/staging' && 'staging' || '' }}
