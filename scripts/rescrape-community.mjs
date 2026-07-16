@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { loadData } from '../data.mjs';
 import { communityPath } from '../paths.mjs';
 import { rewriteCommon } from '../rewrite.mjs';
-import { hydrateCommunity, hydrateCommunityStatus, swapCommunityBanner, bakeRecommend } from '../hydrate-scraped.mjs';
+import { hydrateCommunity, hydrateCommunityStatus, swapCommunityBanner, bakeRecommend, patchCommunityGalleryImages } from '../hydrate-scraped.mjs';
 
 const LIVE = 'https://www.esperanzahomes.com';
 const ROOT = join(import.meta.dirname, '..');
@@ -49,6 +49,7 @@ async function main() {
 
   const rel = livePath.replace(/^\//, '') + 'index.html';
   let html = localize(await res.text());
+  html = patchCommunityGalleryImages(html, community);
   html = bakeRecommend(swapCommunityBanner(hydrateCommunity(html, community, d), rel), rel);
   html = hydrateCommunityStatus(html, d);
 
