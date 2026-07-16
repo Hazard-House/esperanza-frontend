@@ -1,64 +1,78 @@
-# esperanza-oneill-railway
+# esperanza-frontend
 
-The O'Neill/Homefiniti Esperanza Homes site (June-8-2026 static scrape) re-hosted on
-Railway, with every dependency re-pointed at **our** Cloudflare infrastructure instead
-of O'Neill's. Proof-of-concept: 3 flagship pages, one of them running off the **live**
-public API.
+The public **Esperanza Homes** website. A static replica of the legacy
+O'Neill/Homefiniti site (June-8-2026 scrape), rebuilt with every dependency
+re-pointed at **our** Cloudflare infrastructure, and with the dynamic pages
+(Quick-Move-Ins, Communities map, detail pages) driven live from our public API.
 
-**Live:** https://esperanza-oneill-static-production.up.railway.app
-- `/` — homepage (static, images from R2, homepage Mapbox map)
-- `/new-homes/available/` — **live** Quick-Move-Ins: cards + clustered Mapbox map fetched
-  from the public API at runtime (not the frozen scrape)
-- `/new-homes/tx/mcallen/tres-lagos-master-planned-community/12091/` — community page
-  (static, R2 images, live LotVue site-map iframe)
+**Live:** https://esperanzahomes.hazardhouse.ai (a `*.workers.dev` URL also stays
+up as a staging mirror).
 
-Any other path 302-redirects to the still-live `www.esperanzahomes.com` (Caddyfile
-`handle_errors`), so nav stays clickable until more pages are migrated.
+- Zero npm dependencies — the build is plain Node `.mjs` scripts + hand-written
+  vanilla-JS "islands".
+- Served by a **Cloudflare Worker with Static Assets** (`worker.js` + `wrangler.jsonc`).
+- Static content comes from `./public` (committed and deployed as the asset dir);
+  dynamic content is fetched at runtime from the `esperanza-api` Worker.
 
 ## How it works
 
-`build.mjs` assembles `public/` from the scrape at
-`/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08` and rewrites the 3 pages:
+`build.mjs` assembles `./public` from the local scrape at
+`build.mjs:23` (`SCRAPE = /Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08` —
+a machine-local input, not in the repo). `ship.txt` lists which scraped pages to
+include. The assembly is string-rewrite only (no DOM parser / bundler). Rewrites live
+in `rewrite.mjs`:
 
 | From (O'Neill) | To (ours) |
 |---|---|
-| `media.esperanzahomes.com/…` | `img.hazardhouse.ai/assets-media/…` (R2 CDN) |
-| `media.homefiniti.com/…` | `img.hazardhouse.ai/assets-media/homefiniti/…` |
+| `media.esperanzahomes.com/…`, `media.homefiniti.com/…` | `img.hazardhouse.ai/…` (R2 CDN, with `/cdn-cgi/image/` resizing) |
 | `static.esperanzahomes.com/…` | `/static/…` (theme bundled into the deploy) |
-| `/xhr/*` form endpoints | placeholder host (forms deferred — HubSpot later) |
-| O'Neill Mapbox token + custom styles | our token + `mapbox/streets-v11` |
+| O'Neill Mapbox token + custom styles | our Hazard House token + styles |
+| oilib attribution | "Powered by Hazard House" |
 
-Images: the scrape references each image with **and** without a file extension
+**Islands.** For dynamic pages, `build.mjs` strips oilib's `<script>` and injects a
+hand-written JS file from `islands/` that fetches `/api/public/*` at runtime and renders
+into the scrape's own markup — e.g. `available-live.js` (Quick-Move-Ins cards +
+clustered Mapbox map), `communities-live.js` (Communities map), `qmi-detail-live.js`
+(QMI detail shell). Config reaches the islands via a `cfg` object in `rewrite.mjs`
+(`API_BASE`, `MAPBOX_TOKEN`, styles).
+
+**Detail pages.** `render-community.mjs` / `render-floorplan.mjs` / `render-qmi.mjs`
+generate community, floor-plan, and QMI detail pages from live D1 data;
+`npm run generate` (`generate-details.mjs`) regenerates them on demand.
+
+**Images.** The scrape references each image with **and** without a file extension
 (responsive srcset), but R2 objects only exist at the real extension —
-`media-keys-esperanza.txt` / `media-keys-homefiniti.txt` map base path → real key so both
-forms resolve. Those lists came from the one-time R2 upload of the two static pages'
-images (fetched from live O'Neill, uploaded under `assets-media/`).
+`paths/media-keys-esperanza.txt` / `media-keys-homefiniti.txt` map base path → real R2
+key so both forms resolve.
 
-The **available page** is special: `build.mjs` removes oilib's `<script>` and injects
-`islands/available-live.js`, which fetches `/api/public/qmi` + `/api/public/communities`
-(same-origin — Caddy reverse-proxies to `esperanza-api…workers.dev` to dodge CORS),
-renders cards in the scrape's own markup, and draws a clustered Mapbox map.
+## The Worker (`worker.js`)
+
+Runs first (`assets.run_worker_first`) and owns all edge logic:
+
+- `http` → `https` 301
+- `/api/*` → same-origin proxy to the backend. Bound as service `esperanza-api` in
+  `wrangler.jsonc` (a service binding is required: the API's CORS only allows the
+  `esperanzahomes.com` origin, and same-zone Worker→Worker `fetch()` is blocked — CF
+  error 1042; a plain `fetch` fallback covers `wrangler dev`).
+- `/xhr/<form>/` → forwards lead-form POSTs to the **HubSpot** Forms Submission API
+  (portal/form GUID overridable via wrangler vars `HS_PORTAL` / `HS_FORM_GUID` /
+  `HS_SUBMIT_URL`); unknown endpoints get a benign JSON stub. `/hfa/*` → 204.
+- `REDIRECTS` map (301) from `redirects.mjs`, plus legacy-URL fixups and blog
+  `?page=N` → `/page-N/` mapping.
+- `/floorplan-collections/pdf/` → 302 to the `esperanza-pdf` Worker.
+- Branded 404, site-wide security headers, cache-control stamping.
+- Any unmatched path 302-redirects to the still-live `www.esperanzahomes.com`, so nav
+  stays clickable for pages not yet migrated.
 
 ## Rebuild & deploy
 
 ```bash
-node build.mjs            # assemble ./public
-node build.mjs --check    # run the rewrite self-checks
-railway up                # deploy (Caddy Dockerfile). Service: esperanza-oneill-static
+node build.mjs          # assemble ./public from the local scrape
+npm run check           # run all --check self-tests
+wrangler deploy         # deploy the Worker + ./public static assets
 ```
 
-⚠ `public/` must NOT be git-ignored — Railway's uploader honors git ignores and will
-skip it, failing the `COPY public` build step.
-
-## Deferred (per scope — "match up the rest later")
-
-- **Forms** → HubSpot: `/xhr/*` point at a placeholder. Wire per-endpoint HubSpot form
-  GUIDs (contact, request-information, tour, osc/footer-chat, general, referral, realtor)
-  once provided, ideally through the `esperanza-ops` worker.
-- **Full image migration**: only the 3 flagship pages' images are in R2. The other ~980
-  pages still 404 their images (they redirect to live O'Neill anyway). Bulk top-up = fetch
-  remaining originals from live O'Neill → `assets-media/` (mind the R2 rate limit).
-- **PDF gates** (`/xhr/*-download/`) → point at our auto-generated QMI-filter / community
-  PDF workers.
-- **Dynamic PDFs** already work: available-page cards link "VIEW HOME" to each home's live
-  `Dynamic PDF` brochure.
+- Deploys to the custom domain `esperanzahomes.hazardhouse.ai`.
+- `public/` is committed (it's the deployed asset dir) — do not git-ignore it.
+- **`NOINDEX = true`** in `rewrite.mjs:12` — the built site currently emits `noindex`.
+  Flip it for a production/indexable launch and rebuild.

@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from '
 import { join } from 'node:path';
 
 const SCRAPE = process.env.ESP_SCRAPE || '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08/www.esperanzahomes.com/new-homes';
-const API = process.env.ESP_API || 'https://esperanzahomes-ai-core-staging.up.railway.app/api/public';
+const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
 const LEGACY = 'https://www.esperanzahomes.com';
 const OUT = join(import.meta.dirname, 'assets', 'qmi-media-map.json');
 const slugify = s => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
