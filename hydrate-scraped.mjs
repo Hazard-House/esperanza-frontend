@@ -68,6 +68,8 @@ export function bakeRecommend(html, page) {
 const num = n => Number(n).toLocaleString('en-US');
 const money = n => '$' + num(n);
 const miss = (page, step) => console.warn(`hydrate: ${step} missed on ${page}`);
+// Close-out + coming-soon communities must not advertise a from-price anywhere.
+const pricedCommunity = c => c.priceFrom > 0 && !c.comingSoon;
 
 // Sitewide community status, refreshed from the API on EVERY page (the header
 // mega-menu, footer community lists and map-infowindow cards were frozen with the
@@ -94,10 +96,9 @@ export function hydrateCommunityStatus(html, d) {
     const m = block.match(/href="[^"]*new-homes\/tx\/[^/"]+\/([^/"]+)\/\d+\//);
     const c = m && bySlug.get(m[1]);
     if (!c) return block; // unknown community -> frozen
-    // Close-out rule (esperanza-cf #118): priceFrom NULL = no advertised price —
-    // strip the frozen "From $X" column instead of leaving a stale number.
-    if (!(c.priceFrom > 0)) {
-      return block.replace(/<div class="col-auto px-2 my-auto">\s*<div class="price-title">From<\/div>\s*<div class="price mt-1">\$[\d,]+<\/div>\s*<\/div>/, '');
+    // Close-out / coming-soon: no advertised from-price on map cards.
+    if (!pricedCommunity(c)) {
+      return block.replace(/<div class="col-auto(?: px-2 my-auto)?">\s*<div class="price-title">From<\/div>\s*<div class="price mt-1">\$[\d,]+<\/div>\s*<\/div>/, '');
     }
     if (/<div class="price mt-1">\$[\d,]+<\/div>/.test(block)) {
       return block.replace(/(<div class="price mt-1">)\$[\d,]+(<\/div>)/, (_x, a, b) => a + money(c.priceFrom) + b);
@@ -118,20 +119,31 @@ function sub(html, re, fn, page, step) {
 
 // Community page (new-homes/tx/<city>/<slug>/<id>/):
 // 1. hero "Starting at $X" -> c.priceFrom
-// 2. Quick Move-Ins (<section id="specs">) cards -> current c.homes (section
+// 2. overview sidebar "HOMES FROM $X" -> c.priceFrom (same close-out / coming-soon
+//    rule as the hero — strip both when unpriced)
+// 3. Quick Move-Ins (<section id="specs">) cards -> current c.homes (section
 //    removed entirely when 0 homes, matching the live original)
-// 3. Available Floor Plans row prices -> per-community fp.communityPrices[c.name]
+// 4. Available Floor Plans row prices -> per-community fp.communityPrices[c.name]
+const HERO_STARTING_RE = /(?:<div class="d-none d-lg-inline-block mx-1">•<\/div>\s*)?<div class="d-block d-lg-inline-block">\s*Starting at \$[\d,]+\s*<\/div>/;
+const HOMES_FROM_BLOCK_RE = /<div class="overpass fs-7">HOMES FROM<\/div>\s*<div class="overpass bold text-dark-green fs-4">\$[\d,]+<\/div>/;
 export function hydrateCommunity(html, c, d) {
   const page = `community ${c.slug}`;
   try {
-    if (c.priceFrom) html = sub(html, /(Starting at \$)[\d,]+/, (_, a) => a + num(c.priceFrom), page, 'hero price');
-    // Close-out rule (esperanza-cf #118): priceFrom NULL -> the hero must not
-    // advertise a from-price at all; drop the bullet separator + Starting-at line.
+    if (pricedCommunity(c)) html = sub(html, /(Starting at \$)[\d,]+/, (_, a) => a + num(c.priceFrom), page, 'hero price');
+    // Close-out / coming-soon: no advertised from-price in the hero.
     else if (html.includes('Starting at $')) {
-      html = sub(html, /(?:<div class="d-none d-lg-inline-block mx-1">•<\/div>\s*)?<div class="d-block d-lg-inline-block">\s*Starting at \$[\d,]+\s*<\/div>/,
-        () => '', page, 'hero price removal (close-out)');
+      html = sub(html, HERO_STARTING_RE, () => '', page, 'hero price removal (close-out)');
     }
   } catch (e) { miss(page, `hero price (${e.message})`); }
+
+  try {
+    if (pricedCommunity(c)) {
+      html = sub(html, /(HOMES FROM<\/div>\s*<div class="overpass bold text-dark-green fs-4">)\$[\d,]+/,
+        (_, a) => a + money(c.priceFrom), page, 'overview homes-from');
+    } else if (HOMES_FROM_BLOCK_RE.test(html)) {
+      html = sub(html, HOMES_FROM_BLOCK_RE, () => '', page, 'overview homes-from removal (close-out)');
+    }
+  } catch (e) { miss(page, `overview homes-from (${e.message})`); }
 
   // Overview stat block (beds/baths/sqft ranges) go stale as plans open/close.
   // First stats/<icon> match = the community block: it precedes the QMI/plan
@@ -176,7 +188,7 @@ export function hydrateCommunity(html, c, d) {
   try {
     const priceBySlug = new Map((c.plans || []).map(fp => [fp.slug, fp.communityPrices[c.name]]));
     html = html.replace(/<div class="card plan-card"[\s\S]*?(?=<div class="card plan-card"|<\/section>)/g, seg => {
-      const m = seg.match(/href="\.\.\/([^/]+)\/\d+\/index\.html"/);
+      const m = seg.match(/href="\.\.\/([^/]+)\/\d+\/(?:index\.html)?"/);
       const price = m ? priceBySlug.get(m[1]) : undefined;
       if (price == null) return seg; // plan gone or unpriced here -> frozen price stays
       return seg
@@ -238,21 +250,29 @@ function demo() {
     plans: [{ slug: 'indigo', communityPrices: { 'Harvest Coves': 249990 } }],
   };
   const page = '<h1>Harvest Coves</h1>Starting at $244,990'
+    + '<div class="overpass fs-7">HOMES FROM</div><div class="overpass bold text-dark-green fs-4">$244,990</div>'
     + '<div class="stat-group"><div class="item detail pb-4"><img src="/static/esperanza_homes/images/stats/bedroom.svg" width="24">\n3 - 5 Bedrooms\n</div>'
     + '<div class="item detail pb-4"><img src="/static/esperanza_homes/images/stats/bathroom.svg" width="24">\n2.5 - 5 Bathrooms\n</div></div>'
     + '<div class="item"><img src="/static/esperanza_homes/images/stats/bathroom.svg" width="18">2 Bath</div>'
     + '<section id="specs"><div class="container-lg"><div class="row">head</div>'
     + '<div class="row oi-listings mt-3 g-2"><div class="col-12">OLD CARD 9999 Stale St</div></div></div></section>'
     + '<section id="plans"><div class="card plan-card" data-price="244990"><div class="price"></div><div class="price">$244,990</div>'
-    + '<a href="../indigo/231384/index.html">View Details</a></div></section><footer>f</footer>';
+    + '<a href="../indigo/231384/">View Details</a></div></section><footer>f</footer>';
   let out = hydrateCommunity(page, c, {});
   assert(out.includes('Starting at $250,990'), 'hero price updated');
+  assert(out.includes('HOMES FROM</div><div class="overpass bold text-dark-green fs-4">$250,990</div>'), 'overview homes-from updated');
   assert(out.includes('\n2.5 - 4.5 Bathrooms\n') && out.includes('\n3 - 5 Bedrooms\n'), 'community bath/bed ranges refreshed');
   assert(out.includes('width="18">2 Bath</div>'), 'per-home card Bath row untouched');
-  // close-out community (priceFrom null): hero Starting-at line stripped
-  const co = hydrateCommunity('<div class="d-none d-lg-inline-block mx-1">\u2022</div>\n<div class="d-block d-lg-inline-block">\n Starting at $272,990\n</div><div>1565 E Silos Ave</div>',
+  // close-out community (priceFrom null): hero + overview prices stripped
+  const co = hydrateCommunity('<div class="d-none d-lg-inline-block mx-1">\u2022</div>\n<div class="d-block d-lg-inline-block">\n Starting at $272,990\n</div><div>1565 E Silos Ave</div>'
+    + '<div class="overpass fs-7">HOMES FROM</div><div class="overpass bold text-dark-green fs-4">$279,990</div>',
     { slug: 'silos-at-la-sienna', name: 'Silos', priceFrom: null }, {});
-  assert(!co.includes('Starting at') && !co.includes('\u2022') && co.includes('1565 E Silos Ave'), 'close-out hero price + bullet removed');
+  assert(!co.includes('Starting at') && !co.includes('HOMES FROM') && !co.includes('$279,990') && co.includes('1565 E Silos Ave'), 'close-out hero + homes-from removed');
+  // coming-soon community: same price-stripping rule
+  const cs = hydrateCommunity('<div class="d-block d-lg-inline-block">Starting at $199,990</div>'
+    + '<div class="overpass fs-7">HOMES FROM</div><div class="overpass bold text-dark-green fs-4">$199,990</div>',
+    { slug: 'meadow-ridge', name: 'Meadow Ridge', priceFrom: 199990, comingSoon: true }, {});
+  assert(!cs.includes('Starting at') && !cs.includes('HOMES FROM'), 'coming-soon prices stripped');
   assert(out.includes('3706 Westway Court') && !out.includes('9999 Stale St'), 'qmi cards replaced');
   assert(out.includes('data-price="249990"') && out.includes('<div class="price">$249,990</div>'), 'plan row price updated');
   assert(out.includes('<div class="price"></div>'), 'empty price div untouched');
@@ -285,7 +305,7 @@ function demo() {
   const dd = { communities: [
     { slug: 'vista-verde', name: 'Vista Verde', priceFrom: 248990, comingSoon: false },
     { slug: 'meadow-ridge', name: 'Meadow Ridge', priceFrom: null, comingSoon: true },
-    { slug: 'silos-at-la-sienna', name: 'Silos', priceFrom: 272990, comingSoon: false },
+    { slug: 'silos-at-la-sienna', name: 'Silos', priceFrom: null, comingSoon: false },
   ] };
   const nav = '<a href="../new-homes/tx/laredo/vista-verde/18489/" class="nav-link">\n Vista Verde \n<span class="badge bg-green">Coming Soon</span>\n</a>'
     + '<a href="../new-homes/tx/calallen/meadow-ridge/19662/">Meadow Ridge <span class="small badge bg-green d-inline-block ms-2 pt-1 align-top">Coming Soon</span></a>'
@@ -299,7 +319,7 @@ function demo() {
     + `<div class="row my-2 g-0"><div class="col px-2 my-auto"><div class="card-title">X</div></div>${priceHtml}</div>\n</a>\n</div>\n</div>\n</div>`;
   const mout = hydrateCommunityStatus(iw('vista-verde', '') + iw('silos-at-la-sienna', '<div class="col-auto"><div class="price-title">From</div><div class="price mt-1">$279,990</div></div>'), dd);
   assert(mout.includes('<div class="price mt-1">$248,990</div>'), 'priceless infowindow gets injected price col');
-  assert(mout.includes('<div class="price mt-1">$272,990</div>') && !mout.includes('$279,990'), 'stale infowindow price refreshed');
+  assert(!mout.includes('$279,990') && mout.includes('silos-at-la-sienna'), 'close-out infowindow price column removed');
   const dd145 = { communities: [{ slug: 'bentsen-palm-master-planned-community', name: 'Bentsen Palm', priceFrom: 145990, comingSoon: false }] };
   const bentsenOut = hydrateCommunityStatus(iw('bentsen-palm-master-planned-community', ''), dd145);
   assert(bentsenOut.includes('<div class="price mt-1">$145,990</div>') && !bentsenOut.includes('</a>45,990'), 'price injection survives $1 in amount');
