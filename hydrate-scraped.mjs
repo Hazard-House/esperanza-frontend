@@ -70,6 +70,54 @@ const money = n => '$' + num(n);
 const miss = (page, step) => console.warn(`hydrate: ${step} missed on ${page}`);
 // Close-out + coming-soon communities must not advertise a from-price anywhere.
 const pricedCommunity = c => c.priceFrom > 0 && !c.comingSoon;
+const hostUrl = u => String(u || '').replace(/^https?:/, '');
+
+// Live-rescraped community pages can reference assets-media keys that were never
+// uploaded to R2. The API's community image/secondaryImage URLs are always valid —
+// use them for the visible hero gallery slots.
+const apiImagePath = u => String(u || '').replace(/^https?:\/\/[^/]+\//, '');
+
+export function patchCommunityGalleryImages(html, c) {
+  if (!c?.image) return html;
+  const page = `community ${c.slug}`;
+  const hero = hostUrl(c.image);
+  const heroPath = apiImagePath(c.image);
+  const secondary = c.secondaryImage ? hostUrl(c.secondaryImage) : null;
+  const secondaryPath = c.secondaryImage ? apiImagePath(c.secondaryImage) : null;
+  const imgTag = (url, alt, loading = 'eager') =>
+    `<img src="${url}" class="oi-aspect-img" loading="${loading}" alt="${alt}">`;
+
+  const swapPath = (html, fromPath, toPath) => {
+    if (!fromPath || fromPath === toPath) return html;
+    return html.split(fromPath).join(toPath);
+  };
+
+  try {
+    const heroScrapeM = html.match(
+      /<div id="detail-gallery"[\s\S]*?<div class="oi-aspect three-two">\s*<img[^>]*\bsrc="[^"]*?(assets-media\/[^"]+)"/
+    );
+    const secondaryScrapeM = secondary && html.match(
+      /<div id="detail-gallery"[\s\S]*?<div class="col-md-6 col-lg-4[\s\S]*?<div class="row h-50">\s*<div class="col px-0 d-flex align-items-stretch">\s*<div class="oi-aspect sixteen-nine">\s*<img[^>]*\bsrc="[^"]*?(assets-media\/[^"]+)"/
+    );
+
+    html = sub(html,
+      /(<div id="detail-gallery"[\s\S]*?<div class="oi-aspect three-two">\s*)<img[^>]+>/,
+      (_, pre) => pre + imgTag(hero, c.name), page, 'hero gallery image');
+    if (secondary) {
+      html = sub(html,
+        /(<div id="detail-gallery"[\s\S]*?<div class="col-md-6 col-lg-4[\s\S]*?<div class="row h-50">\s*<div class="col px-0 d-flex align-items-stretch">\s*<div class="oi-aspect sixteen-nine">\s*)<img[^>]+>/,
+        (_, pre) => pre + imgTag(secondary, c.name), page, 'secondary gallery image');
+    }
+
+    // Fancybox + tour sidebar still reference the scraped assets-media keys — swap
+    // every occurrence (src + srcset) so duplicates of the hero/secondary load too.
+    html = swapPath(html, heroScrapeM?.[1], heroPath);
+    if (secondaryScrapeM) html = swapPath(html, secondaryScrapeM[1], secondaryPath);
+
+    html = html.replace(/(<meta (?:property="og:image"|name="twitter:image") content=")[^"]+(")/g, `$1${hero}$2`);
+  } catch (e) { miss(page, `gallery images (${e.message})`); }
+  return html;
+}
 
 // Sitewide community status, refreshed from the API on EVERY page (the header
 // mega-menu, footer community lists and map-infowindow cards were frozen with the
