@@ -75,6 +75,8 @@ function normCommunity(c) {
     priceFrom: c.priceFrom, comingSoon: !!c.comingSoon, sqft: c.sqft, beds: c.beds, baths: c.baths,
     description: c.description, amenities: c.amenities, promo: c.promoBannerText,
     officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
+    // HOA documents (CCRs, amendments) — [{title, link}], link is an R2 PDF url.
+    hoaLinks: Array.isArray(c.hoaLinks) ? c.hoaLinks.filter((l) => l && l.link) : [],
   };
 }
 
