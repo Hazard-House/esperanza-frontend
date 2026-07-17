@@ -10,6 +10,14 @@ const un = v => (Array.isArray(v) ? v[0] : v);
 const fixHost = u => (u ? String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u);
 export const slugify = s => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+// Ascending price comparator, missing/zero prices LAST — a "TBD"/no-price card must
+// never masquerade as the cheapest. `get` returns the price to sort on.
+export const byPriceAsc = get => (a, b) => {
+  const pa = Number(get(a)) > 0 ? Number(get(a)) : Infinity;
+  const pb = Number(get(b)) > 0 ? Number(get(b)) : Infinity;
+  return pa === pb ? 0 : pa - pb;
+};
+
 // Interim bridge: floor-plan slug -> _FP.png drawing (already in R2). Used only until
 // floor_plans.floor_plan_image is backfilled in D1 (then the API field wins). Remove
 // this file + the FP_MAP fallback below once R1 is populated. See handoff context doc.
@@ -130,8 +138,12 @@ export async function loadData() {
     }
   }
   for (const cm of communities) {
-    cm.homes = qmis.filter(h => h.communityId === cm.id);
-    cm.plans = floorplans.filter(fp => fp.communityPrices[cm.name] != null || String(fp.communities || '').toLowerCase().includes(String(cm.name).toLowerCase()));
+    // Order low->high by the SAME price each card renders on the community page:
+    // QMI card shows h.price, plan card (planCardHtml) shows fp.startingPrice.
+    cm.homes = qmis.filter(h => h.communityId === cm.id).sort(byPriceAsc(h => h.price));
+    cm.plans = floorplans
+      .filter(fp => fp.communityPrices[cm.name] != null || String(fp.communities || '').toLowerCase().includes(String(cm.name).toLowerCase()))
+      .sort(byPriceAsc(fp => fp.startingPrice));
   }
   for (const fp of floorplans) {
     fp.homes = qmis.filter(h => h.floorPlanId === fp.id);
@@ -155,6 +167,23 @@ async function demo() {
   assert(withHers, 'at least one QMI has a HERS score');
   const withPlans = d.communities.find(c => c.plans.length);
   assert(withPlans, 'at least one community cross-links to floor plans');
+  // Price low->high (missing prices last) on community-page plan + QMI lists.
+  const asc = (arr, get) => {
+    let seenNoPrice = false;
+    for (const x of arr) {
+      const p = Number(get(x));
+      if (!(p > 0)) { seenNoPrice = true; continue; }
+      assert(!seenNoPrice, 'priced item after a no-price item — not low->high with nulls last');
+    }
+    let prev = 0;
+    for (const x of arr) { const p = Number(get(x)); if (p > 0) { assert(p >= prev, 'community list not ascending by price'); prev = p; } }
+  };
+  const cP = d.communities.find(c => c.plans.length > 1) || withPlans;
+  asc(cP.plans, fp => fp.startingPrice);
+  const cH = d.communities.find(c => c.homes.length > 1);
+  if (cH) asc(cH.homes, h => h.price);
+  assert(byPriceAsc(x => x.p)({ p: null }, { p: 100 }) > 0, 'byPriceAsc: null sorts after a price');
+  assert(byPriceAsc(x => x.p)({ p: 100 }, { p: 200 }) < 0, 'byPriceAsc: lower price first');
   assert(typeof slugify('El Edén!') === 'string' && slugify('El Eden') === 'el-eden', 'slugify');
   console.log('data.mjs demo() passed:', d.qmis.length, 'qmi', d.communities.length, 'comm', d.floorplans.length, 'fp');
 }
