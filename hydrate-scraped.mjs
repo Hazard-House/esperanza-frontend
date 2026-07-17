@@ -247,46 +247,60 @@ export function hydrateCommunity(html, c, d) {
   return html;
 }
 
+// Snowflake/API starting price for a floor plan on a given page.
+export function floorplanStartingPrice(fp, communityName) {
+  if (communityName) {
+    const cp = fp.communityPrices?.[communityName];
+    if (cp != null && cp > 0) return cp;
+  }
+  return fp.startingPrice > 0 ? fp.startingPrice : null;
+}
+
+// Header "Starting at $X" + overview "PRICED FROM $X" on floor-plan detail pages.
+export function applyFloorplanPrices(html, price, page = 'floorplan') {
+  if (price == null || price <= 0) return html;
+  try {
+    html = sub(html, /(Starting at \$)[\d,]+/, (_, a) => a + num(price), page, 'header starting-at');
+  } catch (e) { miss(page, `header starting-at (${e.message})`); }
+  try {
+    html = sub(html,
+      /(PRICED FROM<\/div>\s*<div class="overpass bold text-dark-green fs-4[^"]*[^>]*>\s*)\$[\d,]+/,
+      (_, a) => a + money(price), page, 'priced-from');
+  } catch (e) { miss(page, `priced-from (${e.message})`); }
+  return html;
+}
+
 // Floor-plan page (floorplans/<slug>/<id>/):
-// 1. header "Available in N Communities Starting at $X" -> min over communityPrices
-//    of the location cards RENDERED on the page (count N + card list stay frozen;
-//    fp.startingPrice is a known dev-wide-MIN data bug and never used)
-// 2. overview sidebar "PRICED FROM $X" -> same min
-// 3. Available Locations cards "HOMES FROM $X" -> that community's price
+// 1. header "Starting at $X" -> fp.startingPrice (Snowflake)
+// 2. overview sidebar "PRICED FROM $X" -> fp.startingPrice
+// 3. Available Locations cards "HOMES FROM $X" -> that community's priceFrom
 export function hydrateFloorplan(html, fp, d) {
   const page = `floorplan ${fp.slug}`;
-  // Card link slug -> price, keyed by slugified communityPrices name (works even
-  // when the community itself is gone from /communities, e.g. Retama Village).
-  const priceBySlug = new Map(Object.entries(fp.communityPrices || {}).map(([n, p]) => [slugify(n), p]));
-  const cardRe = /<div class="card oi-map-item"[\s\S]*?(?=<div class="card oi-map-item"|<\/section>)/g;
-  const priceOf = seg => {
-    const m = seg.match(/new-homes\/tx\/[^/]+\/([^/]+)\/\d+\/index\.html/);
-    return m ? priceBySlug.get(m[1]) : undefined;
-  };
-  // Min over the communities whose location cards are RENDERED on this page —
-  // the live original's own min. An all-communityPrices min can pull in a
-  // community with no card on the page (e.g. Agave/Silos), a visible deviation.
-  const rendered = (html.match(cardRe) || []).map(priceOf).filter(p => p != null);
-  if (!rendered.length) { miss(page, 'no rendered location card matches communityPrices (prices frozen)'); return html; }
-  const min = Math.min(...rendered);
-  try {
-    html = sub(html, /(Starting at \$)[\d,]+/, (_, a) => a + num(min), page, 'header starting-at');
-    html = sub(html, /(PRICED FROM<\/div>\s*<div class="overpass bold text-dark-green fs-4">)\$[\d,]+/,
-      (_, a) => a + money(min), page, 'priced-from');
-  } catch (e) { miss(page, `min price (${e.message})`); }
+  const price = floorplanStartingPrice(fp);
+  if (price == null) { miss(page, 'no startingPrice in API (prices frozen)'); return html; }
+  html = applyFloorplanPrices(html, price, page);
 
   try {
+    const cardRe = /<div class="card oi-map-item"[\s\S]*?(?=<div class="card oi-map-item"|<\/section>)/g;
     // Card "HOMES FROM $X" shows the COMMUNITY's overall from-price on the
     // original (not this plan's price in that community).
     const commFromBySlug = new Map((d.communities || []).map(c => [c.slug, c.priceFrom]));
     html = html.replace(cardRe, seg => {
-      const m = seg.match(/new-homes\/tx\/[^/]+\/([^/]+)\/\d+\/index\.html/);
-      const price = m ? commFromBySlug.get(m[1]) : undefined;
-      if (price == null) return seg; // community gone from API -> card stays frozen
-      return seg.replace(/(<div class="price(?: mt-1)?">)\$[\d,]+(<\/div>)/g, (_, a, b) => a + money(price) + b);
+      const m = seg.match(/new-homes\/tx\/[^/]+\/([^/]+)\/\d+\/(?:index\.html)?/);
+      const commPrice = m ? commFromBySlug.get(m[1]) : undefined;
+      if (commPrice == null) return seg; // community gone from API -> card stays frozen
+      return seg.replace(/(<div class="price(?: mt-1)?">)\$[\d,]+(<\/div>)/g, (_, a, b) => a + money(commPrice) + b);
     });
   } catch (e) { miss(page, `location cards (${e.message})`); }
   return html;
+}
+
+// Plan-in-community page (new-homes/tx/<city>/<community>/<plan>/<id>/):
+// header "Starting at $X" + overview "PRICED FROM $X" -> per-community plan price.
+export function hydratePlanInCommunity(html, fp, communityName, page) {
+  const price = floorplanStartingPrice(fp, communityName);
+  if (price == null) { miss(page, 'no plan price in API (prices frozen)'); return html; }
+  return applyFloorplanPrices(html, price, page);
 }
 
 // ponytail self-check: fixture-sized pages, no network.
@@ -329,7 +343,7 @@ function demo() {
   out = hydrateCommunity(page, { ...c, homes: [] }, {});
   assert(!out.includes('id="specs"') && out.includes('id="plans"'), 'empty community drops qmi section only');
 
-  const fp = { slug: 'agave', communityPrices: { 'Aqualina at Tres Lagos': 451990, 'Silos at La Sienna': 396990 } };
+  const fp = { slug: 'agave', startingPrice: 451990, communityPrices: { 'Aqualina at Tres Lagos': 451990, 'Silos at La Sienna': 396990 } };
   const d = { communities: [{ slug: 'aqualina-at-tres-lagos', name: 'Aqualina at Tres Lagos', priceFrom: 333990 }] };
   const fpage = '<a href="#mp-locations">Available in 2 Communities</a><div>Starting at $421,990</div>'
     + '<div class="overpass fs-7">PRICED FROM</div><div class="overpass bold text-dark-green fs-4">$421,990</div>'
@@ -337,17 +351,18 @@ function demo() {
     + '<div class="price">$419,990</div><div class="price mt-1">$419,990</div></div>'
     + '<div class="card oi-map-item"><a href="../../../new-homes/tx/laredo/gone-community/1/index.html">x</a><div class="price">$111,111</div></div></section>';
   const fout = hydrateFloorplan(fpage, fp, d);
-  // min over RENDERED cards only: Silos ($396,990) has a communityPrice but no card
-  assert(fout.includes('Starting at $451,990'), 'header min = rendered-cards min');
-  assert(fout.includes('fs-4">$451,990'), 'priced-from = rendered-cards min');
-  assert(!fout.includes('$396,990'), 'cardless communityPrice excluded from min');
-  assert((fout.match(/\$451,990/g) || []).length === 2, 'header + priced-from use rendered min');
+  assert(fout.includes('Starting at $451,990'), 'header uses API startingPrice');
+  assert(fout.includes('fs-4">$451,990'), 'priced-from uses API startingPrice');
   assert((fout.match(/\$333,990/g) || []).length >= 1, 'card HOMES FROM = community priceFrom');
   assert(fout.includes('$111,111'), 'unknown community card stays frozen');
-  // no card matches communityPrices -> everything stays frozen
-  const frozen = hydrateFloorplan(fpage, { slug: 'x', communityPrices: { Nowhere: 1 } }, d);
-  assert(frozen.includes('Starting at $421,990') && frozen.includes('$419,990'), 'no-match page fully frozen');
+  // no startingPrice -> everything stays frozen
+  const frozen = hydrateFloorplan(fpage, { slug: 'x', startingPrice: 0, communityPrices: {} }, d);
+  assert(frozen.includes('Starting at $421,990') && frozen.includes('$419,990'), 'no-price page fully frozen');
   assert(!fout.includes('undefined') && !fout.includes('$NaN'), 'no undefined/$NaN');
+
+  const pic = hydratePlanInCommunity('<p>Starting at $421,990</p><div class="overpass fs-7">PRICED FROM</div><div class="overpass bold text-dark-green fs-4 lh-1 p-0">\n$421,990\n</div>',
+    { slug: 'agave', startingPrice: 451990, communityPrices: { 'Aqualina at Tres Lagos': 451990 } }, 'Aqualina at Tres Lagos', 'plan agave');
+  assert(pic.includes('Starting at $451,990') && pic.includes('$451,990'), 'plan-in-community uses community plan price');
 
   // hydrateCommunityStatus: nav badges + infowindow prices
   const dd = { communities: [
