@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node -e \"import('./build.mjs').then(m=>m.linkCleanThemeNames('./public/static'))\" && npx wrangler dev --port 8787 --ip 0.0.0.0 --show-interactive-dev-session false",
+    "dev": "bash scripts/dev.sh",
+    "link-static": "node scripts/link-static-assets.mjs",
     "build": "node build.mjs",
     "build:details": "node generate-details.mjs",
     "generate": "node generate-details.mjs",
