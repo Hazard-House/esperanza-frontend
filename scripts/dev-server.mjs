@@ -109,6 +109,16 @@ createServer(async (req, res) => {
       return;
     }
 
+    // Match worker.js: scraped nav hrefs resolve to /{city}/{community}/{id}/ (404).
+    const navComm = path.match(/^\/(brownsville|corpus-christi|edinburg|harlingen|laredo|mcallen|mercedes|mission|san-juan|weslaco)\/([^/]+)\/(\d+)\/?$/);
+    if (navComm) {
+      const dest = `/new-homes/tx/${navComm[1]}/${navComm[2]}/${navComm[3]}/`;
+      res.writeHead(301, { Location: dest });
+      res.end();
+      log(req, 301, `nav -> ${dest}`);
+      return;
+    }
+
     path = path.replace(RX_MANGLED, (_, _q, hash, ext) => `﹖v=${hash}.${ext}`);
 
     const file = resolveFile(path);
