@@ -406,7 +406,7 @@ export function qmiCardHtml(h) {
       + `<span class="fs-9 overpass text-gray">PRICE: </span>` + inner
       + `</a>`;
   }
-  return `<div class="col-12 col-md-6 mb-2">`
+  return `<div class="col-12 col-md-6 mb-2" data-qmi-slug="${esc(h.slug || '')}">`
     + `<div class="card spec-card spec-card-detail mb-0 border border-gray p-2 h-100">`
     + `<div class="row m-0 h-100">`
     + `<div class="col-12 col-xl-7 px-0 pe-xl-3 d-flex align-content-stretch flex-wrap">`

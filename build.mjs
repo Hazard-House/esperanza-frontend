@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Assemble a Railway-deployable static site from the June-8 O'Neill scrape,
-// re-pointing images at our R2 CDN and the flagship "available" page at the
-// live public API. Scope: 3 flagship pages + shared theme. Everything else is
-// handled at runtime by Caddy (404 -> redirect to live esperanzahomes.com).
+// Assemble the static site into ./public from the June-8 O'Neill scrape,
+// re-pointing images at our R2 CDN and the dynamic pages at the live public API.
+// The output is served by the Cloudflare Worker (worker.js) via Static Assets;
+// unmatched paths are handled at runtime there (404 -> redirect to live esperanzahomes.com).
 //
 //   node build.mjs            # -> ./public
 //
@@ -112,7 +112,7 @@ function writeOut(rel, html) {
 // source is committed (islands/, assets/) — no scrape dependency. Extracted so the
 // scrape-free fallback can reuse it verbatim.
 function copyRuntimeAssets() {
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js']);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js', 'community-homes-live.js']);
   for (const island of islands) cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
   cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));
