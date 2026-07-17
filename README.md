@@ -41,14 +41,24 @@ renders cards in the scrape's own markup, and draws a clustered Mapbox map.
 
 ## Rebuild & deploy
 
+**Site:** https://esperanzahomes.hazardhouse.ai (Cloudflare Workers Static Assets)
+
 ```bash
-node build.mjs            # assemble ./public
-node build.mjs --check    # run the rewrite self-checks
-railway up                # deploy (Caddy Dockerfile). Service: esperanza-oneill-static
+node build.mjs            # assemble ./public (needs the June-8 scrape on the build machine)
+node build.mjs --check      # run the rewrite self-checks
+git add public && git commit -m "…" && git push origin main   # ship HTML/assets in git
+
+npm install                 # once — pulls wrangler
+npx wrangler login          # once — or set CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
+npm run deploy              # uploads ./public to esperanzahomes.hazardhouse.ai
 ```
 
-⚠ `public/` must NOT be git-ignored — Railway's uploader honors git ignores and will
-skip it, failing the `COPY public` build step.
+`wrangler.jsonc` defines the Worker (`worker.js` + `./public` assets). The deploy
+command targets the top-level environment (`--env=""`) so it always hits the custom
+domain, not the optional `staging` workers.dev preview.
+
+⚠ `public/` must NOT be git-ignored — both git and Wrangler ship from the committed
+`public/` tree (CI does not run `build.mjs`).
 
 ## Deferred (per scope — "match up the rest later")
 

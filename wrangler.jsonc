@@ -1,6 +1,9 @@
 {
   // Esperanza static site on Cloudflare Workers Static Assets (replaces Railway + Caddy).
-  // Build with `node build.mjs` (writes ./public), then `wrangler deploy`.
+  // Build with `node build.mjs` (writes ./public), commit public/, then deploy:
+  //   npm run deploy          -> esperanzahomes.hazardhouse.ai (top-level / production)
+  //   wrangler deploy --env staging -> esperanzahomes-staging.workers.dev only
+  // Requires `wrangler login` once, or CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID.
   "name": "esperanzahomes",
   "main": "worker.js",
   "compatibility_date": "2026-07-01",
