@@ -1,6 +1,0 @@
-node_modules
-.git
-islands
-build.mjs
-*.log
-.DS_Store

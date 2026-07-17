@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Assemble a Railway-deployable static site from the June-8 O'Neill scrape,
-// re-pointing images at our R2 CDN and the flagship "available" page at the
-// live public API. Scope: 3 flagship pages + shared theme. Everything else is
-// handled at runtime by Caddy (404 -> redirect to live esperanzahomes.com).
+// Assemble the static site into ./public from the June-8 O'Neill scrape,
+// re-pointing images at our R2 CDN and the dynamic pages at the live public API.
+// The output is served by the Cloudflare Worker (worker.js) via Static Assets;
+// unmatched paths are handled at runtime there (404 -> redirect to live esperanzahomes.com).
 //
 //   node build.mjs            # -> ./public
 //

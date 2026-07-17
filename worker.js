@@ -1,8 +1,8 @@
 // Esperanza / O'Neill static replica — served by Cloudflare Workers Static Assets.
-// Replaces the Railway + Caddy setup 1:1. The static site lives in ./public (built by
-// build.mjs); this Worker runs first (assets.run_worker_first) so it owns headers,
-// the same-origin API proxy, the analytics/XHR stubs, and the 404 fallback — the exact
-// behaviour the old Caddyfile provided, in one place that survives rebuilds.
+// The static site lives in ./public (built by build.mjs); this Worker runs first
+// (assets.run_worker_first) so it owns headers, the same-origin API proxy, the
+// analytics/XHR stubs, and the 404 fallback — all edge logic in one place that
+// survives rebuilds.
 
 import { REDIRECTS } from "./redirects.mjs";
 
