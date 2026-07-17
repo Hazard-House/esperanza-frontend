@@ -180,6 +180,25 @@ export default {
       return out;
     }
 
+    // Staging preview: neutralize the HARVESTED live-facts badges + per-home cardFacts so
+    // the dynamic cards (available-live.js) render the LIVE incentive/availability from the
+    // API. The harvested map otherwise WINS over the API, hiding unpublished incentive
+    // edits. Keep rate/taxMult/lotFormat (monthly calc + lot display). Gated by
+    // env.PREVIEW_SECRET (staging only) — prod serves the file unchanged.
+    if (env.PREVIEW_SECRET && p === "/live-facts.json") {
+      const r = await env.ASSETS.fetch(new Request(new URL("/live-facts.json", request.url)));
+      if (r.status === 200) {
+        try {
+          const f = await r.json();
+          f.badges = {};
+          f.cardFacts = {};
+          return new Response(JSON.stringify(f), {
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+          });
+        } catch { /* fall through to the normal asset serve below */ }
+      }
+    }
+
     // Homefiniti analytics beacons — 204 so the client stops chasing a dead 302.
     if (p.startsWith("/hfa/")) return new Response("", { status: 204 });
 
