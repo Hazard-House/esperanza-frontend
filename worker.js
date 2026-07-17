@@ -255,6 +255,13 @@ export default {
       return Response.redirect(url.origin + "/new-homes" + p + url.search, 301);
     }
 
+    // Header/footer community links use relative hrefs that climb out of /new-homes/tx/
+    // and land on /{city}/{community}/{id}/ (e.g. /mission/tanglewood-at-bentsen-palm/4106/).
+    const navComm = p.match(/^\/(brownsville|corpus-christi|edinburg|harlingen|laredo|mcallen|mercedes|mission|san-juan|weslaco)\/([^/]+)\/(\d+)\/?$/);
+    if (navComm) {
+      return Response.redirect(url.origin + `/new-homes/tx/${navComm[1]}/${navComm[2]}/${navComm[3]}/` + url.search, 301);
+    }
+
     // Live serves PDFs at extension-less URLs; the scrape stored them as named files.
     // Map the live shapes onto the stored assets (mirror pages link the filename form
     // directly, so this only matters for external/live-shape links).
