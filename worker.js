@@ -149,7 +149,21 @@ export default {
       const ct = request.headers.get("content-type");
       if (ct) h.set("content-type", ct);
       h.set("origin", LIVE); // the API's allow-listed origin
-      const sub = new Request(API + p + url.search, {
+
+      // Draft preview (STAGING ONLY). env.PREVIEW_SECRET is bound only on the staging
+      // Worker (never prod). When set, route the QMI list to the API's ungated
+      // /api/preview/qmi and attach the secret, so the detail/list islands render DRAFT
+      // homes on staging. Prod has no secret -> normal gated /api/public/qmi. The secret
+      // is added server-side here; the browser never sees it.
+      let upstreamPath = p;
+      let previewing = false;
+      if (env.PREVIEW_SECRET && (p === "/api/public/qmi" || p === "/api/public/qmi/")) {
+        upstreamPath = "/api/preview/qmi";
+        h.set("X-Esperanza-Preview", env.PREVIEW_SECRET);
+        previewing = true;
+      }
+
+      const sub = new Request(API + upstreamPath + url.search, {
         method: request.method,
         headers: h,
         body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
@@ -161,7 +175,8 @@ export default {
       let resp = env.API ? await env.API.fetch(sub) : null;
       if (!resp || resp.status === 503) resp = await fetch(new Request(sub, { redirect: "manual" }));
       const out = new Response(resp.body, resp);
-      out.headers.set("Cache-Control", "public, s-maxage=60, max-age=30");
+      // Never edge-cache draft previews (drafts change); cache the public JSON as before.
+      out.headers.set("Cache-Control", previewing ? "no-store" : "public, s-maxage=60, max-age=30");
       return out;
     }
 
