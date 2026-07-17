@@ -17,7 +17,7 @@ import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOI
 import { generateDetails } from './generate-details.mjs';
 import { loadData } from './data.mjs';
 import { communityPath, floorplanPath } from './paths.mjs';
-import { hydrateCommunity, hydrateFloorplan, swapCommunityBanner, bakeRecommend, hydrateCommunityStatus } from './hydrate-scraped.mjs';
+import { hydrateCommunity, hydrateFloorplan, hydratePlanInCommunity, swapCommunityBanner, bakeRecommend, hydrateCommunityStatus } from './hydrate-scraped.mjs';
 import { renderCommunity } from './render-community.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
@@ -70,7 +70,7 @@ const EXTRA_SCRIPTS = {
 export function classifyDetail(rel) {
   let m;
   if ((m = rel.match(/^new-homes\/tx\/[^/]+\/([^/]+)\/\d+\/index\.html$/))) return { type: 'community', slug: m[1] };
-  if ((m = rel.match(/^new-homes\/tx\/[^/]+\/([^/]+)\/[^/]+\/\d+\/index\.html$/))) return { type: 'plan', community: m[1] };
+  if ((m = rel.match(/^new-homes\/tx\/[^/]+\/([^/]+)\/([^/]+)\/\d+\/index\.html$/))) return { type: 'plan', community: m[1], slug: m[2] };
   if (/^new-homes\/tx\/[^/]+\/[^/]+\/\d+\/[^/]+\/\d+\/index\.html$/.test(rel)) return { type: 'qmi' };
   if ((m = rel.match(/^floorplans\/([^/]+)\/\d+\/index\.html$/))) return { type: 'floorplan', slug: m[1] };
   // anything else under the detail space (e.g. index﹖utm=… crawl variants) -> skip
@@ -231,8 +231,12 @@ async function build() {
         scrapedCommunities.add(communityPath(c));
         counts.community++;
       } else if (det.type === 'plan') {
-        if (!communityBySlug.has(det.community)) { counts.gated++; continue; }
-        writeOut(rel, bakeRecommend(swapCommunityBanner(rewriteCommon(readFileSync(src, 'utf8')), rel), rel)); // frozen prices acceptable here for now
+        const comm = communityBySlug.get(det.community);
+        if (!comm) { counts.gated++; continue; }
+        const fp = fpBySlug.get(det.slug);
+        let html = bakeRecommend(swapCommunityBanner(rewriteCommon(readFileSync(src, 'utf8')), rel), rel);
+        if (fp) html = hydratePlanInCommunity(html, fp, comm.name, `plan ${det.slug} @ ${comm.slug}`);
+        writeOut(rel, html);
         counts.plan++;
       } else if (det.type === 'floorplan') {
         const fp = fpBySlug.get(det.slug);
@@ -320,7 +324,7 @@ function demo() {
 
   // detail-page routing classifier
   assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/15176/index.html'), { type: 'community', slug: 'harvest-coves' }, 'community route');
-  assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/indigo/231384/index.html'), { type: 'plan', community: 'harvest-coves' }, 'plan-in-community route');
+  assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/indigo/231384/index.html'), { type: 'plan', community: 'harvest-coves', slug: 'indigo' }, 'plan-in-community route');
   assert.deepEqual(classifyDetail('new-homes/tx/brownsville/palo-alto-groves/7522/2144-sand-lane/1751815/index.html'), { type: 'qmi' }, 'qmi route');
   assert.deepEqual(classifyDetail('floorplans/agave/6133/index.html'), { type: 'floorplan', slug: 'agave' }, 'floorplan route');
   assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/15176/index﹖utm_campaign=x.html'), { type: 'skip' }, 'utm variant skipped');
