@@ -160,6 +160,14 @@ export function restorePrehydratedAccordion(html) {
     .replace(/(id="one-icon" class="[^"]*?)fa-chevron-up([^"]*")/, '$1fa-chevron-down$2');
 }
 
+export function injectSiteOverrides(html) {
+  if (html.includes('site-overrides.css')) return html;
+  return html.replace(
+    /(<link href="\/static\/esperanza_homes\/css\/style\.min\.css[^>]*>)/,
+    '$1\n    <link href="/site-overrides.css" rel="stylesheet" type="text/css">',
+  );
+}
+
 export function rewriteCommon(html) {
   html = stripBakedMapbox(html);
   html = stripBakedCalcResults(html);
@@ -235,10 +243,7 @@ export function rewriteCommon(html) {
       : html.replace(/<head([^>]*)>/i, `<head$1>\n${meta}`);
   }
   if (!html.includes('site-overrides.css')) {
-    html = html.replace(
-      /(<link href="\/static\/esperanza_homes\/css\/style\.min\.css[^>]*>)/,
-      '$1\n    <link href="/site-overrides.css" rel="stylesheet" type="text/css">',
-    );
+    html = injectSiteOverrides(html);
   }
   return html;
 }

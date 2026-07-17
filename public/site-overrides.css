@@ -156,3 +156,8 @@ footer.bg-gray {
   opacity: 0.35;
   pointer-events: none;
 }
+
+/* QMI detail header — 4px gap between availability + promo status banners */
+.status-banner + .status-banner {
+  margin-left: 4px;
+}

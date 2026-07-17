@@ -43,7 +43,7 @@ const ENERGY = (() => {
   try { return JSON.parse(readFileSync(join(import.meta.dirname, 'assets', 'fp-energy.json'), 'utf8')); }
   catch { return {}; }
 })();
-import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, disableOilib } from './rewrite.mjs';
+import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, disableOilib, injectSiteOverrides } from './rewrite.mjs';
 
 export const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 export const money = n => '$' + Number(n || 0).toLocaleString('en-US');
@@ -463,6 +463,7 @@ export function finalizePage(shell, { content, head, page, islands }) {
   html = html.replace('<!--CONTENT-->', content);
   const slides = FACTS.bannerSlidesCommunity || FACTS.bannerSlides;
   if (slides && slides.length) html = html.replace(EMPTY_BANNER_RE, freshBannerHtml(slides));
+  html = injectSiteOverrides(html);
   html = disableOilib(html);
   const cfg = { API_BASE, MAPBOX_TOKEN, MAPBOX_STYLE: STYLE_COMMON_URL, MAPBOX_STYLE_HOME: STYLE_HOME, MAPBOX_STYLE_COMMON: STYLE_COMMON_URL };
   const scripts = `\n<script>window.__ESPERANZA=${JSON.stringify(cfg)};window.__ESPERANZA_PAGE=${JSON.stringify(page)};</script>\n`
