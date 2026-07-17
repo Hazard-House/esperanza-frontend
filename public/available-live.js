@@ -332,6 +332,10 @@
     }
     document.querySelectorAll('.oi-filter-change').forEach(function (el) { el.addEventListener('change', refresh); });
     applyUrlFilters(); // pre-apply filters passed from the homepage search (?city=… etc.)
+    // Default sort = Price (Lowest First). The baked page ships with Sq.Ft. selected;
+    // override to price on load unless the visitor chose a sort via the URL (?sort=).
+    var sortSel = document.querySelector('select[name=sort]');
+    if (sortSel && !new URLSearchParams(location.search).get('sort')) sortSel.value = 'price';
     refresh();
     initMap(all);
   }
