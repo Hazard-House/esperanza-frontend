@@ -11,6 +11,11 @@ footer.bg-gray {
   width: 100vw;
 }
 
+/* QMI detail header — 4px gap between availability + promo status banners */
+.status-banner + .status-banner {
+  margin-left: 4px;
+}
+
 /* Homepage hero slider — centered copy, fixed nav */
 .homepage-slider {
   position: relative;
