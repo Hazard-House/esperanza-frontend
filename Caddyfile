@@ -1,13 +1,14 @@
 # Esperanza / O'Neill static replica — served by Caddy on Railway.
 # Railway injects $PORT; Caddy listens there. Static root is /srv/public,
 # assembled by build.mjs from the June-8 scrape with URLs re-pointed at our CF infra.
+# Local dev: STATIC_ROOT=./public npm run dev  (see scripts/dev.sh)
 {
 	admin off
 	auto_https off
 }
 
 :{$PORT:8080} {
-	root * /srv/public
+	root * {$STATIC_ROOT:/srv/public}
 	encode zstd gzip
 
 	# Security headers, site-wide. No CSP on purpose: the scrape carries many
@@ -44,33 +45,47 @@
 		respond `{"data":{"content":""},"success":true}` 200
 	}
 
-	# Long cache for the immutable theme.
-	@static path /static/*
-	header @static Cache-Control "public, max-age=31536000, immutable"
 
-	# Pretty URLs, then the HTML cache header. The route block forces literal order
-	# so @html matches AFTER try_files rewrites; otherwise Caddy sorts `header` ahead
-	# of the rewrite and the pre-rewrite path misses /contact/, /new-homes/available/…
+	# Static theme assets: serve directly — don't run try_files (it appends .html to
+	# paths like vendor.min.css and 404s). Cursor's preview also strips ?v= from
+	# subresource URLs, so clean-name copies from link-static-assets.mjs must resolve.
+	handle /static/* {
+		@static_v query v=*
+		uri @static_v path_regexp \.([^.]+)$ ﹖v={query.v}.$1
+		uri @static_v query -v
+		@static_ok file
+		header @static_ok Cache-Control "public, max-age=31536000, immutable"
+		@local_dev expression {env.STATIC_ROOT} != ""
+		header @local_dev Cache-Control "no-store"
+		file_server
+	}
+
+	# Pretty URLs for HTML pages.
 	route {
 		try_files {path} {path}/index.html {path}.html
 		@html path *.html
 		header @html Cache-Control "public, max-age=300"
+		@local_dev expression {env.STATIC_ROOT} != ""
+		header @local_dev Cache-Control "no-store"
 		file_server
 	}
 
 	# Unmigrated paths (blog archives, JS-only floorplans catalog, the media/PDF
 	# library) fall through to the still-live O'Neill site so nav stays clickable.
 	handle_errors {
-		# Missing *assets* must fail fast, not redirect to the live site: a mangled
-		# asset URL (e.g. a scrape that localized a tracker/CDN path) would otherwise
-		# 404 -> redirect -> redirect and storm the network. Only real page 404s fall
-		# through to the live O'Neill site.
-		@asset404 {
-			expression {err.status_code} == 404
-			path *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.webp *.avif *.ico *.woff *.woff2 *.ttf *.map *.mp4 *.json
+		route {
+			# Missing *assets* must fail fast, not redirect to the live site: a mangled
+			# asset URL (e.g. a scrape that localized a tracker/CDN path) would otherwise
+			# 404 -> redirect -> redirect and storm the network. Only real page 404s fall
+			# through to the live O'Neill site.
+			@asset404 {
+				expression {err.status_code} == 404
+				path_regexp asset \.(js|css|png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2|ttf|map|mp4|json)$
+			}
+			respond @asset404 404
+			@notfound expression {err.status_code} == 404
+			header @notfound Cache-Control "no-store"
+			redir @notfound https://www.esperanzahomes.com{uri} 302
 		}
-		respond @asset404 404
-		@notfound expression {err.status_code} == 404
-		redir @notfound https://www.esperanzahomes.com{uri} 302
 	}
 }

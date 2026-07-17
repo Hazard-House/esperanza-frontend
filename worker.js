@@ -125,10 +125,15 @@ export default {
 
     // Cleartext http must 301 to https (live does; "Always Use HTTPS" isn't on for
     // this hostname). Sniff the visitor's real scheme from cf-visitor/x-forwarded-proto
-    // — NOT url.protocol, which the edge (and wrangler dev's route simulation)
-    // normalizes and would loop local dev.
+    // when the edge request is already https. url.protocol stays "http:" under wrangler
+    // dev, so local/Cursor preview subresources aren't caught in a 301 loop.
     const visitor = request.headers.get("cf-visitor") || "";
-    if (visitor.includes('"scheme":"http"') || request.headers.get("x-forwarded-proto") === "http") {
+    const isCleartext =
+      visitor.includes('"scheme":"http"') || request.headers.get("x-forwarded-proto") === "http";
+    // url.protocol stays "http:" under wrangler dev (and Cursor's port-forward proxy
+    // sends x-forwarded-proto: http on every subresource). Only upgrade when the edge
+    // request itself is https — i.e. production behind Cloudflare.
+    if (url.protocol !== "http:" && isCleartext) {
       url.protocol = "https:";
       return Response.redirect(url.toString(), 301);
     }

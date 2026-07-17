@@ -11,7 +11,7 @@
 
 import assert from 'node:assert';
 import { execSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, copyFileSync, readdirSync, statSync, lstatSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
 import { generateDetails } from './generate-details.mjs';
@@ -122,6 +122,40 @@ function copyRuntimeAssets() {
   if (existsSync(facts)) cpSync(facts, join(OUT, 'live-facts.json'));
   else console.warn('skip live-facts.json (run harvest-live-facts.mjs)');
   if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
+  linkCleanThemeNames(join(OUT, 'static'));
+}
+
+// HTTrack stored versioned theme files as "name﹖v=hash.ext". HTML references the
+// clean "name.ext?v=hash" form; worker.js maps the query onto the stored filename.
+// Some dev proxies (Cursor Simple Browser) strip ?v= from subresource requests, so
+// aos.js/css/… 404 and every [data-aos] section stays opacity:0 — the page looks
+// unstyled. Copy "name.ext" from "name﹖v=hash.ext" so bare paths resolve too.
+export function linkCleanThemeNames(root) {
+  if (!existsSync(root)) return;
+  let n = 0;
+  for (const dir of walkDir(root)) {
+    for (const name of readdirSync(dir)) {
+      const m = name.match(/^(.+)﹖v=([A-Za-z0-9]+)\.(\w+)$/);
+      if (!m) continue;
+      const src = join(dir, name);
+      const clean = join(dir, `${m[1]}.${m[3]}`);
+      if (existsSync(clean)) {
+        if (lstatSync(clean).isSymbolicLink()) unlinkSync(clean);
+        else continue;
+      }
+      copyFileSync(src, clean);
+      n++;
+    }
+  }
+  if (n) console.log(`theme copies: ${n} clean-name aliases under ${root}`);
+}
+
+function* walkDir(root) {
+  yield root;
+  for (const name of readdirSync(root)) {
+    const p = join(root, name);
+    if (statSync(p).isDirectory()) yield* walkDir(p);
+  }
 }
 
 async function build() {
