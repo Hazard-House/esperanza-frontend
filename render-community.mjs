@@ -32,12 +32,21 @@ export function communityContent(c) {
   const gallery = [c.image, c.secondaryImage].filter(Boolean).map(u => ({ url: u, alt: c.name }));
   const homes = (c.homes || []).map(qmiCardHtml).join('');
   const plans = (c.plans || []).map(planCardHtml).join('');
+  // HOA documents (CCRs, amendments) — {title, link} PDFs hosted in R2. Rendered as a
+  // simple download list; omitted when the community has none.
+  const hoaItems = (c.hoaLinks || [])
+    .map((l) => `<li class="mb-2"><a href="${esc(l.link)}" target="_blank" rel="noopener" class="text-brown text-decoration-underline">${esc(l.title || 'Document')}</a></li>`)
+    .join('');
+  const hoa = hoaItems
+    ? `<section id="hoa" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container"><h2 class="bodoni text-gray fs-3 mb-4">HOA Documents</h2><ul class="list-unstyled mb-0">${hoaItems}</ul></div></section>`
+    : '';
   return [
     communityHeader(c),
     galleryHtml(gallery, c.image, c.name),
     `<section id="overview" class="pagejump pt-4 pt-lg-5 bg-tan-white reverse pb-4"><div class="container-lg pt-3"><div class="row mb-3"><div class="col-12 col-md-7">${c.description ? `<div class="wysiwyg">${c.description}</div>` : ''}</div><div class="col-12 col-md-5 col-lg-4 offset-lg-1 mt-4"><div class="stat-group border-gray py-2">${c.priceFrom ? `<div class="item detail col-12">Homes from <span class="text-dark-green">${money(c.priceFrom)}</span></div>` : ''}${c.beds ? `<div class="item detail col-12">${esc(c.beds)} Bedrooms</div>` : ''}${c.baths ? `<div class="item detail col-12">${esc(c.baths)} Bathrooms</div>` : ''}${c.sqft ? `<div class="item detail col-12">${esc(c.sqft)} Sq. Ft.</div>` : ''}</div>${c.amenities ? `<div class="mt-4"><h3 class="overpass bold fs-7">Community Amenities</h3><div id="amenities-list" class="wysiwyg">${c.amenities}</div></div>` : ''}</div></div></div></section>`,
     homes ? `<section id="specs" class="pagejump py-4 py-lg-5"><div class="container"><h2 class="bodoni text-gray fs-3 mb-4">Quick Move-Ins</h2><div class="row oi-listings">${homes}</div></div></section>` : '',
     plans ? `<section id="plans" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container"><h2 class="bodoni text-gray fs-3 mb-4">Available Floor Plans</h2><div class="row oi-listings oi-listings-plan">${plans}</div></div></section>` : '',
+    hoa,
     mapSalesHtml(c),
     formSlotHtml('tour', c.name),
   ].filter(Boolean).join('\n');
