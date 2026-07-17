@@ -118,7 +118,11 @@
     // there's no ?slug= — derive it from the last path segment so un-built home pages
     // (drafts / newly-published, no static page) still render live without a rebuild.
     if (!slug && !id) slug = location.pathname.replace(/\/+$/, '').split('/').pop() || '';
-    fetch(API + '/qmi').then(function (r) { return r.json(); }).then(function (res) {
+    // Explicit per-home draft preview: only ?preview=1 (the admin "Preview on staging"
+    // link) hits the ungated /api/preview endpoint; the staging worker adds the secret.
+    // Everything else uses the published list, so drafts never show unless asked for.
+    var endpoint = (p.get('preview') === '1' ? '/api/preview' : API) + '/qmi';
+    fetch(endpoint).then(function (r) { return r.json(); }).then(function (res) {
       var raw = (res.homes || []).filter(function (h) {
         var f = h.fields || h;
         return (slug && f.slug === slug) || (id && h.id === id);
