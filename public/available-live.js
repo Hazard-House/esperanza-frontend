@@ -224,6 +224,14 @@
     }
   }
 
+  // Ascending price, missing/zero prices last (no-price never looks cheapest).
+  function byPriceAsc(get) {
+    return function (a, b) {
+      var pa = +get(a) > 0 ? +get(a) : Infinity;
+      var pb = +get(b) > 0 ? +get(b) : Infinity;
+      return pa === pb ? 0 : pa - pb;
+    };
+  }
   function applyFilters(homes) {
     var groups = activeFilters();
     var out = homes.filter(function (h) {
@@ -233,8 +241,9 @@
       });
     });
     var sort = (groups.sort || [])[0];
-    if (sort === 'price') out.sort(function (a, b) { return (a.price || 0) - (b.price || 0); });
-    else if (sort === 'square_footage') out.sort(function (a, b) { return (a.livingSqft || 0) - (b.livingSqft || 0); });
+    // Default (no selection) + "Price (Lowest First)" => price low->high, no-price last.
+    if (sort === 'square_footage') out.sort(function (a, b) { return (a.livingSqft || 0) - (b.livingSqft || 0); });
+    else out.sort(byPriceAsc(function (h) { return h.price; }));
     return out;
   }
 
@@ -312,6 +321,20 @@
     fitTo(homes);
   }
 
+  function injectFreeHousesButton() {
+    if (document.getElementById('free-houses-btn')) return;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;pointer-events:none';
+    var btn = document.createElement('a');
+    btn.id = 'free-houses-btn';
+    btn.href = '#';
+    btn.textContent = 'free houses, yo! click here';
+    btn.style.cssText = 'display:inline-block;padding:2.5rem 4rem;background:#e00;color:#fff;font-size:2.5rem;font-weight:700;text-decoration:none;border-radius:1rem;box-shadow:0 12px 48px rgba(0,0,0,0.35);pointer-events:auto;line-height:1.2;text-align:center;max-width:90vw';
+    btn.addEventListener('click', function (e) { e.preventDefault(); });
+    wrap.appendChild(btn);
+    document.body.appendChild(wrap);
+  }
+
   // ---- boot ----
   function render(all) {
     var grid = document.getElementById('oi-filter-results');
@@ -346,6 +369,7 @@
   }
 
   function boot() {
+    injectFreeHousesButton();
     var grid = document.getElementById('oi-filter-results');
     if (grid) grid.innerHTML = '<div class="col-12 p-4 text-center text-gray">Loading available homes…</div>';
     Promise.all([

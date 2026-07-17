@@ -117,6 +117,14 @@
       default: return true;
     }
   }
+  // Ascending price, missing/zero prices last (no-price never looks cheapest).
+  function byPriceAsc(get) {
+    return function (a, b) {
+      var pa = +get(a) > 0 ? +get(a) : Infinity;
+      var pb = +get(b) > 0 ? +get(b) : Infinity;
+      return pa === pb ? 0 : pa - pb;
+    };
+  }
   function applyFilters(comms) {
     var groups = activeFilters();
     var out = comms.filter(function (c) {
@@ -126,8 +134,10 @@
       });
     });
     var sort = (groups.sort || [])[0];
-    if (sort === 'price') out.sort(function (a, b) { return (a.priceFrom || 0) - (b.priceFrom || 0); });
-    else out.sort(function (a, b) { return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()); }); // original default: alphabetical
+    // Default (no selection) + "Price (Lowest First)" => price low->high, no-price last.
+    // The sort control offers no alphabetical option; keep alpha as an inert fallback.
+    if (sort && sort !== 'price') out.sort(function (a, b) { return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()); });
+    else out.sort(byPriceAsc(function (c) { return c.priceFrom; }));
     return out;
   }
 
