@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --port 8787 --tunnel --show-interactive-dev-session false",
+    "dev": "npx wrangler dev --port 8787 --show-interactive-dev-session false",
     "build": "node build.mjs",
     "build:details": "node generate-details.mjs",
     "generate": "node generate-details.mjs",
