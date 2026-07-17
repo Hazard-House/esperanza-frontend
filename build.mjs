@@ -107,13 +107,46 @@ function writeOut(rel, html) {
   writeFileSync(dst, html);
 }
 
-async function build() {
-  rmSync(OUT, { recursive: true, force: true });
-  mkdirSync(OUT, { recursive: true });
+// Runtime assets shipped every build regardless of the scrape: client islands, map
+// sprites/style, the frozen site-search index, harvested live-facts, robots. Every
+// source is committed (islands/, assets/) — no scrape dependency. Extracted so the
+// scrape-free fallback can reuse it verbatim.
+function copyRuntimeAssets() {
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js']);
+  for (const island of islands) cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
+  cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
+  cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));
+  cpSync(join(import.meta.dirname, 'islands', 'esperanza-common.json'), join(OUT, 'esperanza-common.json'));
+  cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
+  const facts = join(import.meta.dirname, 'assets', 'live-facts.json');
+  if (existsSync(facts)) cpSync(facts, join(OUT, 'live-facts.json'));
+  else console.warn('skip live-facts.json (run harvest-live-facts.mjs)');
+  if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
+}
 
+async function build() {
   // Live data, loaded ONCE (generateDetails reuses it below).
   const d = await loadData();
   LIVE_DATA = d;
+
+  // Scrape-free fallback. The June-8 O'Neill scrape (theme + flagship/blog/detail
+  // HTML) isn't on every machine (CI, a fresh checkout). The theme + flagship pages
+  // are already committed in public/; only the API-driven DETAIL pages + islands
+  // change build-to-build. When the scrape is absent, refresh JUST those IN PLACE
+  // (no rmSync, so committed theme/flagship pages survive). `npm run build:details`
+  // runs generate-details.mjs directly; this makes the full `build` command degrade
+  // to the same result instead of crashing on the missing theme copy.
+  if (!existsSync(WWW)) {
+    console.warn(`scrape absent (${SCRAPE}) -> details-only refresh: regenerating API-driven detail pages + islands into committed public/. Run the full build where the scrape lives to refresh flagship/theme pages.`);
+    await generateDetails(d, {}); // empty skip-sets => every community/floorplan/qmi rendered from the API
+    copyRuntimeAssets();
+    execSync('node scripts/gen-blog-index.mjs', { cwd: import.meta.dirname, stdio: 'inherit' });
+    console.log('public/ detail pages + islands refreshed (scrape-free)');
+    return;
+  }
+
+  rmSync(OUT, { recursive: true, force: true });
+  mkdirSync(OUT, { recursive: true });
   const detailShell = readFileSync(join(import.meta.dirname, 'templates', 'detail-shell.html'), 'utf8');
   const communityBySlug = new Map(d.communities.map(c => [c.slug, c]));
   const fpBySlug = new Map(d.floorplans.map(fp => [fp.slug, fp]));
@@ -212,29 +245,8 @@ async function build() {
     console.warn(`skip shell (template missing): ${SHELL.template}`);
   }
 
-  // 3. Islands (from both explicit LIVE_PAGES and container-inferred CONTAINER_ISLANDS).
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js']);
-  for (const island of islands) {
-    cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
-  }
-  // Marker sprite for the community maps (streets/counties styles have no map_pin),
-  // loaded at runtime via addImage. The exact O'Neill green teardrop (90x120 @2x).
-  cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
-  // mp_pin: the O'Neill house-icon teardrop for Master Planned communities (96x118 @2x).
-  cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));
-  // Captured "Esperanza-Common" style JSON — QMI/Communities/detail maps load it as a
-  // style object (renders 1:1 under our token; data is the public streets tileset).
-  cpSync(join(import.meta.dirname, 'islands', 'esperanza-common.json'), join(OUT, 'esperanza-common.json'));
-  // Frozen site-search index (oilib fetches /sitesearch.json) — served same-origin so
-  // header search works and doesn't CORS-fail against the dead live domain.
-  cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
-  // Harvested live-site facts (mortgage rate, tax multipliers, promo badges) used by
-  // available-live.js cards; regenerate with `node harvest-live-facts.mjs`.
-  const facts = join(import.meta.dirname, 'assets', 'live-facts.json');
-  if (existsSync(facts)) cpSync(facts, join(OUT, 'live-facts.json'));
-  else console.warn('skip live-facts.json (run harvest-live-facts.mjs)');
-  // pre-launch crawl block (NOINDEX): belt-and-suspenders with the per-page noindex meta.
-  if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
+  // 3. Islands + runtime assets (all committed sources — see copyRuntimeAssets).
+  copyRuntimeAssets();
   await generateDetails(d, { skipCommunities: scrapedCommunities, skipFloorplans: scrapedFloorplans });
   // blog search island's index (scans the shipped post pages, so it runs last)
   execSync('node scripts/gen-blog-index.mjs', { cwd: import.meta.dirname, stdio: 'inherit' });
