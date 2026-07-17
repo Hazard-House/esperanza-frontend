@@ -3,9 +3,12 @@ name: Deploy (Cloudflare)
 # Push to `staging`  -> deploys the staging Worker (esperanzahomes-staging.workers.dev)
 # Push/merge to `main` -> deploys production (esperanzahomes.hazardhouse.ai)
 #
-# public/ is committed to the repo, so CI does NOT run `node build.mjs`
-# (that needs the source scrape, which only exists on Matt's machine). CI just
-# ships whatever public/ is in the branch.
+# public/ is committed to the repo. CI does NOT run the full `node build.mjs` (that
+# needs the source O'Neill scrape). It DOES run the scrape-free detail refresh
+# (`node generate-details.mjs`), which re-renders the API-driven detail pages
+# (community / floor-plan / QMI) from the live public API using committed templates +
+# harvested assets — no scrape, no local machine. So every deploy ships fresh detail
+# data from D1 with zero local dependency; flagship/theme/blog pages ship as committed.
 #
 # Requires two repo secrets:
 #   CLOUDFLARE_API_TOKEN   - token with "Edit Cloudflare Workers" scope
@@ -27,6 +30,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Refresh API-driven detail pages (community / floor-plan / QMI) from the live
+      # public API into public/ before shipping. Scrape-free + no npm deps (bare node),
+      # so CI needs no local scrape — the whole point of removing the local dependency.
+      - name: Refresh detail pages from the live API (scrape-free)
+        run: node generate-details.mjs
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
