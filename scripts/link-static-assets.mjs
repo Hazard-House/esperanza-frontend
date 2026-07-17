@@ -1,6 +1,7 @@
-// Create clean-name symlinks for HTTrack "name﹖v=hash.ext" theme files so any static
-// server (Caddy, python -m http.server, Cursor preview) can serve name.ext?v=hash.
-import { readdirSync, symlinkSync, existsSync } from 'node:fs';
+// Create clean-name copies for HTTrack "name﹖v=hash.ext" theme files.
+// HTML references name.ext?v=hash; Cursor's preview strips ?v= from subresources,
+// so bare name.ext must exist as a real file (symlinks don't resolve in Caddy).
+import { readdirSync, copyFileSync, existsSync, lstatSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..', 'public', 'static');
@@ -22,8 +23,12 @@ for (const file of walk(ROOT)) {
   const m = base.match(RX);
   if (!m) continue;
   const clean = join(file.slice(0, file.lastIndexOf('/')), `${m[1]}.${m[3]}`);
-  if (existsSync(clean)) { skipped++; continue; }
-  symlinkSync(base, clean);
+  if (existsSync(clean)) {
+    // Replace stale symlinks with real copies.
+    if (lstatSync(clean).isSymbolicLink()) unlinkSync(clean);
+    else { skipped++; continue; }
+  }
+  copyFileSync(file, clean);
   linked++;
 }
-console.log(`link-static-assets: ${linked} symlinks created, ${skipped} already present`);
+console.log(`link-static-assets: ${linked} copies created, ${skipped} already present`);

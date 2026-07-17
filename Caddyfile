@@ -46,28 +46,25 @@
 	}
 
 
-	# Pretty URLs, then the HTML cache header. The route block forces literal order
-	# so @html matches AFTER try_files rewrites; otherwise Caddy sorts `header` ahead
-	# of the rewrite and the pre-rewrite path misses /contact/, /new-homes/available/…
-	route {
-		# HTTrack stored versioned theme files as "name﹖v=hash.ext"; HTML references
-		# the clean "name.ext?v=hash" form (worker.js maps this on CF; Caddy needs it
-		# locally and on Railway). Symlinks from scripts/link-static-assets.mjs are the
-		# primary fix; this rewrite is a fallback.
-		@static_v path /static/* query v=*
+	# Static theme assets: serve directly — don't run try_files (it appends .html to
+	# paths like vendor.min.css and 404s). Cursor's preview also strips ?v= from
+	# subresource URLs, so clean-name copies from link-static-assets.mjs must resolve.
+	handle /static/* {
+		@static_v query v=*
 		uri @static_v path_regexp \.([^.]+)$ ﹖v={query.v}.$1
 		uri @static_v query -v
+		@static_ok file
+		header @static_ok Cache-Control "public, max-age=31536000, immutable"
+		@local_dev expression {env.STATIC_ROOT} != ""
+		header @local_dev Cache-Control "no-store"
+		file_server
+	}
 
+	# Pretty URLs for HTML pages.
+	route {
 		try_files {path} {path}/index.html {path}.html
 		@html path *.html
 		header @html Cache-Control "public, max-age=300"
-		# Only cache theme assets that actually exist — never stamp immutable on 404/302.
-		@static_ok {
-			path /static/*
-			file
-		}
-		header @static_ok Cache-Control "public, max-age=31536000, immutable"
-		# Local dev (STATIC_ROOT set): override — avoid poisoned redirect cache.
 		@local_dev expression {env.STATIC_ROOT} != ""
 		header @local_dev Cache-Control "no-store"
 		file_server

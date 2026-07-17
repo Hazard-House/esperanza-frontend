@@ -11,7 +11,7 @@
 
 import assert from 'node:assert';
 import { execSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, symlinkSync, readdirSync, statSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, copyFileSync, readdirSync, statSync, lstatSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
 import { generateDetails } from './generate-details.mjs';
@@ -129,7 +129,7 @@ function copyRuntimeAssets() {
 // clean "name.ext?v=hash" form; worker.js maps the query onto the stored filename.
 // Some dev proxies (Cursor Simple Browser) strip ?v= from subresource requests, so
 // aos.js/css/… 404 and every [data-aos] section stays opacity:0 — the page looks
-// unstyled. Symlink "name.ext" -> "name﹖v=hash.ext" so bare paths resolve too.
+// unstyled. Copy "name.ext" from "name﹖v=hash.ext" so bare paths resolve too.
 export function linkCleanThemeNames(root) {
   if (!existsSync(root)) return;
   let n = 0;
@@ -137,13 +137,17 @@ export function linkCleanThemeNames(root) {
     for (const name of readdirSync(dir)) {
       const m = name.match(/^(.+)﹖v=([A-Za-z0-9]+)\.(\w+)$/);
       if (!m) continue;
+      const src = join(dir, name);
       const clean = join(dir, `${m[1]}.${m[3]}`);
-      if (existsSync(clean)) continue;
-      symlinkSync(name, clean);
+      if (existsSync(clean)) {
+        if (lstatSync(clean).isSymbolicLink()) unlinkSync(clean);
+        else continue;
+      }
+      copyFileSync(src, clean);
       n++;
     }
   }
-  if (n) console.log(`theme symlinks: ${n} clean-name aliases under ${root}`);
+  if (n) console.log(`theme copies: ${n} clean-name aliases under ${root}`);
 }
 
 function* walkDir(root) {
