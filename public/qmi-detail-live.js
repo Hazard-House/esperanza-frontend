@@ -114,6 +114,10 @@
     if (!mount) return;
     var p = new URLSearchParams(location.search);
     var slug = p.get('slug'), id = p.get('id');
+    // When the worker serves this shell at a canonical home URL (…/<community>/<slug>/)
+    // there's no ?slug= — derive it from the last path segment so un-built home pages
+    // (drafts / newly-published, no static page) still render live without a rebuild.
+    if (!slug && !id) slug = location.pathname.replace(/\/+$/, '').split('/').pop() || '';
     fetch(API + '/qmi').then(function (r) { return r.json(); }).then(function (res) {
       var raw = (res.homes || []).filter(function (h) {
         var f = h.fields || h;

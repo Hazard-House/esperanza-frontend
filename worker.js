@@ -288,6 +288,28 @@ export default {
         }
       }
       if (ASSET_RE.test(p)) return new Response("Not found", { status: 404 });
+
+      // Un-built QMI home page (draft or newly-published — no static page baked). Serve
+      // the LIVE detail shell so qmi-detail-live.js renders the home by slug from the API
+      // (drafts included on staging via the preview passthrough). Keeps the canonical URL
+      // and needs no rebuild. Matches the home shapes /new-homes/tx/<city>/<community>/<slug>/
+      // and /new-homes/available/<slug>/ — NOT community pages (3-deep) or the shell/grid.
+      const isHomeUrl =
+        (/^\/new-homes\/tx\/[^/]+\/[^/]+\/[^/]+\/?$/.test(p) ||
+          /^\/new-homes\/available\/[^/]+\/?$/.test(p)) &&
+        p !== "/new-homes/available/home/" &&
+        p !== "/new-homes/available/home";
+      if (isHomeUrl) {
+        const shell = await env.ASSETS.fetch(new Request(new URL("/new-homes/available/home/", request.url)));
+        if (shell.status === 200) {
+          const out = new Response(shell.body, shell);
+          out.headers.set("Content-Type", "text/html; charset=utf-8");
+          out.headers.set("Cache-Control", "no-store"); // rendered live by the island
+          for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
+          return out;
+        }
+      }
+
       // Serve our branded 404 page (1:1 with the legacy site) with a real 404 status.
       const nf = await env.ASSETS.fetch(new Request(new URL("/404.html", request.url)));
       const headers = new Headers(nf.status === 200 ? nf.headers : {});
