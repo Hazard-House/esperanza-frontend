@@ -115,12 +115,13 @@ export function galleryHtml(gallery, heroUrl, address) {
   const heroSrc = heroUrl || (all[0] && all[0].url);
   if (!heroSrc) return '';
   const alt = esc(address || '');
-  // 1:1 with O'Neill: lead tile = the home's elevation render (image_url, col-lg-8) +
-  // a side column (col-lg-4) of up to two sixteen-nine PHOTO thumbs in h-50 rows; the
-  // LAST thumb carries the .photo-overlay ("Photo Gallery" + white-bar + View N
-  // Photos) where N = full photo_gallery size. Overlay lives inside a
-  // position-relative cell so it never escapes to cover the page.
-  const thumbs = imgs.filter(g => g.url !== heroSrc).slice(0, 2);
+  // 1:1 with O'Neill: lead tile = elevation render (col-lg-8) + side column of up
+  // to two sixteen-nine PHOTO thumbs. Render-led pages (hero not in gallery) skip
+  // the first candidate when 3+ remain (-05/-11, not -03/-05); photo-led pages use
+  // the first two candidates after the hero photo (-12/-10 when hero is -13).
+  const heroInGallery = imgs.some(g => g.url === heroSrc);
+  const candidates = imgs.filter(g => g.url !== heroSrc);
+  const thumbs = !heroInGallery && candidates.length >= 3 ? candidates.slice(1, 3) : candidates.slice(0, 2);
   const heroCol = thumbs.length ? 'col-12 col-lg-8' : 'col-12';
   const hero = `<div class="${heroCol} d-flex align-items-stretch p-0 pe-lg-2-5"><div class="oi-aspect three-two"><img src="${esc(heroSrc)}" class="oi-aspect-img" loading="eager" alt="${alt}"></div></div>`;
   let side = '';
@@ -489,6 +490,15 @@ function demo() {
   // lightbox group = gallery only (render excluded, like the original).
   const gh = galleryHtml([{ url: '/p1.jpg', alt: '' }, { url: '/p2.jpg', alt: '' }, { url: '/p3.jpg', alt: '' }], '/render.jpg', 'Home');
   assert(gh.indexOf('/render.jpg') < gh.indexOf('/p1.jpg') && gh.includes('View 3 Photos'), 'gallery hero render + count');
+  const hiddenIdx = gh.indexOf('<div class="d-none">');
+  const mosaic = hiddenIdx > 0 ? gh.slice(0, hiddenIdx) : gh;
+  const mosaicSrcs = [...mosaic.matchAll(/src="([^"]+)"/g)].map(m => m[1]);
+  assert(mosaicSrcs.includes('/render.jpg') && mosaicSrcs.includes('/p2.jpg') && mosaicSrcs.includes('/p3.jpg') && !mosaicSrcs.includes('/p1.jpg'), 'mosaic skips first candidate when 3+');
+  const ghLed = galleryHtml([{ url: '/hero.jpg', alt: '' }, { url: '/a.jpg', alt: '' }, { url: '/b.jpg', alt: '' }, { url: '/c.jpg', alt: '' }], '/hero.jpg', 'Home');
+  const ledHidden = ghLed.indexOf('<div class="d-none">');
+  const ledMosaic = ledHidden > 0 ? ghLed.slice(0, ledHidden) : ghLed;
+  const ledSrcs = [...ledMosaic.matchAll(/src="([^"]+)"/g)].map(m => m[1]);
+  assert(ledSrcs.includes('/hero.jpg') && ledSrcs.includes('/a.jpg') && ledSrcs.includes('/b.jpg') && !ledSrcs.includes('/c.jpg'), 'photo-led mosaic uses first two candidates');
   assert((gh.match(/data-fancybox="photos"/g) || []).length === 3 && !gh.includes('src="/render.jpg" loading="lazy" data-fancybox'), 'lightbox = gallery only');
   assert(mobileGalleryBarHtml(true).includes('View Photo Gallery') && mobileGalleryBarHtml(true).includes('d-block d-lg-none') && mobileGalleryBarHtml(false) === '', 'mobile gallery bar');
   const d = descHtml('Highlights:\n- Big yard\n- New roof');
