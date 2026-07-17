@@ -234,6 +234,12 @@ export function rewriteCommon(html) {
       ? html.replace(/<meta name="robots"[^>]*>/gi, meta)
       : html.replace(/<head([^>]*)>/i, `<head$1>\n${meta}`);
   }
+  if (!html.includes('site-overrides.css')) {
+    html = html.replace(
+      /(<link href="\/static\/esperanza_homes\/css\/style\.min\.css[^>]*>)/,
+      '$1\n    <link href="/site-overrides.css" rel="stylesheet" type="text/css">',
+    );
+  }
   return html;
 }
 

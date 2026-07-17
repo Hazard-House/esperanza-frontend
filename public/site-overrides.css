@@ -1,3 +1,16 @@
+/* Site footer — full viewport width (including when nested inside .container) */
+footer.bg-gray {
+  box-sizing: border-box;
+  max-width: none;
+  width: 100%;
+}
+
+.container > footer.bg-gray {
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  width: 100vw;
+}
+
 /* Homepage hero slider — centered copy, fixed nav */
 .homepage-slider {
   position: relative;
