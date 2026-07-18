@@ -117,13 +117,16 @@ export async function loadData() {
     // over D1 image_url, and the original's full gallery wins when D1's is shorter.
     const qm = (QMI_MEDIA.homes || {})[h.slug || slugify(h.address)];
     if (qm) {
-      // A floor-plan DRAWING must never be the hero: the June-8 harvest predates many
-      // exterior renders (O'Neill showed the drawing pre-render), so a harvested hero
-      // that is also one of the home's plan drawings only wins when D1 has no image
-      // (live today shows the exterior render first, drawing in the plan viewer only).
-      const heroIsDrawing = qm.hero && (qm.planImages || []).includes(qm.hero);
-      if (qm.hero && (!heroIsDrawing || !h.image)) h.image = qm.hero;
-      if ((qm.photos || []).length > h.gallery.length) h.gallery = qm.photos.map(u => ({ url: u, alt: h.address }));
+      // A floor-plan DRAWING must never be the hero when D1 already has a real
+      // elevation render — but always prefer a harvested live hero over D1 placeholders
+      // (hero.jpg / photo_N.jpg) even when the same asset appears in planImages.
+      const stem = u => String(u || '').split('/').pop()?.split('?')[0].replace(/\.[^.]+$/i, '').toLowerCase() || '';
+      const heroIsDrawing = qm.hero && (qm.planImages || []).some(u => stem(u) === stem(qm.hero));
+      const apiPlaceholder = !h.image || /\/(hero|photo_\d+)\.jpe?g(?:\?|$)/i.test(String(h.image));
+      if (qm.hero && (qm.source === 'live' || !heroIsDrawing || apiPlaceholder || !h.image)) h.image = qm.hero;
+      // Prefer harvested live gallery — D1 photo_gallery is often placeholder filenames.
+      if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: u, alt: h.address }));
+      else if (qm.source === 'live') h.gallery = []; // live page has no photo set — hero only
     }
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
     // backfilled), else the original page's own viewer drawing, else the harvested
@@ -134,8 +137,10 @@ export async function loadData() {
       || ((QMI_MEDIA.plans || {})[fpSlug] || [])[0]
       || FP_MAP[fpSlug] || null;
     // Galleryless homes (e.g. under construction): fall back to the community's model
-    // photos (already in R2) until real photo_gallery_json lands in D1.
-    if (!h.gallery.length && h.communityObj) {
+    // photos (already in R2) until real photo_gallery_json lands in D1 — but not when
+    // a live harvest explicitly found no gallery photos for this home.
+    const liveGalleryEmpty = qm && qm.source === 'live' && Array.isArray(qm.photos) && !qm.photos.length;
+    if (!h.gallery.length && h.communityObj && !liveGalleryEmpty) {
       h.gallery = [h.communityObj.image, h.communityObj.secondaryImage].filter(Boolean).map(u => ({ url: fixHost(u), alt: h.community }));
     }
   }
