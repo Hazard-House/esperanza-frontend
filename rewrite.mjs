@@ -160,16 +160,11 @@ export function restorePrehydratedAccordion(html) {
     .replace(/(id="one-icon" class="[^"]*?)fa-chevron-up([^"]*")/, '$1fa-chevron-down$2');
 }
 
-// Scraped header/footer nav links climb out of /new-homes/tx/ with relative hrefs like
-// ../../../../../mission/tanglewood-at-bentsen-palm/4106/ — from /floorplans/* that
-// resolves to /mission/... (404) instead of /new-homes/tx/mission/... . Canonicalize
-// to absolute community-id paths; sibling links within the same city (../../slug/id/)
-// are untouched because they don't start with a city slug.
-const TX_CITIES = 'brownsville|corpus-christi|edinburg|harlingen|laredo|mcallen|mercedes|mission|san-juan|weslaco';
-export function fixCommunityNavHrefs(html) {
+export function injectSiteOverrides(html) {
+  if (html.includes('site-overrides.css')) return html;
   return html.replace(
-    new RegExp(`(href=")(?:\\.\\./)+(${TX_CITIES})/([a-z0-9-]+)/(\\d+)/"`, 'gi'),
-    (_, p, city, comm, id) => `${p}/new-homes/tx/${city}/${comm}/${id}/"`,
+    /(<link href="\/static\/esperanza_homes\/css\/style\.min\.css[^>]*>)/,
+    '$1\n    <link href="/site-overrides.css" rel="stylesheet" type="text/css">',
   );
 }
 
@@ -248,12 +243,8 @@ export function rewriteCommon(html) {
       : html.replace(/<head([^>]*)>/i, `<head$1>\n${meta}`);
   }
   if (!html.includes('site-overrides.css')) {
-    html = html.replace(
-      /(<link href="\/static\/esperanza_homes\/css\/style\.min\.css[^>]*>)/,
-      '$1\n    <link href="/site-overrides.css" rel="stylesheet" type="text/css">',
-    );
+    html = injectSiteOverrides(html);
   }
-  html = fixCommunityNavHrefs(html);
   return html;
 }
 
@@ -354,10 +345,6 @@ function demo() {
   const hs = s('<script src="../../js.hsforms.net/forms/v2.js"></script><script>hbspt.forms.create({portalId:"8139268"});</script><div id="hbspt-form-2572ed83-c777-43f3-a702-65de81ec6bc1" class="hbspt-form" data-hs-forms-root="true"><iframe id="hs-form-iframe-0" class="hs-form-iframe"></iframe></div>');
   console.assert(hs.includes('src="https://js.hsforms.net/forms/v2.js"') && hs.includes('hbspt.forms.create') && !hs.includes('hbspt-form-2572ed83'), 'hsforms restore: ' + hs);
   console.assert(s(hs) === hs, 'hsforms idempotent');
-  const nav = fixCommunityNavHrefs('<a href="../../../../../mission/tanglewood-at-bentsen-palm/4106/">TW</a><a href="../../sendero-at-bentsen-palm/9628/">SE</a>');
-  console.assert(nav.includes('href="/new-homes/tx/mission/tanglewood-at-bentsen-palm/4106/"'), 'nav city prefix: ' + nav);
-  console.assert(nav.includes('href="../../sendero-at-bentsen-palm/9628/"'), 'nav sibling untouched: ' + nav);
-  console.assert(fixCommunityNavHrefs(nav) === nav, 'fixCommunityNavHrefs idempotent');
   console.log('rewrite.mjs demo() passed');
 }
 // ponytail: compare real paths, not raw URL strings — file:// URLs percent-encode

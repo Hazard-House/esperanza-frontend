@@ -12,6 +12,7 @@
 // and are reported. Run: node harvest-qmi-media.mjs
 import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const SCRAPE = process.env.ESP_SCRAPE || '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08/www.esperanzahomes.com/new-homes';
 const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
@@ -56,7 +57,7 @@ function convert(raw) {
 
 // --- extraction from one original QMI detail page ---
 const srcOf = tag => { const m = tag.match(/src="([^"]+)"/); return m && m[1]; };
-function extract(html) {
+export function extractQmiMedia(html) {
   const out = { hero: null, photos: [], planImages: [], plan: null };
   const gi = html.indexOf('id="detail-gallery"');
   if (gi !== -1) { const m = html.slice(gi).match(/<img [^>]*src="([^"]+)"/); if (m) out.hero = convert(m[1]); }
@@ -82,6 +83,45 @@ function extract(html) {
   return out;
 }
 
+function extract(html) { return extractQmiMedia(html); }
+
+function commIdsFromShip() {
+  const ids = {};
+  const ship = join(import.meta.dirname, 'ship.txt');
+  if (!existsSync(ship)) return ids;
+  for (const line of readFileSync(ship, 'utf8').split('\n')) {
+    const m = line.trim().match(/^new-homes\/tx\/[^/]+\/([^/]+)\/(\d+)\//);
+    if (m) ids[m[1]] = m[2];
+  }
+  return ids;
+}
+
+async function fetchLiveHome(h, commIds) {
+  const cid = commIds[h.comm];
+  const city = slugify(h.city || '');
+  const urls = [
+    cid && city ? `${LEGACY}/new-homes/tx/${city}/${h.comm}/${cid}/${h.slug}/` : null,
+    cid ? `${LEGACY}/new-homes/tx/city/${h.comm}/${cid}/${h.slug}/` : null,
+    `${LEGACY}/new-homes/tx/city/${h.comm}/0/${h.slug}/`,
+  ].filter(Boolean);
+  let lastErr = 'no URLs';
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(30000), headers: { 'User-Agent': 'esperanza-qmi-harvest/1.0' } });
+      if (!r.ok) { lastErr = `HTTP ${r.status}`; continue; }
+      const e = extractQmiMedia(await r.text());
+      if (!e.hero && !e.photos.length) { lastErr = 'no media extracted'; continue; }
+      const stem = u => String(u || '').split('/').pop()?.split('?')[0].replace(/\.[^.]+$/i, '').toLowerCase() || '';
+      if (e.hero && e.planImages?.length) {
+        e.planImages = e.planImages.filter(u => stem(u) !== stem(e.hero));
+      }
+      e.source = 'live';
+      return e;
+    } catch (err) { lastErr = err.message; }
+  }
+  throw new Error(lastErr);
+}
+
 // --- scan the scrape: .../tx/<city>/<community>/<id>/<address>/<homeid>/index.html ---
 function* qmiPages(dir, depth = 0) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -99,34 +139,32 @@ function* qmiPages(dir, depth = 0) {
 
 async function main() {
   const homes = {}, plans = {};
-  const commIds = {};
+  const commIds = commIdsFromShip();
   let pages = 0;
-  for (const pg of qmiPages(SCRAPE)) {
-    pages++;
-    commIds[pg.comm] = pg.commId;
-    // /tx/city/... alias duplicates the real-city page; either copy is identical
-    if (homes[pg.slug] && pg.city === 'city') continue;
-    const e = extract(readFileSync(pg.file, 'utf8'));
-    e.source = 'scrape';
-    homes[pg.slug] = e;
+  if (existsSync(SCRAPE)) {
+    for (const pg of qmiPages(SCRAPE)) {
+      pages++;
+      commIds[pg.comm] = pg.commId;
+      // /tx/city/... alias duplicates the real-city page; either copy is identical
+      if (homes[pg.slug] && pg.city === 'city') continue;
+      const e = extract(readFileSync(pg.file, 'utf8'));
+      e.source = 'scrape';
+      homes[pg.slug] = e;
+    }
   }
 
-  // --- API match + live gap-fill for homes newer than the scrape ---
+  // --- Refresh every API home from live O'Neill (source of truth for gallery order) ---
   const api = await (await fetch(API + '/qmi')).json();
-  const apiHomes = (api.homes || []).map(h => { const f = h.fields || h; return { slug: f.slug || slugify(f.address), address: f.address, comm: slugify(f.Community) }; });
-  const missing = apiHomes.filter(h => !homes[h.slug]);
+  const apiHomes = (api.homes || []).map(h => {
+    const f = h.fields || h;
+    return { slug: f.slug || slugify(f.address), address: f.address, comm: slugify(f.Community), city: f.City };
+  });
   const failed = [];
-  for (const h of missing) {
-    const cid = commIds[h.comm];
-    const url = `${LEGACY}/new-homes/tx/city/${h.comm}/${cid || 0}/${h.slug}/`;
+  let liveFetched = 0;
+  for (const h of apiHomes) {
     try {
-      if (!cid) throw new Error('community not in scrape');
-      const r = await fetch(url, { signal: AbortSignal.timeout(30000) });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const e = extract(await r.text());
-      if (!e.hero && !e.photos.length) throw new Error('no media extracted');
-      e.source = 'live';
-      homes[h.slug] = e;
+      homes[h.slug] = await fetchLiveHome(h, commIds);
+      liveFetched++;
     } catch (err) { failed.push(`${h.slug}: ${err.message}`); }
   }
 
@@ -145,7 +183,7 @@ async function main() {
   // --- coverage report ---
   const matched = apiHomes.filter(h => homes[h.slug]);
   const withDraw = apiHomes.filter(h => { const e = homes[h.slug]; return e && (e.planImages.length || (e.plan && plans[e.plan] && plans[e.plan].length)); });
-  console.log(`scrape pages: ${pages} -> ${Object.keys(homes).length} homes harvested (${Object.values(homes).filter(e => e.source === 'live').length} live-fetched)`);
+  console.log(`scrape pages: ${pages} -> ${Object.keys(homes).length} homes harvested (${liveFetched} live-fetched)`);
   console.log(`API homes: ${apiHomes.length}, matched: ${matched.length}, with plan drawing: ${withDraw.length}`);
   console.log(`plan pool: ${Object.keys(plans).length} plans; media keys not in R2 mirror (kept original URL): ${unmapped.size}`);
   if (failed.length) console.log('live fetch failures:', failed);
@@ -153,4 +191,4 @@ async function main() {
   if (unmatched.length) console.log('API homes unmatched:', unmatched);
   console.log('wrote', OUT);
 }
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) main();
