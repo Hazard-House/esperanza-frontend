@@ -100,7 +100,7 @@ function normFloorplan(fp) {
     garage: fp.carGarageCount, stories: fp.storiesCount,
     livingSqft: fp.livingSquareFootage, totalSqft: fp.totalSquareFootage,
     masterBed: fp.masterBedLocation, hersScore: fp.hersScore, communities: fp.communities,
-    image: fp.image, description: fp.description, floorPlanImage: fixHost(fp.floorPlanImage),
+    image: fixHost(fp.image), description: fp.description, floorPlanImage: fixHost(fp.floorPlanImage),
     planViewerUrl: fp.planViewerUrl, virtualTourUrl: fp.virtualTourUrl, brochurePdfUrl: fp.brochurePdfUrl,
     promo: fp.promoBannerText,
   };
@@ -135,19 +135,19 @@ export async function loadData() {
       const stem = u => String(u || '').split('/').pop()?.split('?')[0].replace(/\.[^.]+$/i, '').toLowerCase() || '';
       const heroIsDrawing = qm.hero && (qm.planImages || []).some(u => stem(u) === stem(qm.hero));
       const apiPlaceholder = !h.image || /\/(hero|photo_\d+)\.jpe?g(?:\?|$)/i.test(String(h.image));
-      if (qm.hero && (qm.source === 'live' || !heroIsDrawing || apiPlaceholder || !h.image)) h.image = qm.hero;
+      if (qm.hero && (qm.source === 'live' || !heroIsDrawing || apiPlaceholder || !h.image)) h.image = fixHost(qm.hero);
       // Prefer harvested live gallery — D1 photo_gallery is often placeholder filenames.
-      if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: u, alt: h.address }));
+      if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: fixHost(u), alt: h.address }));
       else if (qm.source === 'live') h.gallery = []; // live page has no photo set — hero only
     }
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
     // backfilled), else the original page's own viewer drawing, else the harvested
     // per-plan pool, else the committed _FP.png map (interim). null -> CTA fallback.
     const fpSlug = (h.floorplanObj && h.floorplanObj.slug) || slugify(h.floorPlan);
-    h.planImage = (h.floorplanObj && h.floorplanObj.floorPlanImage)
+    h.planImage = fixHost((h.floorplanObj && h.floorplanObj.floorPlanImage)
       || (qm && qm.planImages && qm.planImages[0])
       || ((QMI_MEDIA.plans || {})[fpSlug] || [])[0]
-      || FP_MAP[fpSlug] || null;
+      || FP_MAP[fpSlug] || null);
     // Galleryless homes (e.g. under construction): fall back to the community's model
     // photos (already in R2) until real photo_gallery_json lands in D1 — but not when
     // a live harvest explicitly found no gallery photos for this home.
