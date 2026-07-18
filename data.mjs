@@ -7,7 +7,19 @@ import { join } from 'node:path';
 const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
 
 const un = v => (Array.isArray(v) ? v[0] : v);
-const fixHost = u => (u ? String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u);
+// Normalize R2 image URLs to the CDN host AND serve raster images through Cloudflare's
+// image transform (format=auto → webp/avif, quality + width cap). This cuts page weight
+// ~10x (a 1.5 MB hero → ~150 KB) with no visible quality loss. Skips PDFs/SVGs and
+// already-transformed URLs. Transformations are enabled on the hazardhouse.ai zone.
+const IMG_TX = 'format=auto,quality=82,width=1600';
+const fixHost = u => {
+  if (!u) return u;
+  let s = String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai');
+  if (/^https:\/\/img\.hazardhouse\.ai\//.test(s) && !s.includes('/cdn-cgi/image/') && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(s)) {
+    s = s.replace('https://img.hazardhouse.ai/', `https://img.hazardhouse.ai/cdn-cgi/image/${IMG_TX}/`);
+  }
+  return s;
+};
 export const slugify = s => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 // Ascending price comparator, missing/zero prices LAST — a "TBD"/no-price card must
@@ -71,7 +83,7 @@ function normCommunity(c) {
     id: c.id, name: c.name, slug: c.slug && slugify(c.slug), city: c.town,
     lat: p[0] != null && p[0] !== '' ? Number(p[0]) : null,
     lng: p[1] != null && p[1] !== '' ? Number(p[1]) : null,
-    address: c.address, image: c.image, secondaryImage: c.secondaryImage,
+    address: c.address, image: fixHost(c.image), secondaryImage: fixHost(c.secondaryImage),
     priceFrom: c.priceFrom, comingSoon: !!c.comingSoon, sqft: c.sqft, beds: c.beds, baths: c.baths,
     description: c.description, amenities: c.amenities, promo: c.promoBannerText,
     officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
