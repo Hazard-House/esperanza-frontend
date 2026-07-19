@@ -7,6 +7,9 @@
   'use strict';
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
+  // API fetch with a timeout so a hung API rejects (into the .catch -> notFound)
+  // instead of leaving the shell empty forever.
+  var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
   var STAT = '/static/esperanza_homes/images/stats/';
   var ICON = {
     bed: STAT + 'bedroom%EF%B9%96v=7516482.svg',
@@ -122,7 +125,7 @@
     // link) hits the ungated /api/preview endpoint; the staging worker adds the secret.
     // Everything else uses the published list, so drafts never show unless asked for.
     var endpoint = (p.get('preview') === '1' ? '/api/preview' : API) + '/qmi';
-    fetch(endpoint).then(function (r) { return r.json(); }).then(function (res) {
+    fetchT(endpoint).then(function (r) { return r.json(); }).then(function (res) {
       var raw = (res.homes || []).filter(function (h) {
         var f = h.fields || h;
         return (slug && f.slug === slug) || (id && h.id === id);
