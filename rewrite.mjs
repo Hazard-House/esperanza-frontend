@@ -64,9 +64,19 @@ export function resolveMedia(rawPath, prefix, map) {
 // The inline GTM snippet self-injects gtm.js, so it must be dropped too (matched by GTM-).
 const TRACKER_SIG = /(hs-analytics|hs-banner|hsadspixel|hs-scripts|hs-script-loader|analytics\.tiktok\.com|clarity\.ms|static\.hotjar\.com|script\.hotjar\.com|connect\.facebook\.net|googletagmanager\.com|google-analytics\.com|googleads\.g\.doubleclick\.net|platform\.twitter\.com|firstparty\/|fbq\(|_fbq\b|ttq\.(?:load|page|track)|TiktokAnalyticsObject|_hjSettings|\bhj\(|window\.clarity|GTM-[A-Z0-9]{4,})/;
 const THEME_KEEP = /(oi_preload\s*=|oiVideoOnLoad|oiReady|new Swiper|AOS\.init|swiper-alert-banner|oilib_version|oi\.loaded)/i;
+// Our restored GA4 Google tag (replaces the vendor's dead proprietary loader). The
+// loader src matches TRACKER_SIG (googletagmanager.com), so exempt this exact tag —
+// otherwise re-running rewriteCommon on an already-built page would strip it.
+export const GTAG_ID = 'G-3GPKQFB5M1';
+export const GTAG = `<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GTAG_ID}');</script>`;
+// Presence check keys on the LOADER url, not the bare id — the theme's kept
+// oi_preload/dataLayer config already carries "GA4id":"G-3GPKQFB5M1" on every page.
+export const hasGtag = (html) => html.includes(`gtag/js?id=${GTAG_ID}`);
 export function stripTrackers(html) {
   return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,
-    m => TRACKER_SIG.test(m) && !THEME_KEEP.test(m) ? '' : m);
+    m => TRACKER_SIG.test(m) && !THEME_KEEP.test(m) && !hasGtag(m) ? '' : m);
 }
 
 // Warm up the connection to the image CDN early (detail pages pull ~270 images from
@@ -235,6 +245,9 @@ export function rewriteCommon(html) {
   html = stripTrackers(html);
   html = resizeImages(html);
   html = html.replace(/<head([^>]*)>/i, `<head$1>\n${PRECONNECT}`);
+  // Restore GA4 (stripTrackers removed the vendor's broken loader above). Idempotent:
+  // stripTrackers exempts our loader, so hasGtag() holds on re-runs.
+  if (!hasGtag(html)) html = html.replace(/<\/head>/i, `${GTAG}\n</head>`);
   if (BANNER_SLIDES) html = html.replace(FROZEN_BANNER_RE, freshBannerHtml(BANNER_SLIDES));
   if (NOINDEX) {
     const meta = '<meta name="robots" content="noindex,nofollow">';
@@ -303,6 +316,11 @@ function demo() {
   console.assert(s('href="https://fonts.googleapis.com"') === 'href="https://fonts.googleapis.com"', 'fonts preconnect untouched');
   console.assert(s('data-bs-target="#promo-form">None</button>') === 'data-bs-target="#promo-form">Learn More</button>', 'promo None -> Learn More');
   console.assert(s('<head></head>').includes('window.ganalyticsLoaded||'), 'tracker stub injected');
+  // GA4 Google tag injected before </head>, survives stripTrackers, exactly once on re-run
+  const ga = s('<head><title>t</title></head>');
+  console.assert(ga.includes(`gtag/js?id=${GTAG_ID}"></script>`) && /googletagmanager[\s\S]*<\/head>/.test(ga), 'gtag injected before </head>');
+  console.assert((s(ga).match(/googletagmanager\.com\/gtag\/js/g) || []).length === 1, 'gtag idempotent');
+  console.assert(stripTrackers(GTAG) === GTAG, 'gtag exempt from stripTrackers');
   console.assert(s('<option value="https://www.esperanzahomes.com/blog/category/news/">') === '<option value="/blog/category/news/">', 'option value same-origin');
   console.assert(s('<input type="hidden" value="https://www.esperanzahomes.com/blog/">').includes('www.esperanzahomes.com'), 'non-option values untouched (forms PR owns those)');
   // baked hydrated map innards stripped; container + siblings preserved
