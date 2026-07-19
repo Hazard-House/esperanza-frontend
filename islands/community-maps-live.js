@@ -12,6 +12,8 @@
   'use strict';
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE, TOKEN = CFG.MAPBOX_TOKEN;
+  // API fetch with a timeout so a hung API rejects (into the .catch) instead of pending forever.
+  var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
   var STYLE_HOME = CFG.MAPBOX_STYLE_HOME, STYLE_DETAIL = CFG.MAPBOX_STYLE_COMMON;
   var PIN_URL = '/map_pin.png';
   // STYLE_DETAIL is a URL to our bundled Esperanza-Common JSON; fetch -> style object.
@@ -137,7 +139,7 @@
     if ((!home && !detail) || typeof mapboxgl === 'undefined') return;
     mapboxgl.accessToken = TOKEN;
     Promise.all([
-      fetch(API + '/communities').then(function (r) { return r.json(); }),
+      fetchT(API + '/communities').then(function (r) { return r.json(); }),
       fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
     ]).then(function (res) {
       if (res[1]) LINKS = res[1];

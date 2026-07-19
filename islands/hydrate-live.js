@@ -7,6 +7,8 @@
   if (!P || !P.id) return;
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
+  // API fetch with a timeout so a hung API rejects (into the .catch, baked price stays).
+  var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
   var money = function (n) { return '$' + Number(n || 0).toLocaleString('en-US'); };
   function set(sel, val) {
     document.querySelectorAll('[data-live="' + sel + '"]').forEach(function (el) {
@@ -15,7 +17,7 @@
     });
   }
   if (P.type !== 'qmi') return; // community/floorplan volatiles added later if needed
-  fetch(API + '/qmi').then(function (r) { return r.json(); }).then(function (res) {
+  fetchT(API + '/qmi').then(function (r) { return r.json(); }).then(function (res) {
     var raw = (res.homes || []).filter(function (h) { return h.id === P.id; })[0];
     if (!raw) return;
     var f = raw.fields || raw;

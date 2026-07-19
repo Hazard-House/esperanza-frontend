@@ -9,6 +9,9 @@
   'use strict';
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE, TOKEN = CFG.MAPBOX_TOKEN, STYLE = CFG.MAPBOX_STYLE_COMMON;
+  // API fetch with a timeout so a hung API rejects (into the .catch, baked cards
+  // stay) instead of pending forever.
+  var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
 
   var STAT = '/static/esperanza_homes/images/stats/';
   var ICON = {
@@ -211,7 +214,7 @@
   function boot() {
     if (!document.getElementById('oi-map') && !document.getElementById('oi-filter-results')) return;
     Promise.all([
-      fetch(API + '/communities').then(function (r) { return r.json(); }),
+      fetchT(API + '/communities').then(function (r) { return r.json(); }),
       fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
       fetch('/live-facts.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
     ]).then(function (res) {

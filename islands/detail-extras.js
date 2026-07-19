@@ -37,6 +37,8 @@ if (typeof window === 'undefined') {
   (function () {
     'use strict';
     var CFG = window.__ESPERANZA || {}, API = CFG.API_BASE || '/api/public';
+    // API fetch with a timeout so a hung API rejects (into the .catch, default rate stays).
+    var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
     var money = function (n) { return '$' + Number(n || 0).toLocaleString('en-US'); };
 
     if (window.Fancybox) window.Fancybox.bind('[data-fancybox]');
@@ -94,7 +96,7 @@ if (typeof window === 'undefined') {
       var rate = 6.15, term = 30;
       var renderCalc = function () { calcResult.textContent = price ? money(monthlyPayment(price, { rate: rate, term: term })) + '/mo' : '--'; };
       renderCalc();
-      fetch(API + '/settings').then(function (r) { return r.json(); }).then(function (d) {
+      fetchT(API + '/settings').then(function (r) { return r.json(); }).then(function (d) {
         rate = (d.settings && Number(d.settings.mortgage_rate)) || rate;
         renderCalc();
       }).catch(function () {});

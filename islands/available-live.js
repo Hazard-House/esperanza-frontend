@@ -6,6 +6,9 @@
   'use strict';
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE, TOKEN = CFG.MAPBOX_TOKEN, STYLE = CFG.MAPBOX_STYLE;
+  // API fetch with a timeout so a hung API rejects (into the .catch) instead of
+  // leaving the page on its loading state forever.
+  var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
   var STAT = '/static/esperanza_homes/images/stats/';
   var ICON = {
     bed: STAT + 'bedroom%EF%B9%96v=7516482.svg',
@@ -362,12 +365,15 @@
     var grid = document.getElementById('oi-filter-results');
     if (grid) grid.innerHTML = '<div class="col-12 p-4 text-center text-gray">Loading available homes…</div>';
     Promise.all([
-      fetch(API + '/qmi').then(function (r) { return r.json(); }),
-      fetch(API + '/communities').then(function (r) { return r.json(); }).catch(function () { return { communities: [] }; }),
+      // /qmi is the only fatal fetch (nothing to render without it): its failure —
+      // including the fetchT timeout — falls through to the outer .catch, which
+      // renders the friendly error. Every secondary fetch has a fallback .catch.
+      fetchT(API + '/qmi').then(function (r) { return r.json(); }),
+      fetchT(API + '/communities').then(function (r) { return r.json(); }).catch(function () { return { communities: [] }; }),
       fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {}, community: {} }; }),
-      fetch(API + '/settings').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+      fetchT(API + '/settings').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       fetch('/live-facts.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-      fetch(API + '/floorplans').then(function (r) { return r.json(); }).catch(function () { return { floorplans: [] }; }),
+      fetchT(API + '/floorplans').then(function (r) { return r.json(); }).catch(function () { return { floorplans: [] }; }),
     ]).then(function (res) {
       if (res[2]) LINKS = res[2];
       var lf = res[4] || {};

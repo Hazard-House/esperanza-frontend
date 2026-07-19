@@ -10,11 +10,13 @@
 (function () {
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
+  // API fetch with a timeout so a hung API rejects (into the .catch, baked cards stay).
+  var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
 
   var cards = document.querySelectorAll('[data-qmi-slug]');
   if (!cards.length) return;
 
-  fetch(API + '/qmi')
+  fetchT(API + '/qmi')
     .then(function (r) { return r.json(); })
     .then(function (res) {
       var homes = (res && res.homes) || [];
