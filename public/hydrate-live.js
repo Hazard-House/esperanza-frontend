@@ -22,7 +22,10 @@
     if (!raw) return;
     var f = raw.fields || raw;
     set('price', money(f.Price));
-    // availability + promo stay as BAKED (harvested from the live original at build;
-    // D1's availability_text/promo_text are known to drift from what O'Neill shows).
+    // Incentive/promo is now managed in the admin — D1's promo_text is the source of
+    // truth, so hydrate it live. The baked value is the frozen June harvest and goes
+    // stale the moment marketing changes an incentive. (Availability stays baked: it
+    // carries sale-gate logic and is known to drift from what the live original shows.)
+    set('promo', f.promo_text);
   }).catch(function () {});
 })();
