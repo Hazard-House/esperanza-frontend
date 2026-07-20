@@ -21,11 +21,11 @@
     var raw = (res.homes || []).filter(function (h) { return h.id === P.id; })[0];
     if (!raw) return;
     var f = raw.fields || raw;
+    // Hydrate every field the page marks data-live from D1 (the source of truth now):
+    // price, incentive/promo, and availability. The baked values are the frozen June
+    // harvest and go stale the moment marketing edits them in the admin.
     set('price', money(f.Price));
-    // Incentive/promo is now managed in the admin — D1's promo_text is the source of
-    // truth, so hydrate it live. The baked value is the frozen June harvest and goes
-    // stale the moment marketing changes an incentive. (Availability stays baked: it
-    // carries sale-gate logic and is known to drift from what the live original shows.)
     set('promo', f.promo_text);
+    set('availability', f.availability_text);
   }).catch(function () {});
 })();
