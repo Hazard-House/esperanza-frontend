@@ -118,8 +118,22 @@ const SEC = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 };
 
-export default {
-  async fetch(request, env) {
+// Sentry browser Loader Script. Injected as the FIRST <head> script on every HTML page so
+// it buffers errors before the page's other (static-scrape) scripts run. Loader (not npm)
+// because the frontend is static assets on a Worker — DSN + config live in the CDN bundle.
+const SENTRY_LOADER =
+  '<script src="https://js.sentry-cdn.com/c009f5391be2cc693451e1489dc3159c.min.js" crossorigin="anonymous"></script>';
+
+// One chokepoint: prepend the loader into <head> of every text/html response. Non-HTML
+// (API JSON, assets, redirects) passes through untouched.
+function withSentry(response) {
+  if (!(response.headers.get("content-type") || "").includes("text/html")) return response;
+  return new HTMLRewriter()
+    .on("head", { element(el) { el.prepend(SENTRY_LOADER, { html: true }); } })
+    .transform(response);
+}
+
+async function handle(request, env) {
     const url = new URL(request.url);
     const p = url.pathname;
 
@@ -336,5 +350,10 @@ export default {
       out.headers.set("Cache-Control", "public, max-age=300");
     }
     return out;
+}
+
+export default {
+  async fetch(request, env) {
+    return withSentry(await handle(request, env));
   },
 };
