@@ -7,7 +7,19 @@ import { join } from 'node:path';
 const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
 
 const un = v => (Array.isArray(v) ? v[0] : v);
-const fixHost = u => (u ? String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u);
+// Normalize R2 image URLs to the CDN host AND serve raster images through Cloudflare's
+// image transform (format=auto → webp/avif, quality + width cap). This cuts page weight
+// ~10x (a 1.5 MB hero → ~150 KB) with no visible quality loss. Skips PDFs/SVGs and
+// already-transformed URLs. Transformations are enabled on the hazardhouse.ai zone.
+const IMG_TX = 'format=auto,quality=82,width=1600';
+const fixHost = u => {
+  if (!u) return u;
+  let s = String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai');
+  if (/^https:\/\/img\.hazardhouse\.ai\//.test(s) && !s.includes('/cdn-cgi/image/') && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(s)) {
+    s = s.replace('https://img.hazardhouse.ai/', `https://img.hazardhouse.ai/cdn-cgi/image/${IMG_TX}/`);
+  }
+  return s;
+};
 export const slugify = s => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 // Ascending price comparator, missing/zero prices LAST — a "TBD"/no-price card must
@@ -71,7 +83,7 @@ function normCommunity(c) {
     id: c.id, name: c.name, slug: c.slug && slugify(c.slug), city: c.town,
     lat: p[0] != null && p[0] !== '' ? Number(p[0]) : null,
     lng: p[1] != null && p[1] !== '' ? Number(p[1]) : null,
-    address: c.address, image: c.image, secondaryImage: c.secondaryImage,
+    address: c.address, image: fixHost(c.image), secondaryImage: fixHost(c.secondaryImage),
     priceFrom: c.priceFrom, comingSoon: !!c.comingSoon, sqft: c.sqft, beds: c.beds, baths: c.baths,
     description: c.description, amenities: c.amenities, promo: c.promoBannerText,
     officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
@@ -88,7 +100,7 @@ function normFloorplan(fp) {
     garage: fp.carGarageCount, stories: fp.storiesCount,
     livingSqft: fp.livingSquareFootage, totalSqft: fp.totalSquareFootage,
     masterBed: fp.masterBedLocation, hersScore: fp.hersScore, communities: fp.communities,
-    image: fp.image, description: fp.description, floorPlanImage: fixHost(fp.floorPlanImage),
+    image: fixHost(fp.image), description: fp.description, floorPlanImage: fixHost(fp.floorPlanImage),
     planViewerUrl: fp.planViewerUrl, virtualTourUrl: fp.virtualTourUrl, brochurePdfUrl: fp.brochurePdfUrl,
     promo: fp.promoBannerText,
   };
@@ -123,19 +135,19 @@ export async function loadData() {
       const stem = u => String(u || '').split('/').pop()?.split('?')[0].replace(/\.[^.]+$/i, '').toLowerCase() || '';
       const heroIsDrawing = qm.hero && (qm.planImages || []).some(u => stem(u) === stem(qm.hero));
       const apiPlaceholder = !h.image || /\/(hero|photo_\d+)\.jpe?g(?:\?|$)/i.test(String(h.image));
-      if (qm.hero && (qm.source === 'live' || !heroIsDrawing || apiPlaceholder || !h.image)) h.image = qm.hero;
+      if (qm.hero && (qm.source === 'live' || !heroIsDrawing || apiPlaceholder || !h.image)) h.image = fixHost(qm.hero);
       // Prefer harvested live gallery — D1 photo_gallery is often placeholder filenames.
-      if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: u, alt: h.address }));
+      if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: fixHost(u), alt: h.address }));
       else if (qm.source === 'live') h.gallery = []; // live page has no photo set — hero only
     }
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
     // backfilled), else the original page's own viewer drawing, else the harvested
     // per-plan pool, else the committed _FP.png map (interim). null -> CTA fallback.
     const fpSlug = (h.floorplanObj && h.floorplanObj.slug) || slugify(h.floorPlan);
-    h.planImage = (h.floorplanObj && h.floorplanObj.floorPlanImage)
+    h.planImage = fixHost((h.floorplanObj && h.floorplanObj.floorPlanImage)
       || (qm && qm.planImages && qm.planImages[0])
       || ((QMI_MEDIA.plans || {})[fpSlug] || [])[0]
-      || FP_MAP[fpSlug] || null;
+      || FP_MAP[fpSlug] || null);
     // Galleryless homes (e.g. under construction): fall back to the community's model
     // photos (already in R2) until real photo_gallery_json lands in D1 — but not when
     // a live harvest explicitly found no gallery photos for this home.

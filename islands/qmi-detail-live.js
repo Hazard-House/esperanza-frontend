@@ -20,8 +20,15 @@
   };
 
   var un = function (v) { return Array.isArray(v) ? v[0] : v; };
+  var IMG_TX = 'format=auto,quality=82,width=1600';
   var fixHost = function (u) {
-    return u ? u.replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u;
+    if (!u) return u;
+    var s = String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai');
+    // Serve raster R2 images through Cloudflare's image transform (webp/avif + width cap) — ~10x smaller. Skip PDFs/SVGs.
+    if (/^https:\/\/img\.hazardhouse\.ai\//.test(s) && s.indexOf('/cdn-cgi/image/') === -1 && /\.(jpe?g|png|webp|avif)($|\?)/i.test(s)) {
+      s = s.replace('https://img.hazardhouse.ai/', 'https://img.hazardhouse.ai/cdn-cgi/image/' + IMG_TX + '/');
+    }
+    return s;
   };
   var money = function (n) { return '$' + Number(n || 0).toLocaleString('en-US'); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
