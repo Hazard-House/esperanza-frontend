@@ -129,6 +129,7 @@ export const REDIRECTS = {
  "/new-homes/tx/mcallen/cascada-at-tres-lagos/7147/6334-cascada-bend-road/110637/": "/new-homes/tx/mcallen/cascada-at-tres-lagos/",
  "/new-homes/tx/mcallen/harvest-coves/15176/4122-westway-court/1757466/": "/new-homes/tx/mcallen/harvest-coves/4122-westway-court/",
  "/new-homes/tx/mcallen/harvest-coves/15176/3916-westway-ave/1756057/": "/new-homes/tx/mcallen/harvest-coves/3916-westway-ave/",
+ "/new-homes/tx/mcallen/harvest-coves/15176/3909-westway-ave/1726567/": "/new-homes/tx/mcallen/harvest-coves/3909-westway-ave/",
  "/new-homes/tx/mcallen/cascada-at-tres-lagos/7147/6319-cascada-bend-road/101292/": "/new-homes/tx/mcallen/cascada-at-tres-lagos/",
  "/new-homes/tx/mcallen/harvest-coves/15176/3702-westway-court/1736778/": "/new-homes/tx/mcallen/harvest-coves/3702-westway-court/",
  "/new-homes/tx/mcallen/las-brisas-at-tres-lagos/16126/15405-n-brisas-st/1735536/": "/new-homes/tx/mcallen/las-brisas-at-tres-lagos/15405-n-brisas-st/",

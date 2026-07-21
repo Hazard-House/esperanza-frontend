@@ -208,6 +208,35 @@ export default {
       return env.ASSETS.fetch(new Request(new URL("/sitesearch-tag.json", request.url)));
     }
 
+    // Header search + oilib autocomplete: live D1 index from esperanza-api. Fall back
+    // to the baked static snapshot when the API endpoint isn't deployed yet.
+    if (p === "/sitesearch.json") {
+      const h = new Headers();
+      h.set("accept", "application/json");
+      h.set("origin", LIVE);
+      const sub = new Request(API + "/api/public/sitesearch.json" + url.search, {
+        method: request.method,
+        headers: h,
+        redirect: "manual",
+      });
+      let resp = env.API ? await env.API.fetch(sub) : null;
+      if (!resp || resp.status === 503) resp = await fetch(new Request(sub, { redirect: "manual" }));
+      if (resp.ok) {
+        const out = new Response(resp.body, resp);
+        out.headers.set("Content-Type", "application/json");
+        out.headers.set("Cache-Control", "public, s-maxage=60, max-age=30");
+        for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
+        return out;
+      }
+      const baked = await env.ASSETS.fetch(new Request(new URL("/sitesearch.json", request.url)));
+      if (baked.status === 200) {
+        const out = new Response(baked.body, baked);
+        out.headers.set("Cache-Control", "public, s-maxage=60, max-age=30");
+        for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
+        return out;
+      }
+    }
+
     // Lead-form endpoints: forward the POST to HubSpot; match live's 405 on other
     // methods. Frozen-snapshot XHRs (oicheck, recommend, filter/load-more) keep the
     // benign stub so page JS resolves quietly.

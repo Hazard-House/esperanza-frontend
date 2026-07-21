@@ -11,8 +11,16 @@
 
   function load() {
     if (DATA) return Promise.resolve(DATA);
-    if (!FETCHING) FETCHING = fetch('/sitesearch.json', { headers: { Accept: 'application/json' } })
-      .then(function (r) { return r.json(); }).then(function (d) { DATA = d || []; return DATA; });
+    if (!FETCHING) {
+      // Prefer live D1 index; fall back to baked /sitesearch.json (worker also proxies it).
+      var urls = ['/api/public/sitesearch.json', '/sitesearch.json'];
+      FETCHING = (function tryNext(i) {
+        if (i >= urls.length) return Promise.resolve([]);
+        return fetch(urls[i], { headers: { Accept: 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : tryNext(i + 1); })
+          .then(function (d) { DATA = d || []; return DATA; });
+      })(0);
+    }
     return FETCHING;
   }
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
