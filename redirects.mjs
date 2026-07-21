@@ -5,6 +5,10 @@ export const REDIRECTS = {
  // ── hand-curated (folded in from PR #13 per its note; keys don't overlap the generated set) ──
  // live QMI slug is "5315-moses-lp"; the generated mirror page uses the full street name
  "/new-homes/tx/laredo/wolf-creek/5315-moses-lp/": "/new-homes/tx/laredo/wolf-creek/5315-moses-loop/",
+ // Meadow Ridge moved cities in D1 (Calallen → Corpus Christi) but the scraped
+ // community pages still link to the old Calallen path, which is missing the map
+ // and has stale meta. 301 to the D1-correct Corpus Christi page (map + right meta).
+ "/new-homes/tx/calallen/meadow-ridge/": "/new-homes/tx/corpus-christi/meadow-ridge/",
  // retired blog slugs — live 301s both to the blog index
  "/blog/vista-verde-groundbreaking-new-homes-coming-to-laredo-tx/": "/blog/",
  "/blog/vista-verde-groundbreaking-ceremony-celebrates-new-community-coming-to-laredo/": "/blog/",

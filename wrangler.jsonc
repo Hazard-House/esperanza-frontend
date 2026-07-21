@@ -34,6 +34,11 @@
   // are repeated here. It reads from the same production API (fine for preview).
   "env": {
     "staging": {
+      // Named envs INHERIT the top-level `routes` unless overridden — without this
+      // empty override a `deploy --env staging` reassigns the prod custom domain
+      // (esperanzahomes.hazardhouse.ai) to the staging worker. This is the flip-flop
+      // that repeatedly "broke" prod. Keep staging on *.workers.dev only.
+      "routes": [],
       "workers_dev": true,
       "assets": {
         "directory": "./public",
