@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { qmiCardHtml } from './sections.mjs';
+import { qmiCardHtml, qmiSectionHtml } from './sections.mjs';
 import { slugify } from './data.mjs';
 import { rewriteCommon, freshBannerHtml } from './rewrite.mjs';
 
@@ -211,7 +211,13 @@ export function hydrateCommunity(html, c, d) {
     const homes = c.homes || [];
     const secStart = html.indexOf('<section id="specs"');
     if (secStart === -1) {
-      if (homes.length) miss(page, `qmi section (absent, ${homes.length} current homes)`);
+      if (homes.length) {
+        const insert = qmiSectionHtml(homes);
+        const anchor = html.indexOf('<section id="plans"');
+        const at = anchor !== -1 ? anchor : html.indexOf('<section id="sales"');
+        if (at !== -1) html = html.slice(0, at) + insert + '\n' + html.slice(at);
+        else miss(page, `qmi section insert point (absent, ${homes.length} current homes)`);
+      }
     } else {
       const secEnd = html.indexOf('</section>', secStart) + '</section>'.length;
       if (!homes.length) {
@@ -349,6 +355,10 @@ function demo() {
   // 0 homes -> whole Quick Move-Ins section removed
   out = hydrateCommunity(page, { ...c, homes: [] }, {});
   assert(!out.includes('id="specs"') && out.includes('id="plans"'), 'empty community drops qmi section only');
+  // absent section + current homes -> insert before plans
+  const noSpecs = page.replace('<section id="specs">', '<section id="removed">');
+  out = hydrateCommunity(noSpecs, c, {});
+  assert(out.includes('id="specs"') && out.includes('3706 Westway Court') && out.indexOf('id="specs"') < out.indexOf('id="plans"'), 'inserts qmi section when absent');
 
   const fp = { slug: 'agave', startingPrice: 451990, communityPrices: { 'Aqualina at Tres Lagos': 451990, 'Silos at La Sienna': 396990 } };
   const d = { communities: [{ slug: 'aqualina-at-tres-lagos', name: 'Aqualina at Tres Lagos', priceFrom: 333990 }] };

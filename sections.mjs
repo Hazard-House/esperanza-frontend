@@ -529,6 +529,11 @@ export function qmiCardHtml(h) {
     + `</div></div></div>`;
 }
 
+export function qmiSectionHtml(homes) {
+  if (!homes || !homes.length) return '';
+  return `<section id="specs" class="pagejump py-4 py-lg-5"><div class="container"><h2 class="bodoni text-gray fs-3 mb-4">Quick Move-Ins</h2><div class="row oi-listings">\n${homes.map(qmiCardHtml).join('\n')}\n</div></div></section>`;
+}
+
 export function planCardHtml(fp) {
   const url = floorplanPath(fp);
   const beds = fp.bedroomMin === fp.bedroomMax ? fp.bedroomMin : `${fp.bedroomMin}-${fp.bedroomMax}`;
