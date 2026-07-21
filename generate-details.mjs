@@ -101,6 +101,22 @@ export function rehydrateScrapedCommunities(d, { outDir = OUT } = {}) {
   return { updated, skipped, checked: paths.size };
 }
 
+// Communities with a scraped ID path in ship.txt ship 1:1 from the O'Neill page
+// (rescrape-community.mjs). CI must not overwrite their clean slug path with the
+// generated renderCommunity() template.
+function scrapedCommunitySkipSet(communities) {
+  const bySlug = new Map(communities.map(c => [c.slug, c]));
+  const skip = new Set();
+  if (!existsSync(SHIP_PATH)) return skip;
+  for (const rel of readFileSync(SHIP_PATH, 'utf8').split('\n').map(s => s.trim()).filter(Boolean)) {
+    const det = classifyDetail(rel);
+    if (det?.type !== 'community') continue;
+    const c = bySlug.get(det.slug);
+    if (c) skip.add(communityPath(c));
+  }
+  return skip;
+}
+
 // data + skip-sets are injectable so build.mjs can load the API once and skip
 // entities it already shipped as hydrated scrape copies (clean paths in the sets).
 export async function generateDetails(data, { skipCommunities, skipFloorplans } = {}) {
@@ -108,7 +124,7 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   const d = data || await loadData();
   // shell nav carries frozen June-8 "Coming Soon" badges — refresh from the API once
   const shell = hydrateCommunityStatus(readFileSync(SHELL_PATH, 'utf8'), d);
-  const skipC = skipCommunities || new Set();
+  const skipC = skipCommunities || scrapedCommunitySkipSet(d.communities);
   const skipF = skipFloorplans || new Set();
   for (const h of d.qmis) writePage(qmiPath(h), renderQmi(h, shell));
   let nc = 0, nf = 0;
