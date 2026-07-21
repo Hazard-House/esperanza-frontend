@@ -8,7 +8,8 @@ import { linksMap, qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
-import { hydrateCommunityStatus } from './hydrate-scraped.mjs';
+import { hydrateCommunity, hydrateCommunityStatus } from './hydrate-scraped.mjs';
+import { classifyDetail } from './build.mjs';
 
 const OUT = join(import.meta.dirname, 'public');
 const SHELL_PATH = join(import.meta.dirname, 'templates', 'detail-shell.html');
@@ -66,6 +67,40 @@ function stripIncentivesPages(publishedSlugs) {
   return total;
 }
 
+const SHIP_PATH = join(import.meta.dirname, 'ship.txt');
+
+// Scraped community ID paths (ship.txt …/<id>/index.html) keep the rich June-8 layout
+// but must be re-hydrated each build so Quick Move-In cards match live API data AND
+// sort low→high by price (same order as renderCommunity / data.mjs).
+export function rehydrateScrapedCommunities(d, { outDir = OUT } = {}) {
+  const bySlug = new Map(d.communities.map(c => [c.slug, c]));
+  const paths = new Map();
+  if (!existsSync(SHIP_PATH)) return { updated: 0, skipped: 0, checked: 0 };
+
+  for (const rel of readFileSync(SHIP_PATH, 'utf8').split('\n').map(s => s.trim()).filter(Boolean)) {
+    const det = classifyDetail(rel);
+    if (det?.type !== 'community') continue;
+    paths.set(rel, det.slug);
+    const c = bySlug.get(det.slug);
+    if (c) paths.set(communityPath(c).replace(/^\//, '') + 'index.html', det.slug);
+  }
+
+  let updated = 0, skipped = 0;
+  for (const [rel, slug] of paths) {
+    const c = bySlug.get(slug);
+    if (!c) { skipped++; continue; }
+    const file = join(outDir, rel);
+    if (!existsSync(file)) { skipped++; continue; }
+    const raw = readFileSync(file, 'utf8');
+    const html = hydrateCommunityStatus(hydrateCommunity(raw, c, d), d);
+    if (html !== raw) {
+      writeFileSync(file, html);
+      updated++;
+    }
+  }
+  return { updated, skipped, checked: paths.size };
+}
+
 // data + skip-sets are injectable so build.mjs can load the API once and skip
 // entities it already shipped as hydrated scrape copies (clean paths in the sets).
 export async function generateDetails(data, { skipCommunities, skipFloorplans } = {}) {
@@ -81,8 +116,9 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   for (const fp of d.floorplans) if (!skipF.has(floorplanPath(fp))) { writePage(floorplanPath(fp), renderFloorplan(fp, shell)); nf++; }
   writeFileSync(join(OUT, 'qmi-links.json'), JSON.stringify(linksMap(d.qmis, d.communities)));
   const strippedCards = stripIncentivesPages(new Set(d.qmis.map((h) => h.slug)));
-  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); stripped ${strippedCards} stale /incentives/ home cards`);
-  return { qmi: d.qmis.length, community: nc, floorplan: nf, strippedCards };
+  const { updated: rehydrated } = rehydrateScrapedCommunities(d);
+  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); rehydrated ${rehydrated} scraped community pages; stripped ${strippedCards} stale /incentives/ home cards`);
+  return { qmi: d.qmis.length, community: nc, floorplan: nf, strippedCards, rehydrated };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();

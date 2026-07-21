@@ -165,7 +165,7 @@ export async function loadData() {
       .sort(byPriceAsc(fp => fp.startingPrice));
   }
   for (const fp of floorplans) {
-    fp.homes = qmis.filter(h => h.floorPlanId === fp.id);
+    fp.homes = qmis.filter(h => h.floorPlanId === fp.id).sort(byPriceAsc(h => h.price));
     fp.communityList = Object.keys(fp.communityPrices).map(n => commByName.get(n.toLowerCase())).filter(Boolean);
   }
   return { qmis, communities, floorplans, settings: s, commById, commByName, fpById };
@@ -201,6 +201,8 @@ async function demo() {
   asc(cP.plans, fp => fp.startingPrice);
   const cH = d.communities.find(c => c.homes.length > 1);
   if (cH) asc(cH.homes, h => h.price);
+  const fpH = d.floorplans.find(fp => fp.homes.length > 1);
+  if (fpH) asc(fpH.homes, h => h.price);
   assert(byPriceAsc(x => x.p)({ p: null }, { p: 100 }) > 0, 'byPriceAsc: null sorts after a price');
   assert(byPriceAsc(x => x.p)({ p: 100 }, { p: 200 }) < 0, 'byPriceAsc: lower price first');
   assert(typeof slugify('El Edén!') === 'string' && slugify('El Eden') === 'el-eden', 'slugify');
