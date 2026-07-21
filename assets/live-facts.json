@@ -384,8 +384,8 @@
       "color": "tan"
     },
     "2622-paso-drive": {
-      "text": "Unlock Your $10K Flex Discount Now!",
-      "color": "tan"
+      "text": "4.99% 30 Year Fixed Rate*",
+      "color": "green"
     },
     "4417-pear-ave": {
       "text": "Unlock Your $15K Flex Discount Now!",
@@ -3176,8 +3176,8 @@
     },
     "2622-paso-drive": {
       "badge": {
-        "text": "Unlock Your $10K Flex Discount Now!",
-        "color": "tan"
+        "text": "4.99% 30 Year Fixed Rate*",
+        "color": "green"
       },
       "avail": {
         "text": "Available AUG/SEP 2026",
@@ -3186,13 +3186,13 @@
       "lot": "159",
       "selfTour": false,
       "stories": 2,
-      "mStd": 2898.92,
-      "mPromo": null
+      "mStd": 2909.43,
+      "mPromo": 2662.18
     },
     "paso-real/2622": {
       "badge": {
-        "text": "Unlock Your $10K Flex Discount Now!",
-        "color": "tan"
+        "text": "4.99% 30 Year Fixed Rate*",
+        "color": "green"
       },
       "avail": {
         "text": "Available AUG/SEP 2026",
@@ -3201,8 +3201,8 @@
       "lot": "159",
       "selfTour": false,
       "stories": 2,
-      "mStd": 2898.92,
-      "mPromo": null
+      "mStd": 2909.43,
+      "mPromo": 2662.18
     },
     "1000-w-star-flower-st": {
       "badge": null,
