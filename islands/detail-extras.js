@@ -5,14 +5,22 @@
 function monthlyPayment(price, opts) {
   opts = opts || {};
   var down = opts.down != null ? opts.down : 0.035;
-  var rate = (opts.rate != null ? opts.rate : 6.15) / 100 / 12;
+  var rate = (opts.rate != null ? opts.rate : 6.2) / 100 / 12;
   var n = (opts.term != null ? opts.term : 30) * 12;
+  var taxMult = opts.taxMult != null ? opts.taxMult : 2.2; // per-community property-tax %
   var principal = price * (1 - down);
   var pi = rate ? principal * rate / (1 - Math.pow(1 + rate, -n)) : principal / n;
-  var tax = price * 0.0207 / 12;
+  var tax = price * (taxMult / 100) / 12;
   var ins = price * 0.004 / 12;
   var pmi = down < 0.2 ? principal * 0.0075 / 12 : 0;
   return Math.round(pi + tax + ins + pmi);
+}
+// P&I only — the basis for "Savings Over 30 Years" (tax/ins/PMI are identical at either
+// rate and cancel out).
+function principalInterest(price, ratePct) {
+  var loan = price * (1 - 0.035);
+  var r = ratePct / 100 / 12;
+  return r ? loan * r / (1 - Math.pow(1 + r, -360)) : loan / 360;
 }
 
 // Floor-plan viewer zoom clamp (fallback viewer scales 1x-3x).
@@ -82,7 +90,8 @@ if (typeof window === 'undefined') {
         '<button type="button" class="btn btn-outline-green" data-term="15">15 Yr</button>' +
         '<button type="button" class="btn btn-outline-green active" data-term="30">30 Yr</button></div>' +
         '<div class="gray-box p-3"><div class="fs-9 text-brown">Estimated Monthly Payment</div>' +
-        '<div id="mort-calc-total" class="fs-3 bold text-dark-green mt-1">--</div></div>' +
+        '<div id="mort-calc-total" class="fs-3 bold text-dark-green mt-1">--</div>' +
+        '<div id="mort-calc-savings" class="fs-9 text-brown mt-1"></div></div>' +
         '</div></div></div></div></div>';
       document.body.appendChild(wrap.firstChild);
     }
@@ -91,18 +100,27 @@ if (typeof window === 'undefined') {
     if (calcResult && !document.querySelector('.oi-calc')) {
       var priceEl = document.querySelector('[data-live="price"]');
       var price = Number((priceEl && priceEl.textContent || '').replace(/[^0-9.]/g, '')) || 0;
-      // Prefer the authoritative monthly baked on the calc trigger (same figure the cards
-      // show); fall back to a client computation for homes with no harvested value.
       var trigger = document.querySelector('[data-bs-target="#payment-calculator"]');
-      var baked = Number(trigger && trigger.getAttribute('data-monthly')) || 0;
-      var rate = 6.15, term = 30;
+      // Live, not baked: per-community tax is baked (stable), but the monthly AND the
+      // "Savings Over 30 Years" compute from the company Settings rates below.
+      var taxMult = Number(trigger && trigger.getAttribute('data-tax')) || 2.2;
+      var savingEl = document.getElementById('calculator-promo-saving');   // under the price
+      var calcSaveEl = document.getElementById('mort-calc-savings');       // in the modal
+      var mortgageRate = 6.2, incentiveRate = 4.99, term = 30;
       var renderCalc = function () {
-        calcResult.textContent = baked ? money(Math.round(baked)) + '/mo'
-          : (price ? money(monthlyPayment(price, { rate: rate, term: term })) + '/mo' : '--');
+        if (!price) { calcResult.textContent = '--'; return; }
+        calcResult.textContent = money(monthlyPayment(price, { rate: mortgageRate, taxMult: taxMult, term: term })) + '/mo';
+        // 30-year savings = (standard P&I − incentive P&I) × 360.
+        var save = Math.round((principalInterest(price, mortgageRate) - principalInterest(price, incentiveRate)) * 360);
+        var savingTxt = save > 0 ? money(save) + ' Savings Over 30 Years' : '';
+        if (savingEl) { savingEl.textContent = savingTxt || 'Savings Over 30 Years'; }
+        if (calcSaveEl) { calcSaveEl.textContent = savingTxt; }
       };
       renderCalc();
       fetchT(API + '/settings').then(function (r) { return r.json(); }).then(function (d) {
-        rate = (d.settings && Number(d.settings.mortgage_rate)) || rate;
+        var s = d.settings || {};
+        if (Number(s.mortgage_rate)) mortgageRate = Number(s.mortgage_rate);
+        if (Number(s.incentive_rate)) incentiveRate = Number(s.incentive_rate);
         renderCalc();
       }).catch(function () {});
       var termGroup = document.getElementById('calc-term-group');

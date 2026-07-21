@@ -57,7 +57,7 @@ export function renderCommunity(c, shell) {
     description: `New homes in ${c.name}, ${c.city}, TX${c.priceFrom ? ` from ${money(c.priceFrom)}` : ''}.`,
     canonical: communityPath(c), image: c.image, url: communityPath(c),
   };
-  return finalizePage(shell, { content: communityContent(c), head, page: { type: 'community', id: c.id, communitySlug: c.slug || '' }, islands: ['detail-extras.js', 'community-maps-live.js', 'community-homes-live.js'] });
+  return finalizePage(shell, { content: communityContent(c), head, page: { type: 'community', id: c.id, communitySlug: c.slug || '' }, islands: ['detail-extras.js', 'community-maps-live.js', 'community-homes-live.js', 'community-copy-live.js'] });
 }
 
 function demo() {
