@@ -33,6 +33,12 @@
   var money = function (n) { return '$' + Number(n || 0).toLocaleString('en-US'); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var slugify = function (s) { return String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  // API promo_banner_style: "green" | "gold" → theme classes overlay-promo green | tan.
+  function promoBannerClass(style, text) {
+    if (style === 'green') return 'green';
+    if (style === 'gold') return 'tan';
+    return /flex/i.test(text || '') ? 'tan' : 'green';
+  }
 
   // qmi-links.json (built from the shipped pages) maps a home to its detail page.
   // Card -> the home-for-sale page (detail), where the "Download PDF" button lives.
@@ -74,6 +80,7 @@
       availableNow: f['Available Now'],
       moveInDate: f['Move-In Date'],
       promo: f.promo_text,
+      promoStyle: f.promo_banner_style,
       pdfUrl: f['Dynamic PDF'],
       lat: lat != null ? Number(lat) : null,
       lng: lng != null ? Number(lng) : null,
@@ -122,9 +129,9 @@
     var fact = factOf(h);
     var badge = fact.badge || FACTS.badges[slugify(h.address)];
     // Live, not baked: prefer the API incentive (h.promo = per-home incentive, else
-    // resolved promotion) over the frozen June-harvest badge; badge kept for color only.
+    // resolved promotion) over the frozen June-harvest badge. Color from API style.
     var promoText = h.promo || (badge ? badge.text : '');
-    var promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
+    var promoColor = promoBannerClass(h.promoStyle, promoText);
     var banners = '';
     if (promoText) banners += '<div class="banner overlay-promo ' + promoColor + '">' + esc(promoText) + '</div>';
     var availText = (fact.avail && fact.avail.text) || h.availability;
