@@ -44,12 +44,20 @@
       if (hn) hit = cf[slugify(f.Community) + '/' + hn[1]];
     }
     var badge = (hit && hit.badge) || (facts.badges || {})[slugify(f.address)];
-    var promoText = (badge && badge.text) || f.promo_text;
-    var promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
-    // Price + availability come from D1; promo uses harvested live-facts when present
-    // because fields.promo_text is often the generic site-wide flex-cash banner.
+    var harvestedPromos = Object.keys(facts.badges || {}).length > 0 || Object.keys(cf).length > 0;
+    // Price + availability come from D1. Promo prefers harvested live-facts because
+    // fields.promo_text is often the generic site-wide flex-cash banner. When staging
+    // strips badges/cardFacts (PREVIEW_SECRET) so the available grid previews API
+    // incentives, leave the baked detail promo alone — otherwise it flashes correct
+    // then jumps to the stale API flex-discount text on load.
     set('price', money(f.Price));
-    setPromo(promoText, promoColor);
+    if (badge) {
+      var promoText = badge.text;
+      setPromo(promoText, badge.color || (/flex discount/i.test(promoText || '') ? 'tan' : 'green'));
+    } else if (harvestedPromos) {
+      var apiPromo = f.promo_text;
+      setPromo(apiPromo, /flex discount/i.test(apiPromo || '') ? 'tan' : 'green');
+    }
     set('availability', f.availability_text);
   }).catch(function () {});
 })();
