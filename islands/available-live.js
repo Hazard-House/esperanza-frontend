@@ -121,7 +121,9 @@
     // site-wide banner, but render it anyway when there's no override.
     var fact = factOf(h);
     var badge = fact.badge || FACTS.badges[slugify(h.address)];
-    var promoText = badge ? badge.text : h.promo;
+    // Live, not baked: prefer the API incentive (h.promo = per-home incentive, else
+    // resolved promotion) over the frozen June-harvest badge; badge kept for color only.
+    var promoText = h.promo || (badge ? badge.text : '');
     var promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
     var banners = '';
     if (promoText) banners += '<div class="banner overlay-promo ' + promoColor + '">' + esc(promoText) + '</div>';
