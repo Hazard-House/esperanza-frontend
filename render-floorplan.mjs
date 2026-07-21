@@ -40,7 +40,11 @@ export function renderFloorplan(fp, shell) {
     description: `The ${fp.name} floor plan${fp.collection ? ` (${fp.collection} Collection)` : ''}${fp.startingPrice ? ` from ${money(fp.startingPrice)}` : ''}.`,
     canonical: floorplanPath(fp), image: fp.image, url: floorplanPath(fp),
   };
-  return finalizePage(shell, { content: floorplanContent(fp), head, page: { type: 'floorplan', id: fp.id, communitySlug: '' }, islands: ['detail-extras.js'] });
+  return finalizePage(shell, {
+    content: floorplanContent(fp), head,
+    page: { type: 'floorplan', id: fp.id, communitySlug: '' },
+    islands: ['detail-extras.js', ...(fp.homes?.length ? ['community-homes-live.js'] : [])],
+  });
 }
 
 function demo() {

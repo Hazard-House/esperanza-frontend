@@ -9,6 +9,7 @@ import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
 import { hydrateCommunity, hydrateCommunityStatus } from './hydrate-scraped.mjs';
+import { ensureCommunityHomesLive } from './rewrite.mjs';
 import { classifyDetail } from './build.mjs';
 
 const OUT = join(import.meta.dirname, 'public');
@@ -92,7 +93,8 @@ export function rehydrateScrapedCommunities(d, { outDir = OUT } = {}) {
     const file = join(outDir, rel);
     if (!existsSync(file)) { skipped++; continue; }
     const raw = readFileSync(file, 'utf8');
-    const html = hydrateCommunityStatus(hydrateCommunity(raw, c, d), d);
+    let html = hydrateCommunityStatus(hydrateCommunity(raw, c, d), d);
+    html = ensureCommunityHomesLive(html);
     if (html !== raw) {
       writeFileSync(file, html);
       updated++;

@@ -291,6 +291,13 @@ export function injectIsland(html, islandFile) {
   return html;
 }
 
+// Scraped community/floor-plan pages with baked QMI cards need the live reconciler
+// (prune sold homes + refresh promo text/color from the API).
+export function ensureCommunityHomesLive(html) {
+  if (!html.includes('data-qmi-slug')) return html;
+  return injectIsland(html, 'community-homes-live.js');
+}
+
 // Chrome shell for data-driven detail pages: rewritten page with the home-specific
 // region (first <section class="header"> up to <footer>) replaced by a marker.
 export function extractShell(rawHtml) {
