@@ -1,7 +1,7 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage, fmtLot, homeBadge } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage, fmtLot, homeBadge, factOf } from './sections.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -22,7 +22,12 @@ export function qmiContent(h) {
   const promoText = (badge && badge.text) || h.promo;
   const promoB = promoText ? `<div class="status-banner overlay-promo mt-2 align-top ${(badge && badge.color) || 'tan'}" data-live="promo">${esc(promoText)}</div>` : '';
   const saving = promoText ? `<p id="calculator-promo-saving" class="small mb-2">Savings Over 30 Years</p>` : '';
-  const header = `<section class="header text-center bg-tan-white pb-2 py-lg-4"><div class="container"><div class="row align-items-center"><div class="col-12 col-md-9"><div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div><h1 class="bodoni text-gray fs-1 ls-sm">${esc(h.address)}</h1>${fpLink}${commLink}${avail}${promoB}</div><div class="col-12 col-md-3"><div><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4" data-live="price">${money(h.price)}</div></div>${saving}<div><a data-bs-toggle="modal" data-bs-target="#payment-calculator"><div class="btn btn-auto btn-learn">Calculate Monthly Payment<img class="ms-auto mb-1" src="${GREEN_ARROW}" aria-hidden="true" loading="lazy" width="16"></div></a></div></div></div></div></section>`;
+  // Authoritative monthly = the same harvested value every QMI card shows (factOf.mStd),
+  // baked onto the calc trigger so the detail modal matches the cards to the cent. The
+  // client calc (detail-extras.js) uses this when present, else falls back to its formula.
+  const cf = factOf(h);
+  const monthly = cf.mStd != null ? cf.mStd : '';
+  const header = `<section class="header text-center bg-tan-white pb-2 py-lg-4"><div class="container"><div class="row align-items-center"><div class="col-12 col-md-9"><div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div><h1 class="bodoni text-gray fs-1 ls-sm">${esc(h.address)}</h1>${fpLink}${commLink}${avail}${promoB}</div><div class="col-12 col-md-3"><div><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4" data-live="price">${money(h.price)}</div></div>${saving}<div><a data-bs-toggle="modal" data-bs-target="#payment-calculator" data-monthly="${monthly}"><div class="btn btn-auto btn-learn">Calculate Monthly Payment<img class="ms-auto mb-1" src="${GREEN_ARROW}" aria-hidden="true" loading="lazy" width="16"></div></a></div></div></div></div></section>`;
 
   // --- Overview: description | stat-group + share + osc-callout; CTA row spans below ---
   const stats = [
