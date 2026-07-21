@@ -5,6 +5,10 @@
   "ports": [
     {
       "name": "Esperanza site",
+      "port": 3000
+    },
+    {
+      "name": "Esperanza site (legacy)",
       "port": 8787
     }
   ],
@@ -12,7 +16,7 @@
     {
       "name": "Dev server",
       "command": "npm run dev",
-      "description": "Serves public/ on port 8787 with Cursor-preview-safe asset paths."
+      "description": "Serves public/ on ports 3000 and 8787 with Cursor-preview-safe asset paths."
     }
   ]
 }

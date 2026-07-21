@@ -1,0 +1,14 @@
+{
+  "remote.autoForwardPorts": true,
+  "remote.autoForwardPortsSource": "process",
+  "remote.portsAttributes": {
+    "3000": {
+      "label": "Esperanza site",
+      "onAutoForward": "notify"
+    },
+    "8787": {
+      "label": "Esperanza site (legacy)",
+      "onAutoForward": "notify"
+    }
+  }
+}

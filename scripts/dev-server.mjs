@@ -7,9 +7,13 @@ import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
-const PORT = Number(process.env.PORT || 8787);
+const PORT = Number(process.env.PORT || 3000);
+const EXTRA_PORTS = (process.env.DEV_EXTRA_PORTS || '8787')
+  .split(',').map(s => Number(s.trim())).filter(n => n > 0 && n !== PORT);
+const ALL_PORTS = [PORT, ...EXTRA_PORTS];
 const API = 'https://esperanza-api.round-base-ed8c.workers.dev';
 const RX_MANGLED = /(%EF%B9%96|﹖)v=([A-Za-z0-9]+)\.(\w+)/;
+const TX_CITIES = 'brownsville|corpus-christi|edinburg|harlingen|laredo|mcallen|mercedes|mission|san-juan|weslaco';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -50,7 +54,6 @@ function resolveFile(urlPath) {
     if (existsSync(file)) return file;
   }
 
-  // Theme fonts are referenced as /fonts/* from CSS; files live under /static/.../fonts/.
   if (clean.startsWith('/fonts/')) {
     file = join(ROOT, 'static/esperanza_homes/fonts', clean.slice('/fonts/'.length));
     if (existsSync(file)) return file;
@@ -63,7 +66,6 @@ function resolveFile(urlPath) {
 }
 
 function patchDevHtml(html) {
-  // Strip ?v= from same-origin asset refs — Cursor preview drops query strings.
   let out = html.replace(/((?:href|src)="\/[^"?#]+)\?v=[A-Za-z0-9]+(")/g, '$1$2');
   if (!out.includes('name="dev-preview"')) {
     out = out.replace('</head>', '<meta name="dev-preview" content="bare-asset-paths"></head>');
@@ -87,9 +89,9 @@ function sendJson(res, body, status = 200) {
   res.end(JSON.stringify(body));
 }
 
-createServer(async (req, res) => {
+async function handler(req, res) {
   try {
-    const url = new URL(req.url || '/', `http://localhost:${PORT}`);
+    const url = new URL(req.url || '/', 'http://localhost');
     let path = decodeURIComponent(url.pathname);
 
     if (path.startsWith('/api/')) {
@@ -109,6 +111,20 @@ createServer(async (req, res) => {
       return;
     }
 
+    const navComm = path.match(new RegExp(`^/(${TX_CITIES})/([^/]+)/(\\d+)/?$`));
+    if (navComm) {
+      const dest = `/new-homes/tx/${navComm[1]}/${navComm[2]}/${navComm[3]}/`;
+      res.writeHead(301, { Location: dest, 'Cache-Control': 'no-store' });
+      res.end();
+      log(req, 301, `nav -> ${dest}`);
+      return;
+    }
+
+    if (path === '/__dev/health') {
+      sendJson(res, { ok: true, ports: ALL_PORTS, root: ROOT });
+      return;
+    }
+
     path = path.replace(RX_MANGLED, (_, _q, hash, ext) => `﹖v=${hash}.${ext}`);
 
     const file = resolveFile(path);
@@ -122,7 +138,6 @@ createServer(async (req, res) => {
     const ext = extname(file).toLowerCase();
     const type = MIME[ext] || 'application/octet-stream';
     let body = readFileSync(file);
-
     if (ext === '.html') body = Buffer.from(patchDevHtml(body.toString('utf8')), 'utf8');
 
     res.writeHead(200, {
@@ -137,14 +152,17 @@ createServer(async (req, res) => {
     res.writeHead(500);
     res.end('Server error');
   }
-}).listen(PORT, '0.0.0.0', () => {
-  console.log('');
-  console.log('════════════════════════════════════════════════════════');
-  console.log(`  Esperanza preview: http://localhost:${PORT}/`);
-  console.log('  Forward port 8787 in Cursor (plug icon) if the preview');
-  console.log('  window is blank, then open that URL in Simple Browser.');
-  console.log('════════════════════════════════════════════════════════');
-  console.log(`Static root: ${ROOT}`);
-  console.log('Rebuild after edits: npm run build');
-  console.log('');
-});
+}
+
+console.log('');
+console.log('════════════════════════════════════════════════════════');
+console.log('  Esperanza local preview');
+console.log(`  Static root: ${ROOT}`);
+console.log('  Edit public/ → refresh. Edit generators → npm run generate');
+console.log('════════════════════════════════════════════════════════');
+
+for (const port of ALL_PORTS) {
+  createServer(handler).listen(port, '0.0.0.0', () => {
+    console.log(`  http://localhost:${port}/  (health: /__dev/health)`);
+  });
+}

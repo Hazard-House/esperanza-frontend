@@ -2,7 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-export PORT="${PORT:-8787}"
+export PORT="${PORT:-3000}"
+export DEV_EXTRA_PORTS="${DEV_EXTRA_PORTS:-8787}"
 
 if [[ ! -f public/index.html ]]; then
   echo "public/index.html is missing. Run: npm run build" >&2
