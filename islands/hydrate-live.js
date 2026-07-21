@@ -75,5 +75,26 @@
     } else {
       fillSavings('');
     }
+    // Self-tour callout (PR #69): show when the home is self-tourable + has an NterNow link.
+    var sec = document.getElementById('self-tour-callout');
+    var show = !!(f.self_tour_available && f.nter_now);
+    if (show) {
+      if (!sec) {
+        var ov = document.getElementById('overview');
+        if (ov) {
+          var wrap = document.createElement('div');
+          wrap.innerHTML = '<section id="self-tour-callout" class="bg-light pb-2 pb-md-0 pt-5 text-center bg-tan-white" data-live="self-tour"><div class="container"><div class="align-items-center row justify-content-md-center"><div class="col-lg-7 ml-auto mr-auto"><div class="mobile-container"><h2 class="font-weight-bold mb-2">Tour This Home Today — On Your Terms</h2><p>Schedule a self-guided tour in just a few clicks.</p><div class="mx-auto decoration-bar-gold brown-bar mt-4 mb-4"></div><a href="" class="btn btn-primary m-2" target="_blank" rel="noopener" data-live="nter-now">Self-Tour</a></div></div></div></div></section>';
+          sec = wrap.firstElementChild;
+          ov.parentNode.insertBefore(sec, ov);
+        }
+      }
+      if (sec) {
+        sec.style.display = '';
+        var link = sec.querySelector('[data-live="nter-now"]');
+        if (link) link.href = f.nter_now;
+      }
+    } else if (sec) {
+      sec.style.display = 'none';
+    }
   }).catch(function () {});
 })();

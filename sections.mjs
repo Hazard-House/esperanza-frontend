@@ -20,6 +20,13 @@ export function taxMultFor(h) {
   return (FACTS.taxMult || {})[slugify(s)] || 2.2;
 }
 
+// API promo_banner_style: "green" | "gold" → theme classes overlay-promo green | tan.
+export function promoBannerClass(style, text) {
+  if (style === 'green') return 'green';
+  if (style === 'gold') return 'tan';
+  return /flex/i.test(text || '') ? 'tan' : 'green';
+}
+
 // Full per-home card facts as the live original renders them (badge, availability
 // text/color, verbatim lot, stories, self-tour, exact monthlies). Address slug
 // first; "<community>/<housenumber>" absorbs street-suffix slug differences.
@@ -181,6 +188,13 @@ export function subnavHtml(anchors) {
     ? `<a class="col" data-fancybox-trigger="photos" role="button">${it.label}</a>`
     : `<a href="${it.href}" class="col on-scroll${it.active ? ' active' : ''}">${it.label}</a>`).join('');
   return `<div class="subnav"><div class="dropdown d-block d-lg-none"><button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Go To...</button><ul class="dropdown-menu">${dropdown}</ul></div><div id="desktop-menu" class="row subnav text-center d-none d-lg-flex">${desktop}</div></div>`;
+}
+
+// Self-guided tour promo — live inserts this section immediately before #overview
+// when self_tour_available + nter_now are set on the home record.
+export function selfTourCalloutHtml(nterNow) {
+  if (!nterNow) return '';
+  return `<section id="self-tour-callout" class="bg-light pb-2 pb-md-0 pt-5 text-center bg-tan-white" data-live="self-tour"><div class="container"><div class="align-items-center row justify-content-md-center"><div class="col-lg-7 ml-auto mr-auto"><div class="mobile-container"><h2 class="font-weight-bold mb-2">Tour This Home Today — On Your Terms</h2><p>Schedule a self-guided tour in just a few clicks.</p><div class="mx-auto decoration-bar-gold brown-bar mt-4 mb-4"></div><a href="${esc(nterNow)}" class="btn btn-primary m-2" target="_blank" rel="noopener" data-live="nter-now">Self-Tour</a></div></div></div></div></section>`;
 }
 
 export function tourHtml(url, home = {}) {
@@ -453,11 +467,11 @@ export function mortgageCalcModalHtml(h) {
 // aspect, no map data-attrs). Same anatomy as islands/available-live.js cardHTML.
 export function qmiCardHtml(h) {
   const url = qmiPath(h);
-  // Per-home badge harvested from the live site wins over the (often site-wide) promo_text.
+  // Live API promo_text + promo_banner_style are authoritative; cardFacts badge is fallback only.
   const fact = factOf(h);
   const badge = fact.badge || (FACTS.badges || {})[slugify(h.address)];
-  const promoText = badge ? badge.text : h.promo;
-  const promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
+  const promoText = h.promo || (badge ? badge.text : '');
+  const promoColor = promoBannerClass(h.promoStyle, promoText);
   let banners = '';
   if (promoText) banners += `<div class="banner overlay-promo ${promoColor}">${esc(promoText)}</div>`;
   const availText = (fact.avail && fact.avail.text) || h.availability;
