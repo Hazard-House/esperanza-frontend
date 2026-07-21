@@ -218,8 +218,15 @@ export function hydrateCommunity(html, c, d) {
         html = html.slice(0, secStart) + html.slice(secEnd);
       } else {
         const sec = html.slice(secStart, secEnd);
-        const listOpen = '<div class="row oi-listings mt-3 g-2">';
-        const li = sec.indexOf(listOpen);
+        const listPatterns = [
+          '<div class="row oi-listings mt-3 g-2">',
+          '<div class="row oi-listings">',
+        ];
+        let li = -1, listOpen = '';
+        for (const p of listPatterns) {
+          const i = sec.indexOf(p);
+          if (i !== -1 && (li === -1 || i < li)) { li = i; listOpen = p; }
+        }
         if (li === -1) miss(page, 'qmi listings container');
         else {
           // Everything after the listings open tag is cards + the three closes
