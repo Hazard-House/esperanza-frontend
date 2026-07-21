@@ -177,6 +177,13 @@ export function subnavHtml(anchors) {
   return `<div class="subnav"><div class="dropdown d-block d-lg-none"><button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Go To...</button><ul class="dropdown-menu">${dropdown}</ul></div><div id="desktop-menu" class="row subnav text-center d-none d-lg-flex">${desktop}</div></div>`;
 }
 
+// Self-guided tour promo — live inserts this section immediately before #overview
+// when self_tour_available + nter_now are set on the home record.
+export function selfTourCalloutHtml(nterNow) {
+  if (!nterNow) return '';
+  return `<section id="self-tour-callout" class="bg-light pb-2 pb-md-0 pt-5 text-center bg-tan-white" data-live="self-tour"><div class="container"><div class="align-items-center row justify-content-md-center"><div class="col-lg-7 ml-auto mr-auto"><div class="mobile-container"><h2 class="font-weight-bold mb-2">Tour This Home Today — On Your Terms</h2><p>Schedule a self-guided tour in just a few clicks.</p><div class="mx-auto decoration-bar-gold brown-bar mt-4 mb-4"></div><a href="${esc(nterNow)}" class="btn btn-primary m-2" target="_blank" rel="noopener" data-live="nter-now">Self-Tour</a></div></div></div></div></section>`;
+}
+
 export function tourHtml(url, home = {}) {
   if (!url) return '';
   const mid = (String(url).match(/[?&]m=([^&]+)/) || [])[1] || '';

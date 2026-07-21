@@ -1,7 +1,7 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, factOf, promoBannerClass } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, selfTourCalloutHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, factOf, promoBannerClass } from './sections.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -72,12 +72,14 @@ export function qmiContent(h) {
   // Schedule-form thumbnail: an interior photo (2nd+ gallery image), not the
   // sales-office exterior.
   const interior = (h.gallery[1] && h.gallery[1].url) || (h.gallery[0] && h.gallery[0].url) || c.image;
+  const selfTour = h.selfTourAvailable && h.nterNow ? selfTourCalloutHtml(h.nterNow) : '';
 
   return [
     header,
     galleryHtml(h.gallery, h.image, h.address),
     subnavHtml(anchors),
     mobileGalleryBarHtml(hasPhotos),
+    selfTour,
     overview,
     has.tour && tourHtml(h.virtualTourUrl, h),
     has.elev && elevationHtml(h.elevation, h.image),
@@ -141,6 +143,10 @@ function demo() {
   assert(!g0.slice(g0.indexOf('id="overview"'), g0.indexOf('id="virtualtour"')).includes('Car Garage'), 'garage 0 omitted');
   const one = qmiContent({ ...h, gallery: [{ url: '/1.jpg', alt: '' }] });
   assert(!one.includes('Photo Gallery') && !one.includes('data-fancybox="photos"') && !one.includes('View Photo Gallery'), '1-photo home hides gallery + anchor');
+  const st = qmiContent({ ...h, selfTourAvailable: true, nterNow: 'https://www.webflow.nternow.com/EsperanzaHomes/property/50036' });
+  assert(st.includes('id="self-tour-callout"') && st.includes('Tour This Home Today') && st.includes('property/50036'), 'self-tour callout');
+  assert(st.indexOf('id="self-tour-callout"') < st.indexOf('id="overview"'), 'self-tour before overview');
+  assert(!qmiContent(h).includes('id="self-tour-callout"'), 'no self-tour without flags');
   const page = renderQmi(h, '<head><title>x</title></head><body><!--CONTENT--></body>');
   assert(page.includes('hydrate-live.js') && page.includes('community-maps-live.js') && page.includes('__ESPERANZA_PAGE'), 'islands+config');
   assert(page.includes('<title>5131 Carambola Ln, Laredo, TX New Home for Sale | Esperanza Homes</title>'), 'live-format SEO title');
