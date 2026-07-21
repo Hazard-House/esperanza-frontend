@@ -1,7 +1,7 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, homeBadge, factOf } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, factOf, promoBannerClass } from './sections.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -18,12 +18,9 @@ export function qmiContent(h) {
   const fpLink = h.floorPlan ? `<div class="d-block text-brown"><a href="${esc(fpHref)}" class="text-brown">${esc(h.floorPlan)} Floor Plan</a></div>` : '';
   const commLink = h.community ? `<div class="d-block"><a href="${esc(commHref)}" class="text-brown">${esc(h.community)}${h.city ? ` in ${esc(h.city)}, TX` : ''}</a></div>` : '';
   const avail = h.availability ? `<div class="status-banner gray mt-2 align-top" data-live="availability">${esc(h.availability)}</div>` : '';
-  const badge = homeBadge(h);
-  // Live, not baked: the incentive banner is the API's promo_text (= the home's own
-  // incentive, else its resolved promotion), NEVER the frozen June-harvest badge. The
-  // harvested badge is only kept for its color hint below. hydrate-live keeps it live.
+  // Live, not baked: hydrate-live.js refreshes text + color from promo_banner_style.
   const promoText = h.promo;
-  const promoB = promoText ? `<div class="status-banner overlay-promo mt-2 align-top ${(badge && badge.color) || 'tan'}" data-live="promo">${esc(promoText)}</div>` : '';
+  const promoB = promoText ? `<div class="status-banner overlay-promo mt-2 align-top ${promoBannerClass(h.promoStyle, promoText)}" data-live="promo">${esc(promoText)}</div>` : '';
   const saving = promoText ? `<p id="calculator-promo-saving" class="small mb-2">Savings Over 30 Years</p>` : '';
   // Authoritative monthly = the same harvested value every QMI card shows (factOf.mStd),
   // baked onto the calc trigger so the detail modal matches the cards to the cent. The

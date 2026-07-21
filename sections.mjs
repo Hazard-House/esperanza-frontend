@@ -13,6 +13,13 @@ import { freshBannerHtml } from './rewrite.mjs';
 // just the site-wide banner) — {text, color} or null.
 export function homeBadge(h) { return (FACTS.badges || {})[slugify(h.address)] || null; }
 
+// API promo_banner_style: "green" | "gold" → theme classes overlay-promo green | tan.
+export function promoBannerClass(style, text) {
+  if (style === 'green') return 'green';
+  if (style === 'gold') return 'tan';
+  return /flex/i.test(text || '') ? 'tan' : 'green';
+}
+
 // Full per-home card facts as the live original renders them (badge, availability
 // text/color, verbatim lot, stories, self-tour, exact monthlies). Address slug
 // first; "<community>/<housenumber>" absorbs street-suffix slug differences.
@@ -439,11 +446,11 @@ export function mortgageCalcModalHtml(h) {
 // aspect, no map data-attrs). Same anatomy as islands/available-live.js cardHTML.
 export function qmiCardHtml(h) {
   const url = qmiPath(h);
-  // Per-home badge harvested from the live site wins over the (often site-wide) promo_text.
+  // Live API promo_text + promo_banner_style are authoritative; cardFacts badge is fallback only.
   const fact = factOf(h);
   const badge = fact.badge || (FACTS.badges || {})[slugify(h.address)];
-  const promoText = badge ? badge.text : h.promo;
-  const promoColor = badge ? badge.color : (/flex discount/i.test(promoText || '') ? 'tan' : 'green');
+  const promoText = h.promo || (badge ? badge.text : '');
+  const promoColor = promoBannerClass(h.promoStyle, promoText);
   let banners = '';
   if (promoText) banners += `<div class="banner overlay-promo ${promoColor}">${esc(promoText)}</div>`;
   const availText = (fact.avail && fact.avail.text) || h.availability;

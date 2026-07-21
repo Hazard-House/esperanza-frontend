@@ -1,41 +1,61 @@
-/* community-homes-live — remove statically-baked Quick-Move-In cards for homes that are
- * no longer published (sold or unpublished).
+/* community-homes-live — reconcile baked Quick-Move-In cards on community (and
+ * floor-plan) detail pages against the live public API.
  *
- * The community page's card grid is baked at BUILD time from the published-gated API.
- * Admin unpublish only purges the API edge cache; it does NOT rebuild this static site,
- * so a formerly-live home (including homes auto-unpublished when they sell) can linger on
- * the community page until the next deploy. This re-checks the gated /api/public/qmi on
- * load and drops any baked card whose home is no longer in the published set, so
- * sold/unpublished homes disappear immediately. Config is window.__ESPERANZA. */
+ * 1. Drop cards for homes no longer published (sold/unpublished).
+ * 2. Refresh promo banner text + frame color from promo_text / promo_banner_style
+ *    (green for 4.99% rate promos, gold/tan for Flex discounts).
+ *
+ * Config is window.__ESPERANZA. */
 (function () {
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
-  // API fetch with a timeout so a hung API rejects (into the .catch, baked cards stay).
   var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
 
   var cards = document.querySelectorAll('[data-qmi-slug]');
   if (!cards.length) return;
 
+  function promoBannerClass(style, text) {
+    if (style === 'green') return 'green';
+    if (style === 'gold') return 'tan';
+    return /flex/i.test(text || '') ? 'tan' : 'green';
+  }
+
+  function patchPromo(card, f) {
+    var promoEl = card.querySelector('.banner.overlay-promo');
+    if (!f.promo_text) {
+      if (promoEl && promoEl.parentNode) promoEl.parentNode.removeChild(promoEl);
+      return;
+    }
+    if (!promoEl) return;
+    promoEl.textContent = f.promo_text;
+    var color = promoBannerClass(f.promo_banner_style, f.promo_text);
+    promoEl.classList.remove('green', 'tan');
+    promoEl.classList.add(color);
+  }
+
   fetchT(API + '/qmi')
     .then(function (r) { return r.json(); })
     .then(function (res) {
       var homes = (res && res.homes) || [];
-      // Never reconcile against an empty/failed response — that would wrongly nuke the
-      // whole grid. Only prune when we have a usable published set.
       if (!homes.length) return;
 
-      var live = {};
+      var bySlug = {};
       for (var i = 0; i < homes.length; i++) {
         var f = homes[i].fields || homes[i];
-        if (f && f.slug) live[f.slug] = true;
+        if (f && f.slug) bySlug[f.slug] = f;
       }
 
       cards.forEach(function (card) {
         var slug = card.getAttribute('data-qmi-slug');
-        if (slug && !live[slug] && card.parentNode) card.parentNode.removeChild(card);
+        if (!slug) return;
+        var f = bySlug[slug];
+        if (!f) {
+          if (card.parentNode) card.parentNode.removeChild(card);
+          return;
+        }
+        patchPromo(card, f);
       });
 
-      // If the grid is now empty, hide the whole "Quick Move-Ins" section.
       var grid = document.querySelector('.oi-listings');
       if (grid && !grid.querySelector('[data-qmi-slug]')) {
         var sec = document.getElementById('specs');

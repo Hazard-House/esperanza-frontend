@@ -13,7 +13,7 @@ import assert from 'node:assert';
 import { execSync } from 'node:child_process';
 import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, copyFileSync, readdirSync, statSync, lstatSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland } from './rewrite.mjs';
+import { API_BASE, MAPBOX_TOKEN, STYLE_HOME, STYLE_COMMON_URL, PUBLIC_STYLE, NOINDEX, rewriteCommon, injectIsland, ensureCommunityHomesLive } from './rewrite.mjs';
 import { generateDetails } from './generate-details.mjs';
 import { loadData } from './data.mjs';
 import { communityPath, floorplanPath } from './paths.mjs';
@@ -223,9 +223,9 @@ async function build() {
           && !/master-planned/.test(c.slug || '')
           && !raw.includes('Starting at $');
         if (staleVariant) console.log(`community ${c.slug}: scraped page is the coming-soon variant but API prices it — using generated page`);
-        const html = staleVariant
+        const html = ensureCommunityHomesLive(staleVariant
           ? renderCommunity(c, detailShell)
-          : bakeRecommend(swapCommunityBanner(hydrateCommunity(rewriteCommon(raw), c, d), rel), rel);
+          : bakeRecommend(swapCommunityBanner(hydrateCommunity(rewriteCommon(raw), c, d), rel), rel));
         writeOut(rel, html); // scraped ID path
         writeOut(communityPath(c).replace(/^\//, '') + 'index.html', html); // clean path
         scrapedCommunities.add(communityPath(c));
