@@ -12,8 +12,7 @@ function monthlyPayment(price, opts) {
   var tax = price * 0.0207 / 12;
   var ins = price * 0.004 / 12;
   var pmi = down < 0.2 ? principal * 0.0075 / 12 : 0;
-  var hoa = 360 / 12;
-  return Math.round(pi + tax + ins + pmi + hoa);
+  return Math.round(pi + tax + ins + pmi);
 }
 
 // Floor-plan viewer zoom clamp (fallback viewer scales 1x-3x).
@@ -29,7 +28,7 @@ if (typeof window === 'undefined') {
     var check = function (cond, msg) { if (!cond) throw new Error(msg); };
     var m = monthlyPayment(300000, { rate: 6.15 });
     check(m > 2200 && m < 2900, 'monthlyPayment ~2600, got ' + m);
-    check(monthlyPayment(0) === 30, 'zero price -> hoa only, got ' + monthlyPayment(0));
+    check(monthlyPayment(0) === 0, 'zero price -> zero (no phantom HOA), got ' + monthlyPayment(0));
     check(clampZoom(0.5) === 1 && clampZoom(2) === 2 && clampZoom(9) === 3, 'clampZoom 1..3');
     console.log('detail-extras.js demo() passed: $' + m + '/mo on $300k @6.15%');
   }
@@ -93,8 +92,15 @@ if (typeof window === 'undefined') {
     if (calcResult) {
       var priceEl = document.querySelector('[data-live="price"]');
       var price = Number((priceEl && priceEl.textContent || '').replace(/[^0-9.]/g, '')) || 0;
+      // Prefer the authoritative monthly baked on the calc trigger (same figure the cards
+      // show); fall back to a client computation for homes with no harvested value.
+      var trigger = document.querySelector('[data-bs-target="#payment-calculator"]');
+      var baked = Number(trigger && trigger.getAttribute('data-monthly')) || 0;
       var rate = 6.15, term = 30;
-      var renderCalc = function () { calcResult.textContent = price ? money(monthlyPayment(price, { rate: rate, term: term })) + '/mo' : '--'; };
+      var renderCalc = function () {
+        calcResult.textContent = baked ? money(Math.round(baked)) + '/mo'
+          : (price ? money(monthlyPayment(price, { rate: rate, term: term })) + '/mo' : '--');
+      };
       renderCalc();
       fetchT(API + '/settings').then(function (r) { return r.json(); }).then(function (d) {
         rate = (d.settings && Number(d.settings.mortgage_rate)) || rate;
