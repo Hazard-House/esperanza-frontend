@@ -1,6 +1,7 @@
 /* sitesearch-live.js — header search for pages where oilib is disabled (islands own
  * those pages, so oilib's autocomplete never runs). Replicates oilib's dropdown 1:1
- * against the same /sitesearch.json data and the baked autocomplete_wrapper markup:
+ * against the live /api/public/sitesearch.json index (falls back to baked
+ * /sitesearch.json; the worker also proxies that path to the API).
  * a results-summary <p> plus up to 5 highlighted result items.
  * ponytail: substring match ranked by position (oilib adds fuzzy ranking; add it only
  * if someone misses it). */
