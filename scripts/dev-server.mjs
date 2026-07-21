@@ -138,7 +138,13 @@ createServer(async (req, res) => {
     res.end('Server error');
   }
 }).listen(PORT, '0.0.0.0', () => {
-  console.log(`Dev server at http://localhost:${PORT} (bare asset paths, /fonts alias)`);
+  console.log('');
+  console.log('════════════════════════════════════════════════════════');
+  console.log(`  Esperanza preview: http://localhost:${PORT}/`);
+  console.log('  Forward port 8787 in Cursor (plug icon) if the preview');
+  console.log('  window is blank, then open that URL in Simple Browser.');
+  console.log('════════════════════════════════════════════════════════');
   console.log(`Static root: ${ROOT}`);
   console.log('Rebuild after edits: npm run build');
+  console.log('');
 });
