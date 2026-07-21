@@ -66,11 +66,10 @@ if (typeof window === 'undefined') {
 
     // render-qmi's hero links to data-bs-target="#payment-calculator", but the shell
     // template has no such modal (it's only in the legacy static scrape, as a full
-    // jQuery oicalc widget). Inject a minimal one so the trigger has somewhere to go.
-    // ponytail: price + term only (no tax/PMI/HOA inputs like the legacy widget) —
-    // add fields if users need to tweak them beyond the term toggle.
+    // jQuery oicalc widget). Inject a minimal one so the trigger has somewhere to go
+    // when the page lacks the full OiCalc modal (e.g. floor-plan pages).
     var calcTrigger = document.querySelector('[data-bs-target="#payment-calculator"]');
-    if (calcTrigger && !document.getElementById('payment-calculator')) {
+    if (calcTrigger && !document.getElementById('payment-calculator') && !document.querySelector('.oi-calc')) {
       var wrap = document.createElement('div');
       wrap.innerHTML = '<div class="modal fade rounded" id="payment-calculator" tabindex="-1" aria-labelledby="payment-calculator-label" aria-hidden="true">' +
         '<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">' +
@@ -89,7 +88,7 @@ if (typeof window === 'undefined') {
     }
 
     var calcResult = document.getElementById('mort-calc-total');
-    if (calcResult) {
+    if (calcResult && !document.querySelector('.oi-calc')) {
       var priceEl = document.querySelector('[data-live="price"]');
       var price = Number((priceEl && priceEl.textContent || '').replace(/[^0-9.]/g, '')) || 0;
       // Prefer the authoritative monthly baked on the calc trigger (same figure the cards
@@ -113,6 +112,12 @@ if (typeof window === 'undefined') {
         Array.prototype.forEach.call(termGroup.children, function (b) { b.classList.toggle('active', b === btn); });
         renderCalc();
       });
+    }
+
+    // Open the calculator modal when arriving via #mortgage-calculator (card links).
+    if (location.hash === '#mortgage-calculator') {
+      var calcModal = document.getElementById('payment-calculator');
+      if (calcModal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(calcModal).show();
     }
 
     // ponytail: the old #recommended QMI-card hydration is gone — generated pages now

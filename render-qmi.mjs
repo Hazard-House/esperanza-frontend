@@ -1,7 +1,7 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, setHead, finalizePage, fmtLot, homeBadge, factOf } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, homeBadge, factOf } from './sections.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -88,6 +88,7 @@ export function qmiContent(h) {
     has.sales && mapSalesHtml({ ...c, zip: c.zip || h.postalCode }),
     formSlotHtml('tour', { address: h.address, image: interior }),
     recommendedHtml(recPlans, c.name),
+    mortgageCalcModalHtml(h),
   ].filter(Boolean).join('\n');
 }
 
@@ -133,6 +134,7 @@ function demo() {
   // Schedule-form thumbnail = interior photo (2nd gallery image), not the sales office.
   const formSec = out.slice(out.indexOf('id="request-a-tour"'));
   assert(formSec.includes('/2.jpg') && !formSec.includes('/c.jpg'), 'form interior thumbnail');
+  assert(out.includes('id="payment-calculator"') && out.includes('class="oi-calc"') && out.includes('OiCalc.Mortgage'), 'mortgage calc modal');
   assert(!out.includes('<!--CONTENT-->') && !/undefined|NaN/.test(out), 'no leftover markers/undefined/NaN');
   // garage 0 -> overview spec row omitted (live rule); 1-photo home -> no gallery affordance
   const g0 = qmiContent({ ...h, garage: 0 });
