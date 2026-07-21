@@ -50,7 +50,8 @@
   function isCommunityListingPage() {
     if (PAGE.type === 'community') return true;
     var parts = location.pathname.replace(/^\/+|\/+$/g, '').split('/');
-    return parts[0] === 'new-homes' && parts[1] === 'tx' && parts.length === 4;
+    if (parts[0] !== 'new-homes' || parts[1] !== 'tx') return false;
+    return parts.length === 4 || (parts.length === 5 && /^\d+$/.test(parts[4]));
   }
 
   var LINKS = { qmi: {} };
@@ -151,9 +152,10 @@
       var inner;
       if (promoRate && Number(promoRate) < RATE) {
         var pm = monthlyPayment(h.price, Number(promoRate), tax);
+        var savings = (m - pm) * 360;
         inner = '<span class="fs-9 overpass bold text-green">$' + pm.toFixed(2) + '/mo*</span>' +
           '<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="' + m.toFixed(2) + '">$' + m.toFixed(2) + '/mo*</span>' +
-          '<p class="fs-9 overpass bold text-green mb-1">$' + (m - pm).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years</p>';
+          '<p class="fs-9 overpass bold text-green mb-1">$' + savings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years</p>';
       } else {
         inner = '<span class="estimated-price fs-9 overpass bold text-green" data-price="' + m + '">$' + m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/mo*</span>';
       }
@@ -224,6 +226,25 @@
     if (anchor) anchor.insertAdjacentHTML('beforebegin', html);
   }
 
+  function specsSectionTitle(sec) {
+    var h2 = sec.querySelector('h2');
+    if (h2) return h2.textContent.trim();
+    var t = sec.querySelector('.text-gray.bodoni.ls-sm.fs-2');
+    if (t) return t.textContent.trim();
+    return 'Quick Move-Ins';
+  }
+
+  // Stale static builds used <h2> without green-bar-light. Re-wrap cards in the
+  // live-site header when cards are present but the divider is missing.
+  function normalizeSpecsHeader() {
+    var sec = document.getElementById('specs');
+    if (!sec || sec.style.display === 'none') return;
+    if (sec.innerHTML.indexOf('green-bar-light') !== -1) return;
+    var grid = sec.querySelector('.oi-listings');
+    if (!grid || !grid.querySelector('[data-qmi-slug]')) return;
+    sec.outerHTML = specsSectionHtml(grid.innerHTML, specsSectionTitle(sec));
+  }
+
   function reconcileBaked(cards) {
     return fetchT(API + '/qmi').then(function (r) { return r.json(); }).then(function (res) {
       var homes = (res && res.homes) || [];
@@ -250,6 +271,8 @@
       if (grid && !grid.querySelector('[data-qmi-slug]')) {
         var sec = document.getElementById('specs');
         if (sec) sec.style.display = 'none';
+      } else {
+        normalizeSpecsHeader();
       }
     });
   }
@@ -294,6 +317,7 @@
     var baked = specs ? specs.querySelectorAll('[data-qmi-slug]') : document.querySelectorAll('[data-qmi-slug]');
 
     if (baked.length) {
+      normalizeSpecsHeader();
       reconcileBaked(baked).catch(function () {});
       return;
     }
