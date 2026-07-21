@@ -25,6 +25,27 @@
     "aqualina-at-tres-lagos": 2.49,
     "cascada-at-tres-lagos": 2.49
   },
+  "hoa": {
+    "palo-alto-groves": 360,
+    "sapphire-at-la-sienna": 0,
+    "villas-at-la-sienna": 0,
+    "paso-real": 420,
+    "antlers-crossing": 210,
+    "aquero": 0,
+    "cielo-vista": 0,
+    "el-eden": 0,
+    "wolf-creek": 180,
+    "anaqua-at-tres-lagos": 0,
+    "aqualina-at-tres-lagos": 0,
+    "harvest-coves": 300,
+    "las-brisas-at-tres-lagos": 0,
+    "villas-at-tres-lagos": 0,
+    "retama-village-55-at-bentsen-palm": 2176,
+    "sendero-at-bentsen-palm": 360,
+    "tanglewood-at-bentsen-palm": 660,
+    "stewart-coves": 360,
+    "texas-heights": 300
+  },
   "badges": {
     "1806-e-bella-st": {
       "text": "Unlock Your $20K Flex Discount Now!",

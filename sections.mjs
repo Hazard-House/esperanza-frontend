@@ -351,6 +351,90 @@ export function monthlyPayment(price, rate, taxMult) {
   return Math.round(m * 100) / 100;
 }
 
+// Full O'Neill mortgage-calculator modal (OiCalc widget) for generated QMI pages.
+// Scraped QMI pages ship this inline; generated pages need it baked at build time.
+export function mortgageCalcModalHtml(h) {
+  const commSlug = slugify((h.communityObj && h.communityObj.slug) || h.community);
+  const price = Number(h.price) || 0;
+  const rate = FACTS.rate || 6.15;
+  const taxMult = (FACTS.taxMult || {})[commSlug] || 2.2;
+  const hoa = (FACTS.hoa || {})[commSlug] ?? 0;
+  return `<div class="modal fade rounded" id="payment-calculator" tabindex="-1" aria-labelledby="payment-calculator-label" aria-hidden="true">`
+    + `<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">`
+    + `<button type="button" class="btn-close fs-6 ms-auto me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>`
+    + `<div class="modal-header py-0"><div class="col text-center">`
+    + `<div class="fs-4 bodoni ls-sm" id="payment-calculator-label">Calculate Monthly Payment</div>`
+    + `<div class="green-bar-light my-2 my-lg-3 mx-auto"></div></div></div>`
+    + `<div class="modal-body">`
+    + `<form class="oi-calc"><div class="row"><div class="gray-box col-auto mx-auto">`
+    + `<div id="mort-calc-total" class="oi-calc-results calc-results"></div>`
+    + `<p class="oi-calc-notices text-center my-1 mx-3"></p></div></div>`
+    + `<div class="row mt-2"><div class="col-11 mx-auto">`
+    + `<div class="row form-group oi-calc-price-form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-4"><label>Price</label></div>`
+    + `<div class="col-12 col-lg-8"><div class="input-group"><span class="input-group-prepend">`
+    + `<span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">$</span></span>`
+    + `<input type="number" class="calc-input form-control oi-calc-price border-0 rounded-end bg-tan-200 ls-md" min="0" value=""></div></div></div>`
+    + `<div class="row form-group oi-calc-downpaymentamount-form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-4"><label>Down Payment</label></div>`
+    + `<div class="col-12 col-lg-8"><div class="row"><div class="col-6 col-lg-7"><div class="input-group">`
+    + `<span class="input-group-prepend"><span class="input-group-text disabled p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">$</span></span>`
+    + `<input type="number" class="calc-input form-control oi-calc-downpaymentamount border-0 rounded-end bg-tan-200 ls-md" min="0" step="500" value="" disabled></div></div>`
+    + `<div class="col-6 col-lg-5 ps-0"><div class="input-group">`
+    + `<input type="number" class="form-control oi-calc-downpaymentpercent border-0 rounded-end bg-tan-200 ls-md" value="" aria-label="Down Payment Percentage">`
+    + `<span class="input-group-addon"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">%</span></span></div></div></div></div></div>`
+    + `<div class="row form-group oi-calc-homeins-form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-4"><label>Home Insurance</label></div>`
+    + `<div class="col-12 col-lg-8"><div class="input-group"><span class="input-group-prepend">`
+    + `<span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">$</span></span>`
+    + `<input type="number" class="calc-input form-control oi-calc-homeins border-0 rounded-end bg-tan-200 ls-md" min="0" step="10" value="" disabled></div></div></div>`
+    + `<div class="row form-group oi-calc-rate-form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-4"><label>Mortgage Rate</label></div>`
+    + `<div class="col-12 col-lg-8"><div class="input-group">`
+    + `<input type="number" class="calc-input form-control oi-calc-rate border-0 rounded-end bg-tan-200 ls-md" min="0" value="">`
+    + `<span class="input-group-append"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">%</span></span></div></div></div>`
+    + `<div class="row form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-6 pe-lg-4">`
+    + `<div class="form-group oi-calc-term-form-group"><label>Term</label><div class="input-group">`
+    + `<select class="calc-input oi-calc-term form-control border-0 rounded-end bg-tan-200 ls-md"><option value="15">15</option><option value="30">30</option><option value="40">40</option></select>`
+    + `<span class="input-group-append"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">Yrs.</span></span></div></div></div>`
+    + `<div class="col-12 col-lg-6 mt-1 mt-lg-0"><div class="form-group oi-calc-taxmultiplier-form-group oi-calc-taxamount-form-group"><label>Taxes</label>`
+    + `<div class="input-group"><span class="input-group-prepend"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">$</span></span>`
+    + `<input type="number" class="form-control oi-calc-taxamount border-0 rounded-end bg-tan-200 ls-md" min="0" step="100" value="" disabled>`
+    + `<div class="input-group col-4 d-none"><input type="number" class="form-control oi-calc-taxmultiplier" min="0" step="0.01" value="" disabled="">`
+    + `<span class="input-group-addon"><span class="input-group-text">%</span></span></div></div></div></div></div>`
+    + `<div class="row form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-6 pe-lg-4">`
+    + `<div class="form-group hoa oi-calc-hoa-form-group"><label>HOA</label><div class="input-group">`
+    + `<span class="input-group-prepend"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">$</span></span>`
+    + `<input type="number" class="form-control oi-calc-hoa border-0 rounded-end bg-tan-200 ls-md" min="0" step="10" value="" aria-label="HOA" disabled></div></div></div>`
+    + `<div class="col-12 col-lg-6 mt-1 mt-lg-0"><div class="form-group form-check"><div class="pmi-container oi-calc-pmiamount-form-group">`
+    + `<div class="d-block"><label class="form-check-label">PMI</label></div>`
+    + `<input type="checkbox" class="calc-input form-check-input oi-calc-pmiamount ms-auto" value="0" checked="checked"></div></div></div></div>`
+    + `<div class="row align-items-center mt-3 mt-lg-4 mb-2"><div class="col text-center">`
+    + `<button class="btn btn-green calc-button oi-calc-calculate mr-1 btn-auto">CALCULATE</button>`
+    + `<button class="btn btn-gray draw calc-button oi-calc-reset btn-auto mt-3 mt-sm-0 ms-lg-3">RESET</button></div></div>`
+    + `<div class="row w-100 text-center d-flex justify-content-center"><div class="form-group col-12 col-md-6">`
+    + `<p class="">Estimated monthly Payment</p>`
+    + `<div class="oi-calc-results-form-group text-center f-proxima-bold text-dark-blue">`
+    + `<p class="oi-calc-results calc-results mb-0"></p></div></div></div></div></div>`
+    + `<input type="hidden" class="oi-calc-loanamount" disabled value="">`
+    + `<input type="hidden" class="oi-calc-pandi" disabled value="">`
+    + `<input type="hidden" class="oi-calc-pmimultiplier" disabled value="0.0075">`
+    + `<input type="hidden" class="oi-calc-homeinsmultiplier" disabled value="0.004"></form>`
+    + `<script src="/static/esperanza_homes/js/oi/oicalc.js?v=e8dcc6f"></script>`
+    + `<script>jQuery(document).ready(function($){`
+    + `var mcalcoptions={fields:{price:{default:${price}},downpaymentpercent:{displayField:true,default:3.5,suffix:'',type:'number'},`
+    + `downpaymentamount:{displayField:true,type:'number'},rate:{displayField:true,type:'number',default:${rate}},term:{suffix:''},`
+    + `homeins:{userCanEdit:false,displayField:true,itemizeResult:true,type:'number'},`
+    + `pmiamount:{displayField:true,itemizeResult:true,type:'checkbox',userCanEdit:true}},`
+    + `results:{itemize:false,itemizeLabel:'',selector:'.oi-calc-results'}};`
+    + `mcalcoptions.fields.homeinsmultiplier={type:'hidden',selector:'.oi-calc-homeinsmultiplier',default:.004,siblingFields:['homeins']};`
+    + `mcalcoptions.fields.taxmultiplier={displayField:true,default:${taxMult}};`
+    + `mcalcoptions.fields.taxamount={displayField:true,itemizeResult:true};`
+    + `mcalcoptions.fields.hoa={itemizeResult:true,displayField:true,type:'number',userCanEdit:false,monthsToDisplay:1,default:${hoa}};`
+    + `var mortgage=new OiCalc.Mortgage('.oi-calc',mcalcoptions);`
+    + `mortgage.instance.calculate.on('click',function(e){e.preventDefault();});`
+    + `if(location.hash==='#mortgage-calculator'){var el=document.getElementById('payment-calculator');if(el&&window.bootstrap)bootstrap.Modal.getOrCreateInstance(el).show();}`
+    + `});</script>`
+    + `</div><div class="modal-footer pb-lg-4 fs-10 overpass light-italic col-12 col-lg-11 mx-auto"></div>`
+    + `</div></div></div>`;
+}
+
 // Full O'Neill spec-card (community/floor-plan page variant: h-100, four-three-xl
 // aspect, no map data-attrs). Same anatomy as islands/available-live.js cardHTML.
 export function qmiCardHtml(h) {
@@ -569,6 +653,9 @@ function demo() {
   }
   const comm = communityBlurbHtml({ name: 'El Eden', slug: 'el-eden', city: 'Laredo', image: '/c.jpg', description: '<p>x</p>' });
   assert(comm.includes('gray-gradient') && comm.includes('oi-aspect-img') && comm.includes('About the Community') && comm.includes('photo-block-info') && !comm.includes('background-image'), 'communityBlurbHtml real-img structure');
+
+  const calc = mortgageCalcModalHtml({ price: 242990, community: 'Retama Village (55+) at Bentsen Palm', communityObj: { slug: 'retama-village-55-at-bentsen-palm' } });
+  assert(calc.includes('id="payment-calculator"') && calc.includes('class="oi-calc"') && calc.includes('242990') && calc.includes('2176') && calc.includes('2.45'), 'mortgageCalcModalHtml');
 
   // subnav: mobile "Go To..." dropdown + desktop row with `on-scroll` links (active on first item)
   const nav = subnavHtml([['overview', 'Overview'], ['photos', 'Photo Gallery'], ['sales', 'Contact']]);

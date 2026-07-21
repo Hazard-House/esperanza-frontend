@@ -77,11 +77,14 @@ for (const block of avail.split('class="card spec-card').slice(1)) {
 // Sequential detail-page fetches (origin throttles bursts); tolerate failures.
 let rate = null;
 const taxMult = {};
+const hoa = {};
 for (const [slug, path] of byCommunity) {
   try {
     const html = await getText(ORIGIN + path);
     const t = html.match(/\['taxmultiplier'\]\s*=\s*\{[\s\S]*?'default'\s*:\s*([\d.]+)/);
     if (t) taxMult[slug] = Number(t[1]);
+    const hm = html.match(/\['hoa'\]\s*=\s*\{[\s\S]*?'default'\s*:\s*([\d.]+)/);
+    if (hm) hoa[slug] = Number(hm[1]);
     if (rate == null) {
       const rm = html.match(/'rate'\s*:\s*\{[\s\S]*?'default'\s*:\s*([\d.]+)/);
       if (rm) rate = Number(rm[1]);
@@ -181,7 +184,7 @@ try {
   }
 } catch (e) { console.warn('community promos harvest skipped: ' + e.message); }
 
-const out = { rate, taxMult, badges, lotFormat, cardFacts, bannerSlides, bannerSlidesCommunity, recommendHtml, communityPromos };
+const out = { rate, taxMult, hoa, badges, lotFormat, cardFacts, bannerSlides, bannerSlidesCommunity, recommendHtml, communityPromos };
 const dst = join(import.meta.dirname, 'assets', 'live-facts.json');
 writeFileSync(dst, JSON.stringify(out, null, 2) + '\n');
-console.log(`live-facts.json: rate=${rate}, taxMult=${Object.keys(taxMult).length} communities, badges=${Object.keys(badges).length} homes, cardFacts=${Object.keys(cardFacts).length}, lotFormat=${Object.keys(lotFormat).length}, bannerSlides=${bannerSlides.length}, communityPromos=${Object.keys(communityPromos).length}, communitySlides=${bannerSlidesCommunity.length}, recommend=${Object.keys(recommendHtml).join("+")}`);
+console.log(`live-facts.json: rate=${rate}, taxMult=${Object.keys(taxMult).length} communities, hoa=${Object.keys(hoa).length}, badges=${Object.keys(badges).length} homes, cardFacts=${Object.keys(cardFacts).length}, lotFormat=${Object.keys(lotFormat).length}, bannerSlides=${bannerSlides.length}, communityPromos=${Object.keys(communityPromos).length}, communitySlides=${bannerSlidesCommunity.length}, recommend=${Object.keys(recommendHtml).join("+")}`);
