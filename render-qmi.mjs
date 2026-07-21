@@ -19,7 +19,10 @@ export function qmiContent(h) {
   const commLink = h.community ? `<div class="d-block"><a href="${esc(commHref)}" class="text-brown">${esc(h.community)}${h.city ? ` in ${esc(h.city)}, TX` : ''}</a></div>` : '';
   const avail = h.availability ? `<div class="status-banner gray mt-2 align-top" data-live="availability">${esc(h.availability)}</div>` : '';
   const badge = homeBadge(h);
-  const promoText = (badge && badge.text) || h.promo;
+  // Live, not baked: the incentive banner is the API's promo_text (= the home's own
+  // incentive, else its resolved promotion), NEVER the frozen June-harvest badge. The
+  // harvested badge is only kept for its color hint below. hydrate-live keeps it live.
+  const promoText = h.promo;
   const promoB = promoText ? `<div class="status-banner overlay-promo mt-2 align-top ${(badge && badge.color) || 'tan'}" data-live="promo">${esc(promoText)}</div>` : '';
   const saving = promoText ? `<p id="calculator-promo-saving" class="small mb-2">Savings Over 30 Years</p>` : '';
   // Authoritative monthly = the same harvested value every QMI card shows (factOf.mStd),
