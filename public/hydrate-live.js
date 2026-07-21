@@ -37,7 +37,22 @@
     });
   }
   if (P.type !== 'qmi') return; // community/floorplan volatiles added later if needed
-  fetchT(API + '/qmi').then(function (r) { return r.json(); }).then(function (res) {
+  // P&I only — the basis for "Savings Over 30 Years" (tax/ins/PMI cancel at either rate).
+  function principalInterest(price, ratePct) {
+    var loan = price * (1 - 0.035), r = ratePct / 100 / 12;
+    return r ? loan * r / (1 - Math.pow(1 + r, -360)) : loan / 360;
+  }
+  function fillSavings(txt) {
+    ['calculator-promo-saving', 'calc-savings-line'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = txt;
+    });
+  }
+  Promise.all([
+    fetchT(API + '/qmi').then(function (r) { return r.json(); }),
+    fetchT(API + '/settings').then(function (r) { return r.json(); }).catch(function () { return {}; })
+  ]).then(function (arr) {
+    var res = arr[0] || {}, sres = arr[1] || {};
     var raw = (res.homes || []).filter(function (h) { return h.id === P.id; })[0];
     if (!raw) return;
     var f = raw.fields || raw;
@@ -47,5 +62,18 @@
     set('price', money(f.Price));
     setPromo(f.promo_text, f.promo_banner_style);
     set('availability', f.availability_text);
+    // Live "Savings Over 30 Years" = (standard P&I − promo P&I) × 360, using the company
+    // Settings mortgage rate and the % rate parsed from THIS home's incentive banner.
+    // Flex-discount / no-rate promos have no % → no rate savings (clear the baked label).
+    var s = sres.settings || {};
+    var mortgageRate = Number(s.mortgage_rate) || 6.2;
+    var promoRate = Number(((f.promo_text || '').match(/([\d.]+)\s*%/) || [])[1]);
+    var price = Number(f.Price) || 0;
+    if (price && promoRate && promoRate < mortgageRate) {
+      var save = (principalInterest(price, mortgageRate) - principalInterest(price, promoRate)) * 360;
+      fillSavings('$' + save.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years');
+    } else {
+      fillSavings('');
+    }
   }).catch(function () {});
 })();

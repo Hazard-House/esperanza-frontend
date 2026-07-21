@@ -13,6 +13,13 @@ import { freshBannerHtml } from './rewrite.mjs';
 // just the site-wide banner) — {text, color} or null.
 export function homeBadge(h) { return (FACTS.badges || {})[slugify(h.address)] || null; }
 
+// Per-community property-tax multiplier (%) used by the payment calc. Stable value,
+// still from the harvest; the RATE itself comes live from Settings.
+export function taxMultFor(h) {
+  const s = (h.communityObj && h.communityObj.slug) || h.community;
+  return (FACTS.taxMult || {})[slugify(s)] || 2.2;
+}
+
 // Full per-home card facts as the live original renders them (badge, availability
 // text/color, verbatim lot, stories, self-tour, exact monthlies). Address slug
 // first; "<community>/<housenumber>" absorbs street-suffix slug differences.
@@ -37,6 +44,12 @@ const FACTS = (() => {
   try { return JSON.parse(readFileSync(join(import.meta.dirname, 'assets', 'live-facts.json'), 'utf8')); }
   catch { return {}; }
 })();
+// Company Settings mortgage rate (standard). data.mjs already fetches /settings at
+// build; generate-details calls setBuildRate() once so every baked payment uses the
+// live rate, not the frozen June harvest (FACTS.rate=6.15). Refreshed on each deploy;
+// the volatile under-price/calc savings hydrate fully live (hydrate-live.js).
+let BUILD_RATE = FACTS.rate || 6.15;
+export function setBuildRate(r) { if (Number(r) > 0) BUILD_RATE = Number(r); }
 // Per-plan Energy Cost Comparison values harvested from the June-8 scrape
 // (see harvest-energy.mjs). {} if missing -> energy section self-hides.
 const ENERGY = (() => {
@@ -356,7 +369,7 @@ export function monthlyPayment(price, rate, taxMult) {
 export function mortgageCalcModalHtml(h) {
   const commSlug = slugify((h.communityObj && h.communityObj.slug) || h.community);
   const price = Number(h.price) || 0;
-  const rate = FACTS.rate || 6.15;
+  const rate = BUILD_RATE;
   const taxMult = (FACTS.taxMult || {})[commSlug] || 2.2;
   const hoa = (FACTS.hoa || {})[commSlug] ?? 0;
   return `<div class="modal fade rounded" id="payment-calculator" tabindex="-1" aria-labelledby="payment-calculator-label" aria-hidden="true">`
@@ -411,7 +424,8 @@ export function mortgageCalcModalHtml(h) {
     + `<div class="row w-100 text-center d-flex justify-content-center"><div class="form-group col-12 col-md-6">`
     + `<p class="">Estimated monthly Payment</p>`
     + `<div class="oi-calc-results-form-group text-center f-proxima-bold text-dark-blue">`
-    + `<p class="oi-calc-results calc-results mb-0"></p></div></div></div></div></div>`
+    + `<p class="oi-calc-results calc-results mb-0"></p></div>`
+    + `<p id="calc-savings-line" class="fs-9 overpass bold text-green mt-2 mb-0"></p></div></div></div></div>`
     + `<input type="hidden" class="oi-calc-loanamount" disabled value="">`
     + `<input type="hidden" class="oi-calc-pandi" disabled value="">`
     + `<input type="hidden" class="oi-calc-pmimultiplier" disabled value="0.0075">`
@@ -470,15 +484,17 @@ export function qmiCardHtml(h) {
     + `</div>`;
   let est = '';
   if (h.price) {
-    const RATE = FACTS.rate || 6.15;
+    const RATE = BUILD_RATE;
     const tax = (FACTS.taxMult || {})[slugify(h.community)] || 2.2;
-    const m = fact.mStd != null ? fact.mStd : monthlyPayment(h.price, RATE, tax);
+    // Compute fresh from the live Settings rate — the harvested fact.mStd/mPromo were
+    // baked at the frozen 6.15 and are ~$3k off on the 30-yr savings.
+    const m = monthlyPayment(h.price, RATE, tax);
     const promoRate = promoText && (promoText.match(/([\d.]+)\s*%/) || [])[1];
     let inner;
     if (promoRate && Number(promoRate) < RATE) {
       // original promo-rate card: promo monthly + struck standard + 30-yr savings
       // (both /mo spans render WITHOUT thousands separators on the original)
-      const pm = fact.mPromo != null ? fact.mPromo : monthlyPayment(h.price, Number(promoRate), tax);
+      const pm = monthlyPayment(h.price, Number(promoRate), tax);
       const savings = (m - pm) * 360;
       inner = `<span class="fs-9 overpass bold text-green">$${pm.toFixed(2)}/mo*</span>`
         + `<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="${m.toFixed(2)}">$${m.toFixed(2)}/mo*</span>`

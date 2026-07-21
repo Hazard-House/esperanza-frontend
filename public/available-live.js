@@ -164,13 +164,13 @@
     var est = '';
     if (h.price) {
       var tax = FACTS.taxMult[slugify(h.community)] || 2.2;
-      var m = fact.mStd != null ? fact.mStd : monthlyPayment(h.price, RATE, tax);
+      var m = monthlyPayment(h.price, RATE, tax);
       var promoRate = promoText && (promoText.match(/([\d.]+)\s*%/) || [])[1];
       var inner;
       if (promoRate && Number(promoRate) < RATE) {
         // original promo-rate card: promo monthly + struck standard + 30-yr savings
         // (these two spans render WITHOUT thousands separators on the original)
-        var pm = fact.mPromo != null ? fact.mPromo : monthlyPayment(h.price, Number(promoRate), tax);
+        var pm = monthlyPayment(h.price, Number(promoRate), tax);
         var savings = (m - pm) * 360;
         inner = '<span class="fs-9 overpass bold text-green">$' + pm.toFixed(2) + '/mo*</span>' +
           '<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="' + m.toFixed(2) + '">$' + m.toFixed(2) + '/mo*</span>' +
@@ -395,7 +395,9 @@
       var lf = res[4] || {};
       FACTS = { rate: lf.rate, taxMult: lf.taxMult || {}, badges: lf.badges || {}, lotFormat: lf.lotFormat || {}, cardFacts: lf.cardFacts || {} };
       var settings = (res[3] && res[3].settings) || {};
-      RATE = FACTS.rate || settings.mortgage_rate || 6.15;
+      // Live, not baked: the company-wide Mortgage Rate from Settings drives payments;
+      // the June-harvest FACTS.rate is only a last-ditch fallback.
+      RATE = settings.mortgage_rate || FACTS.rate || 6.15;
       var planStories = {};
       ((res[5] && res[5].floorplans) || []).forEach(function (fp) {
         if (fp.storiesCount != null) { planStories[String(fp.name || '').toLowerCase()] = fp.storiesCount; planStories[fp.slug] = fp.storiesCount; }

@@ -8,6 +8,7 @@ import { linksMap, qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
+import { setBuildRate } from './sections.mjs';
 import { hydrateCommunity, hydrateCommunityStatus } from './hydrate-scraped.mjs';
 import { classifyDetail } from './build.mjs';
 
@@ -122,6 +123,8 @@ function scrapedCommunitySkipSet(communities) {
 export async function generateDetails(data, { skipCommunities, skipFloorplans } = {}) {
   if (!existsSync(OUT)) mkdirSync(OUT, { recursive: true });
   const d = data || await loadData();
+  // Bake payments off the live Settings mortgage rate (not the frozen 6.15 harvest).
+  setBuildRate(d.settings?.settings?.mortgage_rate ?? d.settings?.mortgage_rate);
   // shell nav carries frozen June-8 "Coming Soon" badges — refresh from the API once
   const shell = hydrateCommunityStatus(readFileSync(SHELL_PATH, 'utf8'), d);
   const skipC = skipCommunities || scrapedCommunitySkipSet(d.communities);
