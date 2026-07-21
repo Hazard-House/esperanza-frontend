@@ -51,8 +51,11 @@ const CONTAINER_ISLANDS = [
   { id: 'id="map"', island: 'community-maps-live.js' },      // community detail single-location (Common)
   // Community WYSIWYG copy (description + amenities) live from D1. #overview is on
   // every community page (also QMI/floor-plan pages, where the island no-ops via its
-  // type guard) — the only marker present on all 33 community pages.
+  // URL guard) — the only marker present on all 33 community pages.
   { id: 'id="overview"', island: 'community-copy-live.js' },
+  // City landing pages (/{city}/) — the same island hydrates .city-page-wysiwyg from
+  // /cities heroDescription. city-page-hero-title marks the 10 city pages.
+  { id: 'city-page-hero-title', island: 'community-copy-live.js' },
 ];
 // City/filter/lot maps stay oilib-owned; mapbox-patch.js (injected by rewriteCommon)
 // fixes their style + map_pin so they render 1:1 without disabling oilib.
