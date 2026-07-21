@@ -70,6 +70,7 @@ function normQmi(h) {
     elevation: f.elevation,
     availability: f.availability_text, availableNow: f['Available Now'], moveInDate: f['Move-In Date'],
     description: f.Description, promo: f.promo_text, promoStyle: f.promo_banner_style,
+    selfTourAvailable: !!f.self_tour_available, nterNow: f.nter_now || null,
     pdfUrl: f['Dynamic PDF'],
     lat: f.latitude != null ? Number(f.latitude) : (f.geo_latitude != null ? Number(f.geo_latitude) : null),
     lng: f.longitude != null ? Number(f.longitude) : (f.geo_longitude != null ? Number(f.geo_longitude) : null),
