@@ -174,6 +174,13 @@ function sub(html, re, fn, page, step) {
 // 4. Available Floor Plans row prices -> per-community fp.communityPrices[c.name]
 const HERO_STARTING_RE = /(?:<div class="d-none d-lg-inline-block mx-1">•<\/div>\s*)?<div class="d-block d-lg-inline-block">\s*Starting at \$[\d,]+\s*<\/div>/;
 const HOMES_FROM_BLOCK_RE = /<div class="overpass fs-7">HOMES FROM<\/div>\s*<div class="overpass bold text-dark-green fs-4">\$[\d,]+<\/div>/;
+// Scraped pages ship the O'Neill header (title + green-bar-light [+ download CTA]).
+// Generated/inserted sections use qmiSectionHtml — replace the whole block when the
+// frozen header is missing the bar so rehydrate normalizes styling.
+function specsHasStyledHeader(sec) {
+  const pre = sec.slice(0, sec.indexOf('oi-listings'));
+  return pre.includes('green-bar-light');
+}
 export function hydrateCommunity(html, c, d) {
   const page = `community ${c.slug}`;
   try {
@@ -222,6 +229,8 @@ export function hydrateCommunity(html, c, d) {
       const secEnd = html.indexOf('</section>', secStart) + '</section>'.length;
       if (!homes.length) {
         html = html.slice(0, secStart) + html.slice(secEnd);
+      } else if (!specsHasStyledHeader(html.slice(secStart, secEnd))) {
+        html = html.slice(0, secStart) + qmiSectionHtml(homes) + html.slice(secEnd);
       } else {
         const sec = html.slice(secStart, secEnd);
         const listPatterns = [
@@ -349,6 +358,7 @@ function demo() {
     { slug: 'meadow-ridge', name: 'Meadow Ridge', priceFrom: 199990, comingSoon: true }, {});
   assert(!cs.includes('Starting at') && !cs.includes('HOMES FROM'), 'coming-soon prices stripped');
   assert(out.includes('3706 Westway Court') && !out.includes('9999 Stale St'), 'qmi cards replaced');
+  assert(out.includes('green-bar-light') && out.indexOf('green-bar-light') < out.indexOf('3706 Westway Court'), 'qmi section has green bar before cards');
   assert(out.includes('data-price="249990"') && out.includes('<div class="price">$249,990</div>'), 'plan row price updated');
   assert(out.includes('<div class="price"></div>'), 'empty price div untouched');
   assert(out.includes('<footer>f</footer>'), 'chrome preserved');
@@ -359,6 +369,7 @@ function demo() {
   const noSpecs = page.replace('<section id="specs">', '<section id="removed">');
   out = hydrateCommunity(noSpecs, c, {});
   assert(out.includes('id="specs"') && out.includes('3706 Westway Court') && out.indexOf('id="specs"') < out.indexOf('id="plans"'), 'inserts qmi section when absent');
+  assert(out.includes('green-bar-light'), 'inserted qmi section includes green bar');
 
   const fp = { slug: 'agave', startingPrice: 451990, communityPrices: { 'Aqualina at Tres Lagos': 451990, 'Silos at La Sienna': 396990 } };
   const d = { communities: [{ slug: 'aqualina-at-tres-lagos', name: 'Aqualina at Tres Lagos', priceFrom: 333990 }] };

@@ -545,9 +545,12 @@ export function qmiCardHtml(h) {
     + `</div></div></div>`;
 }
 
-export function qmiSectionHtml(homes) {
+export function qmiSectionHtml(homes, title = 'Quick Move-Ins') {
   if (!homes || !homes.length) return '';
-  return `<section id="specs" class="pagejump py-4 py-lg-5"><div class="container"><h2 class="bodoni text-gray fs-3 mb-4">Quick Move-Ins</h2><div class="row oi-listings">\n${homes.map(qmiCardHtml).join('\n')}\n</div></div></section>`;
+  return `<section id="specs" class="pagejump py-4 py-lg-5"><div class="container">`
+    + `<div class="text-gray bodoni ls-sm fs-2 ps-0">${esc(title)}</div>`
+    + `<div class="green-bar-light my-2 my-lg-3"></div>`
+    + `<div class="row oi-listings mt-3 g-2">\n${homes.map(qmiCardHtml).join('\n')}\n</div></div></section>`;
 }
 
 export function planCardHtml(fp) {
