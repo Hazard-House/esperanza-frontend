@@ -132,13 +132,12 @@ export async function loadData() {
     h.floorplanObj = fpById.get(h.floorPlanId) || null;
     // plan-first stories: D1 per-home stories_count is missing/wrong for many homes
     if (h.floorplanObj && h.floorplanObj.stories != null) h.stories = h.floorplanObj.stories;
-    // Original-page media (harvested): the original's hero elevation render wins
-    // over D1 image_url, and the original's full gallery wins when D1's is shorter.
+    // Harvested media is a fallback only — admin photo_gallery + image_url are the source
+    // of truth for card/detail heroes once the panel has real uploads.
     const qm = (QMI_MEDIA.homes || {})[h.slug || slugify(h.address)];
-    if (qm) {
-      // Prefer harvested live gallery — D1 photo_gallery is often placeholder filenames.
+    if (qm && !h.gallery.length) {
       if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: fixHost(u), alt: h.address }));
-      else if (qm.source === 'live') h.gallery = []; // live page has no photo set — hero only
+      else if (qm.source === 'live') h.gallery = [];
     }
     h.image = resolveQmiHero({ image: h.image, gallery: h.gallery }, qm, fixHost);
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is

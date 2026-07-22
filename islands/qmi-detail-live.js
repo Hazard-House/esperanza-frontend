@@ -22,7 +22,11 @@
   var un = function (v) { return Array.isArray(v) ? v[0] : v; };
   var QMI_IMAGES = {};
   function isBadHero(u) {
-    return !u || /\/floor_plans\//i.test(String(u)) || /\/(hero|photo_\d+)\.jpe?g/i.test(String(u));
+    if (!u) return true;
+    var s = String(u);
+    if (/\/floor_plans\//i.test(s)) return true;
+    if (/\/qmi\/rec[^/]+\//i.test(s)) return false;
+    return /\/(hero|photo_\d+)\.(jpe?g|png|webp|avif)/i.test(s);
   }
   var IMG_TX = 'format=auto,quality=82,width=1600';
   var fixHost = function (u) {
