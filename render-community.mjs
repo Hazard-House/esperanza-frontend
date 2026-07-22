@@ -29,8 +29,13 @@ function communityHeader(c) {
 }
 
 export function communityContent(c) {
-  const gallery = [c.image, c.secondaryImage].filter(Boolean).map(u => ({ url: u, alt: c.name }));
-  const plans = (c.plans || []).map(planCardHtml).join('');
+  // Full community photo gallery from D1 (communities.photo_gallery_json → API photoGallery),
+  // falling back to the hero + secondary image when a community has no gallery. The legacy
+  // 2-image cap was the "galleries near-empty on our site" bug (parity audit 2026-07-21).
+  const gallery = (Array.isArray(c.photoGallery) && c.photoGallery.length)
+    ? c.photoGallery.map(g => ({ url: g.url || g, alt: g.alt || c.name }))
+    : [c.image, c.secondaryImage].filter(Boolean).map(u => ({ url: u, alt: c.name }));
+  const plans = (c.plans || []).map(fp => planCardHtml(fp, c.name)).join('');
   // HOA documents (CCRs, amendments) — {title, link} PDFs hosted in R2. Rendered as a
   // simple download list; omitted when the community has none.
   const hoaItems = (c.hoaLinks || [])
@@ -62,11 +67,16 @@ export function renderCommunity(c, shell) {
 
 function demo() {
   const c = { id: 'recC', name: 'El Eden', slug: 'el-eden', city: 'Laredo', lat: 27.43, lng: -99.45, priceFrom: 209990, beds: '3 - 5', baths: '2 - 4', sqft: '1,148 - 2,328', description: '<p>Great</p>', amenities: '<ul><li>Pool</li></ul>', image: '/c.jpg', secondaryImage: '/c2.jpg',
+    photoGallery: [{ url: '/g1.jpg', alt: 'a' }, { url: '/g2.jpg', alt: 'b' }, { url: '/g3.jpg', alt: 'c' }],
     homes: [{ id: 'h1', address: '1 A St', community: 'El Eden', city: 'Laredo', slug: '1-a-st', price: 236990, beds: 3, baths: 2, livingSqft: 1106, image: '/h.jpg', communityObj: null }],
-    plans: [{ id: 'p1', name: 'Presidio', slug: 'presidio', collection: 'Haven', startingPrice: 219990, bedroomMin: 3, bedroomMax: 4, bathroomMin: 2, bathroomMax: 3, garage: 2, livingSqft: 1400, image: '/p.jpg' }] };
+    plans: [{ id: 'p1', name: 'Presidio', slug: 'presidio', collection: 'Haven', startingPrice: 219990, communityPrices: { 'El Eden': 229990 }, bedroomMin: 3, bedroomMax: 4, bathroomMin: 2, bathroomMax: 3, garage: 2, livingSqft: 1400, image: '/p.jpg' }] };
   const out = communityContent(c);
   for (const id of ['id="overview"', 'id="specs"', 'id="plans"', 'id="sales"', 'id="request-a-tour"']) assert(out.includes(id), 'has ' + id);
   assert(out.includes('Starting at $209,990') && out.includes('green-bar-thick') && out.includes('New Homes in') && out.includes('Pool') && out.includes('1 A St') && out.includes('Presidio'), 'content');
+  // Plan card must show the per-community price ($229,990), NOT the dev-wide min ($219,990).
+  assert(out.includes('$229,990') && !out.includes('$219,990'), 'plan card per-community price');
+  // Full gallery (>2 images) surfaces from photoGallery, not just hero+secondary.
+  assert(out.includes('/g1.jpg') && out.includes('/g2.jpg') && out.includes('/g3.jpg'), 'community gallery from photoGallery');
   assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'clean');
   console.log('render-community.mjs demo() passed');
 }

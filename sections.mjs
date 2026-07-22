@@ -474,8 +474,11 @@ export function qmiCardHtml(h) {
   const promoColor = promoBannerClass(h.promoStyle, promoText);
   let banners = '';
   if (promoText) banners += `<div class="banner overlay-promo ${promoColor}">${esc(promoText)}</div>`;
-  const availText = (fact.avail && fact.avail.text) || h.availability;
-  const availColor = fact.avail ? fact.avail.color : (/available now/i.test(availText || '') ? 'green' : 'gray');
+  // API-first (Snowflake-derived availability_text); the frozen June harvest is only a
+  // fallback for a home the API has no availability for. Harvest-first froze move-in
+  // windows a month off (e.g. 14009 Sugarberry) — see parity audit 2026-07-21.
+  const availText = h.availability || (fact.avail && fact.avail.text);
+  const availColor = /available now/i.test(availText || '') ? 'green' : 'gray';
   if (availText) banners += `<div class="banner ${availColor}"${promoText ? ' style="top:2.5rem"' : ''}>${esc(availText)}</div>`;
   if (fact.selfTour) banners += `<div class="banner-self-tour banner"><p>Self-Touring Available</p></div>`;
   const lotTxt = fact.lot || fmtLot(h.lot, h.community);
@@ -553,12 +556,16 @@ export function qmiSectionHtml(homes, title = 'Quick Move-Ins') {
     + `<div class="row oi-listings mt-3 g-2">\n${homes.map(qmiCardHtml).join('\n')}\n</div></div></section>`;
 }
 
-export function planCardHtml(fp) {
+export function planCardHtml(fp, communityName) {
   const url = floorplanPath(fp);
   const beds = fp.bedroomMin === fp.bedroomMax ? fp.bedroomMin : `${fp.bedroomMin}-${fp.bedroomMax}`;
   const baths = fp.bathroomMin === fp.bathroomMax ? fp.bathroomMin : `${fp.bathroomMin}-${fp.bathroomMax}`;
   const specs = [`${beds} bd`, `${baths} ba`, fp.garage ? `${fp.garage} gar` : '', fp.livingSqft ? num(fp.livingSqft) + ' sq ft' : ''].filter(Boolean).join(' · ');
-  return `<div class="col-12 col-md-6 col-lg-4 mb-3"><div class="card plan-card border border-gray p-2">${fp.image ? `<a href="${esc(url)}"><div class="oi-aspect three-two"><img src="${esc(fp.image)}" class="oi-aspect-img" loading="lazy" alt="${esc(fp.name)}"></div></a>` : ''}<div class="card-body"><a href="${esc(url)}"><div class="card-title mt-2"><span class="fs-4">${esc(fp.name)}</span></div></a>${fp.collection ? `<div class="text-brown fs-9">${esc(fp.collection)} Collection</div>` : ''}${fp.startingPrice ? `<div class="price-title">From</div><div class="price">${money(fp.startingPrice)}</div>` : ''}<div class="fs-9 text-gray mt-1">${specs}</div><a href="${esc(url)}" class="btn btn-green mt-2 d-inline-block">View Details</a></div></div></div>`;
+  // Per-community "From" price (same source as recommendedHtml + the community header).
+  // fp.startingPrice is the dev-wide MIN and is only a fallback for a plan not priced in
+  // this community — printing it in-community is the long-standing "cards too low" bug.
+  const price = (communityName && fp.communityPrices && fp.communityPrices[communityName] != null) ? fp.communityPrices[communityName] : fp.startingPrice;
+  return `<div class="col-12 col-md-6 col-lg-4 mb-3"><div class="card plan-card border border-gray p-2">${fp.image ? `<a href="${esc(url)}"><div class="oi-aspect three-two"><img src="${esc(fp.image)}" class="oi-aspect-img" loading="lazy" alt="${esc(fp.name)}"></div></a>` : ''}<div class="card-body"><a href="${esc(url)}"><div class="card-title mt-2"><span class="fs-4">${esc(fp.name)}</span></div></a>${fp.collection ? `<div class="text-brown fs-9">${esc(fp.collection)} Collection</div>` : ''}${price ? `<div class="price-title">From</div><div class="price">${money(price)}</div>` : ''}<div class="fs-9 text-gray mt-1">${specs}</div><a href="${esc(url)}" class="btn btn-green mt-2 d-inline-block">View Details</a></div></div></div>`;
 }
 
 export function setHead(html, m) {
@@ -666,6 +673,10 @@ function demo() {
   assert(rec.includes('tour-icon') && rec.indexOf('tour-icon') > rec.indexOf('content-rec1') && rec.lastIndexOf('tour-icon') < rec.indexOf('content-rec2'), 'recommendedHtml 360 badge only w/ virtual tour');
   assert(rec.includes('3-4 Bed') && rec.includes('1,443 Living Sq. Ft.') && !/undefined|NaN/.test(rec), 'recommendedHtml stats + clean');
   assert(recommendedHtml([]) === '' && recommendedHtml() === '', 'recommendedHtml omitted without plans');
+  // planCardHtml (community-grid card) must use the per-community price, not the dev-wide min.
+  const pcard = planCardHtml({ name: 'Indigo', slug: 'indigo', startingPrice: 215990, communityPrices: { 'Paso Real': 241990 }, bedroomMin: 3, bedroomMax: 3, bathroomMin: 2, bathroomMax: 2, garage: 2, livingSqft: 1400 }, 'Paso Real');
+  assert(pcard.includes('$241,990') && !pcard.includes('$215,990'), 'planCardHtml per-community price');
+  assert(planCardHtml({ name: 'Indigo', slug: 'indigo', startingPrice: 215990, communityPrices: { 'Paso Real': 241990 } }).includes('$215,990'), 'planCardHtml dev-min fallback without community');
 
   const sales = mapSalesHtml({ lat: 1, lng: 2, address: '1 Main St', city: 'Brownsville', officePhone: '956-000-0000' });
   assert(noFakeH2(sales) && sales.includes('<div class="text-gray bodoni ls-sm fs-2 ps-0">Sales Office</div>') && sales.includes('brown-bar short my-3') && sales.includes('btn btn-gray') && sales.includes('oi-directions-click') && !sales.includes('btn btn-green'), 'mapSalesHtml Sales Office + brown-bar + btn-gray');

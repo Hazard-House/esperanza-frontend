@@ -12,6 +12,7 @@ import { setBuildRate } from './sections.mjs';
 import { hydrateCommunity, hydrateCommunityStatus } from './hydrate-scraped.mjs';
 import { ensureCommunityHomesLive } from './rewrite.mjs';
 import { classifyDetail } from './build.mjs';
+import { generateBlogs } from './generate-blogs.mjs';
 
 const OUT = join(import.meta.dirname, 'public');
 const SHELL_PATH = join(import.meta.dirname, 'templates', 'detail-shell.html');
@@ -138,8 +139,11 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   writeFileSync(join(OUT, 'qmi-links.json'), JSON.stringify(linksMap(d.qmis, d.communities)));
   const strippedCards = stripIncentivesPages(new Set(d.qmis.map((h) => h.slug)));
   const { updated: rehydrated } = rehydrateScrapedCommunities(d);
-  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); rehydrated ${rehydrated} scraped community pages; stripped ${strippedCards} stale /incentives/ home cards`);
-  return { qmi: d.qmis.length, community: nc, floorplan: nf, strippedCards, rehydrated };
+  // Blog pages from D1 (was: frozen June-8 scrape). Non-fatal so a blog hiccup never blocks
+  // the pricing/inventory deploy; the count-parity guard still logs loudly on a shortfall.
+  const blogs = await generateBlogs().catch(e => { console.error('generate-blogs:', e.message); return 0; });
+  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; stripped ${strippedCards} stale /incentives/ home cards`);
+  return { qmi: d.qmis.length, community: nc, floorplan: nf, blogs, strippedCards, rehydrated };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();
