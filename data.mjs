@@ -86,6 +86,10 @@ function normCommunity(c) {
     lat: p[0] != null && p[0] !== '' ? Number(p[0]) : null,
     lng: p[1] != null && p[1] !== '' ? Number(p[1]) : null,
     address: c.address, image: fixHost(c.image), secondaryImage: fixHost(c.secondaryImage),
+    // Full community photo gallery (communities.photo_gallery_json → API photoGallery),
+    // host-fixed to img.hazardhouse.ai; empty when a community has no gallery (render
+    // falls back to hero+secondary). Mirrors normQmi's gallery handling.
+    photoGallery: Array.isArray(c.photoGallery) ? c.photoGallery.map(g => ({ url: fixHost(g && g.url != null ? g.url : g), alt: (g && g.alt) || c.name })) : [],
     priceFrom: c.priceFrom, comingSoon: !!c.comingSoon, sqft: c.sqft, beds: c.beds, baths: c.baths,
     description: c.description, amenities: c.amenities, promo: c.promoBannerText,
     officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
