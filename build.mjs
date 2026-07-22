@@ -119,7 +119,7 @@ function writeOut(rel, html) {
 // source is committed (islands/, assets/) — no scrape dependency. Extracted so the
 // scrape-free fallback can reuse it verbatim.
 function copyRuntimeAssets() {
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js', 'community-homes-live.js']);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js', 'community-homes-live.js', 'incentives-live.js']);
   for (const island of islands) cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
   cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));
@@ -269,6 +269,9 @@ async function build() {
         const tag = `\n<script src="/${f}" defer></script>\n`;
         html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }
+    }
+    if (/^incentives\/[^/]+\/index\.html$/.test(rel) && html.includes('data-listing-id') && !html.includes('incentives-live.js')) {
+      html = injectIsland(html, 'incentives-live.js');
     }
     writeOut(rel, html);
     n++;

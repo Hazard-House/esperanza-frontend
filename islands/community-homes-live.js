@@ -207,16 +207,26 @@
   }
 
   function patchPromo(card, f) {
+    var aspect = card.querySelector('.oi-aspect');
+    if (!aspect) return;
     var promoEl = card.querySelector('.banner.overlay-promo');
+    var avail = card.querySelector('.banner.green:not(.overlay-promo), .banner.gray:not(.overlay-promo)');
     if (!f.promo_text) {
       if (promoEl && promoEl.parentNode) promoEl.parentNode.removeChild(promoEl);
+      if (avail) avail.style.top = '';
       return;
     }
-    if (!promoEl) return;
-    promoEl.textContent = f.promo_text;
     var color = promoBannerClass(f.promo_banner_style, f.promo_text);
-    promoEl.classList.remove('green', 'tan');
-    promoEl.classList.add(color);
+    if (!promoEl) {
+      promoEl = document.createElement('div');
+      promoEl.className = 'banner overlay-promo ' + color;
+      aspect.insertBefore(promoEl, aspect.firstChild);
+    } else {
+      promoEl.classList.remove('green', 'tan');
+      promoEl.classList.add(color);
+    }
+    promoEl.textContent = f.promo_text;
+    if (avail) avail.style.top = '2.5rem';
   }
 
   function byPriceAsc(a, b) {
@@ -338,9 +348,19 @@
   }
 
   function boot() {
+    // Community listing pages always re-render QMI cards from the live API so per-home
+    // promo_text + promo_banner_style stay current (baked cards go stale between deploys).
+    if (isCommunityListingPage()) {
+      var commSlug = communitySlugFromPath();
+      if (commSlug) {
+        normalizeSpecsHeader();
+        injectCommunitySpecs(commSlug, PAGE.id, null).catch(function () {});
+        return;
+      }
+    }
+
     var specs = document.getElementById('specs');
     var baked = specs ? specs.querySelectorAll('[data-qmi-slug]') : document.querySelectorAll('[data-qmi-slug]');
-
     if (baked.length) {
       normalizeSpecsHeader();
       reconcileBaked(baked).catch(function () {});
@@ -348,11 +368,8 @@
     }
 
     if (!isCommunityListingPage()) return;
-
-    var commSlug = communitySlugFromPath();
-    if (!commSlug) return;
-
-    injectCommunitySpecs(commSlug, PAGE.id, null).catch(function () {});
+    var slug = communitySlugFromPath();
+    if (slug) injectCommunitySpecs(slug, PAGE.id, null).catch(function () {});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
