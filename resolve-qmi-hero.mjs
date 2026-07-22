@@ -1,15 +1,19 @@
 // resolve-qmi-hero.mjs — QMI hero/card image selection shared by build + runtime islands.
-// Priority: live O'Neill hero (harvested elevation) → admin panel image_url → safe fallbacks.
-// Never surface a floor-plan schematic or D1 placeholder when a better hero exists.
+// Source of truth: admin panel main image (D1 image_url), then photo_gallery lead,
+// then harvested/live fallbacks when admin has only a floor-plan schematic or stub.
 
-export const PLACEHOLDER_HERO = /\/(hero|photo_\d+)\.jpe?g(?:\?|$)/i;
+export const PLACEHOLDER_HERO = /\/(hero|photo_\d+)\.(jpe?g|png|webp|avif)(?:\?|$)/i;
 
 export function isFloorPlanHeroUrl(u) {
   return /\/floor_plans\//i.test(String(u || ''));
 }
 
 export function isPlaceholderHeroUrl(u) {
-  return !u || PLACEHOLDER_HERO.test(String(u));
+  const s = String(u || '');
+  if (!s) return true;
+  // Admin uploads land at /qmi/rec…/photo_N.ext (or hero.jpg) — real main images, not stubs.
+  if (/\/qmi\/rec[^/]+\//i.test(s)) return false;
+  return PLACEHOLDER_HERO.test(s);
 }
 
 export function isBadHeroUrl(u) {
@@ -18,32 +22,39 @@ export function isBadHeroUrl(u) {
 
 /** Pick the hero/card image for one QMI. `gallery` is [{url, alt}]. `qm` is harvested media. */
 export function resolveQmiHero({ image, gallery = [] }, qm, fixHost = u => u) {
-  // 1. Live O'Neill mosaic lead (harvested from detail-gallery) — source of truth for parity.
-  if (qm?.hero) return fixHost(qm.hero);
-
-  // 2. Admin panel hero (D1 image_url) when it is a real photo/render.
+  // 1. Admin panel main image (image_url) when it is a real photo/render.
   if (image && !isBadHeroUrl(image)) return fixHost(image);
 
-  // 3. First real photo from D1 gallery.
+  // 2. Admin photo_gallery lead (panel sets main image = first gallery photo).
   const realGallery = (gallery || []).filter(g => g && g.url && !isBadHeroUrl(g.url));
   if (realGallery.length) return fixHost(realGallery[0].url);
 
-  // 4. Harvested construction photos, then whatever admin sent.
+  // 3. Harvested live mosaic / construction photos when admin still has a schematic only.
+  if (qm?.hero) return fixHost(qm.hero);
   if (qm?.photos?.length) return fixHost(qm.photos[0]);
+
   return image ? fixHost(image) : image;
 }
 
 function demo() {
   const fix = u => u;
-  const qm = { hero: 'https://x/ED916.jpg', photos: ['https://x/photo1.jpg'], planImages: [], source: 'live' };
+  const adminMain = 'https://img.hazardhouse.ai/qmi/recABC/photo_1.jpg';
+  const fromAdmin = resolveQmiHero({ image: adminMain, gallery: [{ url: adminMain, alt: '' }] }, null, fix);
+  if (fromAdmin !== adminMain) throw new Error('expected admin qmi/photo_1 as main image');
+
+  const qm = { hero: 'https://x/ED916.jpg', photos: ['https://x/photo1.jpg'], source: 'live' };
+  const adminWins = resolveQmiHero({ image: adminMain, gallery: [] }, qm, fix);
+  if (adminWins !== adminMain) throw new Error('expected admin over live harvest');
+
   const fromFp = resolveQmiHero({ image: 'https://img/floor_plans/recZ/PRESIDIO.jpg', gallery: [] }, qm, fix);
-  if (fromFp !== 'https://x/ED916.jpg') throw new Error('expected live hero over floor plan');
-  const fromGallery = resolveQmiHero({ image: 'https://img/floor_plans/x.jpg', gallery: [{ url: 'https://img/real.jpg' }] }, null, fix);
-  if (fromGallery !== 'https://img/real.jpg') throw new Error('expected D1 gallery photo when no harvest');
-  const liveWins = resolveQmiHero({ image: 'https://img/good.jpg', gallery: [{ url: 'https://x/photo1.jpg' }] }, qm, fix);
-  if (liveWins !== 'https://x/ED916.jpg') throw new Error('expected live hero over admin/gallery');
-  const adminOnly = resolveQmiHero({ image: 'https://img/good.jpg', gallery: [] }, null, fix);
-  if (adminOnly !== 'https://img/good.jpg') throw new Error('expected admin hero when no harvest');
+  if (fromFp !== 'https://x/ED916.jpg') throw new Error('expected live hero when admin is floor plan');
+
+  const fromGallery = resolveQmiHero(
+    { image: 'https://img/floor_plans/x.jpg', gallery: [{ url: 'https://img/qmi/recZ/photo_2.jpg' }] },
+    null, fix,
+  );
+  if (fromGallery !== 'https://img/qmi/recZ/photo_2.jpg') throw new Error('expected admin gallery lead');
+
   console.log('resolve-qmi-hero.mjs demo() passed');
 }
 

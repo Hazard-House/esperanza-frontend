@@ -12,6 +12,13 @@ const PUBLIC = join(ROOT, 'public');
 
 const fixHost = u => (u ? String(u).replace(/^https:\/\/pub-9c9bfee574a54b62b2623e361b3ad305\.r2\.dev/, 'https://img.hazardhouse.ai') : u);
 const PLACEHOLDER = /\/(hero|photo_\d+)\.(jpe?g|png|webp|avif)(?:\?|$)/i;
+function adminHeroBad(u) {
+  const s = String(u || '');
+  if (!s) return true;
+  if (/\/floor_plans\//i.test(s)) return true;
+  if (/\/qmi\/rec[^/]+\//i.test(s)) return false;
+  return PLACEHOLDER.test(s);
+}
 
 function mosaicFromHtml(html) {
   const gi = html.indexOf('id="detail-gallery"');
@@ -59,8 +66,8 @@ function normAdmin(h) {
     city: f.City,
     image: fixHost(f.image_url),
     gallery,
-    heroPlaceholder: PLACEHOLDER.test(String(f.image_url || '')),
-    galleryPlaceholders: gallery.filter(g => PLACEHOLDER.test(String(g.url || ''))).length,
+    heroPlaceholder: adminHeroBad(f.image_url),
+    galleryPlaceholders: gallery.filter(g => adminHeroBad(g.url)).length,
   };
 }
 
