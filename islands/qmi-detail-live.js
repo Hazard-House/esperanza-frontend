@@ -20,6 +20,7 @@
   };
 
   var un = function (v) { return Array.isArray(v) ? v[0] : v; };
+  var QMI_IMAGES = {};
   var IMG_TX = 'format=auto,quality=82,width=1600';
   var fixHost = function (u) {
     if (!u) return u;
@@ -139,11 +140,22 @@
       })[0];
       if (!raw) { mount.innerHTML = notFound(); return; }
       var h = normalizeHome(raw);
+      if (h.slug && QMI_IMAGES[h.slug]) h.image = QMI_IMAGES[h.slug];
       document.title = h.address + ', ' + (h.city || 'TX') + ' | Esperanza Homes';
       mount.innerHTML = detailHTML(h);
     }).catch(function () { mount.innerHTML = notFound(); });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  function bootImages(cb) {
+    fetch('/qmi-images.json').then(function (r) { return r.json(); }).then(function (data) {
+      if (data && data.images) QMI_IMAGES = data.images;
+    }).catch(function () {}).finally(cb);
+  }
+
+  function bootWithImages() {
+    bootImages(boot);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootWithImages);
+  else bootWithImages();
 })();
