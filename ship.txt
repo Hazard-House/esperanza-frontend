@@ -263,6 +263,7 @@ new-homes/tx/brownsville/palo-alto-groves/paloma/179709/index.html
 new-homes/tx/brownsville/palo-alto-groves/san-luis/146470/index.html
 new-homes/tx/brownsville/villas-las-lagunas/17778/index.html
 new-homes/tx/calallen/meadow-ridge/19662/index.html
+new-homes/tx/corpus-christi/meadow-ridge/19662/index.html
 new-homes/tx/city/anaqua-at-tres-lagos/17178/14005-sugarberry-ln/1724786/index.html
 new-homes/tx/city/anaqua-at-tres-lagos/17178/6529-anaqua-loop/1713165/index.html
 new-homes/tx/city/aqualina-at-tres-lagos/8658/14918-aqualina-way/1700671/index.html
