@@ -70,12 +70,19 @@
       moveInDate: f['Move-In Date'],
       description: f.Description,
       promo: f.promo_text,
+      promoStyle: f.promo_banner_style,
       pdfUrl: f['Dynamic PDF'],
     };
   }
 
   function statRow(icon, txt) {
     return '<div class="item detail pb-4 col-12 col-lg-6"><img class="me-2" src="' + icon + '" aria-hidden="true" width="24">' + txt + '</div>';
+  }
+
+  function promoBannerClass(style, text) {
+    if (style === 'green') return 'green';
+    if (style === 'gold') return 'tan';
+    return /flex/i.test(text || '') ? 'tan' : 'green';
   }
 
   function detailHTML(h) {
@@ -88,7 +95,7 @@
 
     var banners = '';
     if (h.availability) banners += '<div class="status-banner gray mt-2 align-top">' + esc(h.availability) + '</div>';
-    if (h.promo) banners += '<div class="status-banner overlay-promo mt-2 align-top tan">' + esc(h.promo) + '</div>';
+    if (h.promo) banners += '<div class="status-banner overlay-promo mt-2 align-top ' + promoBannerClass(h.promoStyle, h.promo) + '">' + esc(h.promo) + '</div>';
 
     var fpTile = h.fpImage
       ? '<div class="col-md-6 col-lg-4 ps-lg-1 d-none d-lg-block"><div class="oi-aspect three-two h-100"><img src="' + esc(h.fpImage) + '" class="oi-aspect-img" alt="' + esc(h.floorPlan) + ' floor plan"></div></div>'
