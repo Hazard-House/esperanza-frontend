@@ -174,6 +174,20 @@ function sub(html, re, fn, page, step) {
 // 4. Available Floor Plans row prices -> per-community fp.communityPrices[c.name]
 const HERO_STARTING_RE = /(?:<div class="d-none d-lg-inline-block mx-1">•<\/div>\s*)?<div class="d-block d-lg-inline-block">\s*Starting at \$[\d,]+\s*<\/div>/;
 const HOMES_FROM_BLOCK_RE = /<div class="overpass fs-7">HOMES FROM<\/div>\s*<div class="overpass bold text-dark-green fs-4">\$[\d,]+<\/div>/;
+// Live O'Neill pages embed promo/grand-opening graphics in the overview wysiwyg after
+// the body copy. D1 description is text-only — inject known graphics at build time.
+const OVERVIEW_GRAPHICS = {
+  'villas-las-lagunas': '<p><img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/7/11/Villas_Las_Lagunas_Community_Grand_Opening.jpg" style="width: 750px;"></p>',
+};
+function injectOverviewGraphic(html, c) {
+  const graphic = OVERVIEW_GRAPHICS[c.slug];
+  if (!graphic || html.includes('Villas_Las_Lagunas_Community_Grand_Opening')) return html;
+  const page = `community ${c.slug}`;
+  return sub(html,
+    /(<div class="wysiwyg pt-2 pt-lg-4">[\s\S]*?<\/p>)(<p><br><\/p>)?(<\/div>)/,
+    (_, pre, br, close) => pre + graphic + (br || '') + close,
+    page, 'overview graphic');
+}
 // Scraped pages ship the O'Neill header (title + green-bar-light [+ download CTA]).
 // Generated/inserted sections use qmiSectionHtml — replace the whole block when the
 // frozen header is missing the bar so rehydrate normalizes styling.
@@ -266,6 +280,7 @@ export function hydrateCommunity(html, c, d) {
         .replace(/(<div class="price">)\$[\d,]+(<\/div>)/g, (_, a, b) => a + money(price) + b);
     });
   } catch (e) { miss(page, `plan prices (${e.message})`); }
+  html = injectOverviewGraphic(html, c);
   return html;
 }
 
