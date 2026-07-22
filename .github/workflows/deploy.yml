@@ -20,6 +20,12 @@ on:
   push:
     branches: [main, staging]
   workflow_dispatch:
+  # Nightly rebuild: re-run the scrape-free detail refresh from live D1 and redeploy, so
+  # corrected data / ingest updates reach prod within 24h with nobody remembering to
+  # re-bake. Without this, the static bake goes stale and every "we fixed it" stays
+  # invisible on the site — the core reason O'Neill parity kept regressing (audit 2026-07-21).
+  schedule:
+    - cron: "0 9 * * *"  # 09:00 UTC ≈ 3–4am Central (off-peak)
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -34,6 +40,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+
+      # Renderer regression self-tests (scrape-free). Gates the deploy so a render-source
+      # regression (e.g. plan cards reverting to dev-min price, gallery cap, blog parity)
+      # fails CI instead of shipping. --if-present so this no-ops until the check:render
+      # script lands (frontend render PR), then activates automatically.
+      - name: Regression self-tests (scrape-free)
+        run: npm run --if-present check:render
 
       # Refresh API-driven detail pages (community / floor-plan / QMI) from the live
       # public API into public/ before shipping. Scrape-free + no npm deps (bare node),
