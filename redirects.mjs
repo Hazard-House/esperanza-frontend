@@ -8,7 +8,9 @@ export const REDIRECTS = {
  // Meadow Ridge moved cities in D1 (Calallen → Corpus Christi) but the scraped
  // community pages still link to the old Calallen path, which is missing the map
  // and has stale meta. 301 to the D1-correct Corpus Christi page (map + right meta).
- "/new-homes/tx/calallen/meadow-ridge/": "/new-homes/tx/corpus-christi/meadow-ridge/",
+ "/new-homes/tx/calallen/meadow-ridge/": "/new-homes/tx/corpus-christi/meadow-ridge/19662/",
+ "/new-homes/tx/calallen/meadow-ridge/19662/": "/new-homes/tx/corpus-christi/meadow-ridge/19662/",
+ "/new-homes/tx/corpus-christi/meadow-ridge/": "/new-homes/tx/corpus-christi/meadow-ridge/19662/",
  // retired blog slugs — live 301s both to the blog index
  "/blog/vista-verde-groundbreaking-new-homes-coming-to-laredo-tx/": "/blog/",
  "/blog/vista-verde-groundbreaking-ceremony-celebrates-new-community-coming-to-laredo/": "/blog/",
