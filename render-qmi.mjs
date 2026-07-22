@@ -1,7 +1,8 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, selfTourCalloutHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, factOf, promoBannerClass, taxMultFor } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, selfTourCalloutHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, factOf, promoBannerClass, taxMultFor, getBuildRate } from './sections.mjs';
+import { isRatePromo } from './promo-utils.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -21,7 +22,8 @@ export function qmiContent(h) {
   // Live, not baked: hydrate-live.js refreshes text + color from promo_banner_style.
   const promoText = h.promo;
   const promoB = promoText ? `<div class="status-banner overlay-promo mt-2 align-top ${promoBannerClass(h.promoStyle, promoText)}" data-live="promo">${esc(promoText)}</div>` : '';
-  const saving = promoText ? `<p id="calculator-promo-saving" class="small mb-2">Savings Over 30 Years</p>` : '';
+  const saving = isRatePromo(promoText, getBuildRate())
+    ? `<p id="calculator-promo-saving" class="small mb-2"></p>` : '';
   // Bake price + per-community tax so the calculator (detail-extras.js) computes the
   // monthly AND "Savings Over 30 Years" LIVE from the Settings rates (mortgage + incentive)
   // — not the frozen June harvest. data-live="price" already carries the price.
