@@ -42,13 +42,23 @@
     return Number.isFinite(n) ? n : null;
   }
   if (P.type !== 'qmi') return; // community/floorplan volatiles added later if needed
-  function fillSavings(txt) {
-    ['calculator-promo-saving', 'calc-savings-line', 'promo-saving'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.textContent = txt;
-    });
+  function fillSavings(save, termYrs) {
+    termYrs = termYrs || 30;
+    var amount = save > 0
+      ? '$' + save.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '';
+    var fullLine = amount ? amount + ' Savings Over ' + termYrs + ' Years' : '';
     var header = document.getElementById('calculator-promo-saving');
-    if (header) header.style.display = txt ? '' : 'none';
+    if (header) {
+      header.textContent = fullLine;
+      header.style.display = fullLine ? '' : 'none';
+    }
+    var modalSave = document.getElementById('promo-saving');
+    if (modalSave) modalSave.textContent = amount;
+    var termEl = document.getElementById('term-selected');
+    if (termEl) termEl.textContent = termYrs;
+    var calcLine = document.getElementById('calc-savings-line');
+    if (calcLine) calcLine.textContent = fullLine;
   }
   Promise.all([
     fetchT(API + '/qmi').then(function (r) { return r.json(); }),
@@ -85,10 +95,10 @@
           return rr ? loan * rr / (1 - Math.pow(1 + rr, -360)) : loan / 360;
         };
         var save = (pi(mortgageRate) - pi(promoRate)) * 360;
-        fillSavings('$' + save.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years');
+        fillSavings(save, 30);
       }
     } else {
-      fillSavings('');
+      fillSavings(0, 30);
     }
     // Self-tour callout (PR #69): show when the home is self-tourable + has an NterNow link.
     var sec = document.getElementById('self-tour-callout');

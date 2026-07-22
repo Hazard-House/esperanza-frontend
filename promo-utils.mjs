@@ -43,33 +43,55 @@ export function savingsOverTerm(stdMonthly, promoMonthly, termYrs = 30) {
 export function promoCalcScript(promoRate) {
   const rate = Number(promoRate);
   return `(function(){`
-    + `function fmtTotal(n){n=Number(n)||0;var p=n.toFixed(2).split('.');`
-    + `return '<span class="dollar-sign">$</span><span class="dollars">'+p[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g,',')+'</span><span class="decimal">.</span><span class="cents">'+p[1]+'</span>';}`
     + `function readNum(sel,def){var el=document.querySelector(sel);var v=el?Number(el.value):NaN;return Number.isFinite(v)?v:def;}`
-    + `function taxMult(){var t=readNum('.oi-calc-taxmultiplier',0);return t>1?t:t*100;}`
-    + `function totalMonthly(price,ratePct){`
-    + `var down=readNum('.oi-calc-downpaymentpercent',3.5),term=readNum('.oi-calc-term',30),`
-    + `hoaM=readNum('.oi-calc-hoa',0),pmiEl=document.querySelector('.oi-calc-pmiamount'),`
-    + `pmiOn=pmiEl?pmiEl.checked:true,loan=price*(1-down/100),months=term*12,r=ratePct/1200,`
-    + `pi=r?loan*r/(1-Math.pow(1+r,-months)):loan/months,`
-    + `tax=price*taxMult()/100/12,ins=price*0.004/12,`
-    + `pmi=pmiOn&&down<20?loan*0.0075/12:0;`
-    + `return Math.round((pi+tax+ins+pmi+hoaM)*100)/100;}`
+    + `function readEmi(){var d=document.querySelector('.emi-wrap .dollars'),c=document.querySelector('.emi-wrap .cents');`
+    + `if(!d||!c)return NaN;var dollars=Number(String(d.textContent||'').replace(/,/g,'')),`
+    + `cents=Number('.'+String(c.textContent||'0'));return dollars+cents;}`
+    + `function readTaxMonthly(price){var t=readNum('.oi-calc-taxamount',NaN);`
+    + `if(Number.isFinite(t)&&t>0)return Math.round(t/12*100)/100;`
+    + `var tm=readNum('.oi-calc-taxmultiplier',0);tm=tm>1?tm:tm*100;return Math.round(price*tm/100/12*100)/100;}`
+    + `function readHoaMonthly(){return Math.round(readNum('.oi-calc-hoa',0)/12*100)/100;}`
+    + `function readHomeInsMonthly(price){var hi=readNum('.oi-calc-homeins',NaN);`
+    + `if(Number.isFinite(hi)&&hi>0)return Math.round(hi/12*100)/100;return Math.round(price*0.004/12*100)/100;}`
+    + `function readPmiMonthly(price,dp){var pmiEl=document.querySelector('.oi-calc-pmiamount');`
+    + `if(pmiEl&&!pmiEl.checked)return 0;var loan=price-dp;if(loan<=0)return 0;return Math.round(loan*0.0075/12*100)/100;}`
+    + `function fmt(n){return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}`
     + `function promoCalc(){`
-    + `var stdRate=readNum('.oi-calc-rate',6.2),price=readNum('.oi-calc-price',0),`
-    + `term=readNum('.oi-calc-term',30),promoRate=${rate},`
-    + `pm=document.getElementById('promo-monthly'),ps=document.getElementById('promo-saving');`
-    + `if(!pm||!price||!(promoRate<stdRate))return;`
-    + `var std=totalMonthly(price,stdRate),pro=totalMonthly(price,promoRate),`
-    + `txt=fmtTotal(pro),save=(std-pro)*term*12;`
-    + `pm.innerHTML=txt;`
-    + `var line=save>0?"$"+save.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' Savings Over '+term+' Years':'';`
-    + `if(ps)ps.textContent=line;`
-    + `['calculator-promo-saving','calc-savings-line'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=line;});`
+    + `var promoRateEl=document.querySelector('.promo-rate'),`
+    + `promoMonthlyEl=document.getElementById('promo-monthly'),`
+    + `promoSavingEl=document.getElementById('promo-saving'),`
+    + `externalPromoSavingEl=document.getElementById('calculator-promo-saving'),`
+    + `termSelectedEl=document.getElementById('term-selected');`
+    + `if(!promoMonthlyEl||!promoRateEl)return;`
+    + `var price=readNum('.oi-calc-price',0),`
+    + `rate=Number(promoRateEl.value)||${rate},`
+    + `dpRate=readNum('.oi-calc-downpaymentpercent',3.5),`
+    + `dp=Math.round(price*(dpRate/100)),`
+    + `termYrs=readNum('.oi-calc-term',30),`
+    + `term=termYrs*12,`
+    + `emi=readEmi();`
+    + `if(!price||!Number.isFinite(emi))return;`
+    + `var taxes=readTaxMonthly(price),homeIns=readHomeInsMonthly(price),`
+    + `hoa=readHoaMonthly(),pmi=readPmiMonthly(price,dp),`
+    + `principal=price-dp,r=rate/100/12,`
+    + `monthly=r?principal*r/(1-Math.pow(1+r,-term)):principal/term;`
+    + `monthly=Math.round(monthly*100)/100;`
+    + `var monthlyTotal=Math.round((monthly+taxes+homeIns+hoa+pmi)*100)/100,`
+    + `monthlySaving=Math.round((emi-monthlyTotal)*100)/100,`
+    + `totalSaving=Math.round(monthlySaving*term*100)/100;`
+    + `if(!(totalSaving>0)){promoMonthlyEl.textContent='';`
+    + `if(promoSavingEl)promoSavingEl.textContent='';`
+    + `if(externalPromoSavingEl){externalPromoSavingEl.textContent='';externalPromoSavingEl.style.display='none';}`
+    + `if(termSelectedEl)termSelectedEl.textContent=termYrs;return;}`
+    + `promoMonthlyEl.textContent=fmt(monthlyTotal);`
+    + `if(promoSavingEl)promoSavingEl.textContent=fmt(totalSaving);`
+    + `if(externalPromoSavingEl){externalPromoSavingEl.textContent=fmt(totalSaving)+' Savings Over '+termYrs+' Years';externalPromoSavingEl.style.display='';}`
+    + `if(termSelectedEl)termSelectedEl.textContent=termYrs;`
     + `}`
     + `window.esperanzaPromoCalc=promoCalc;`
+    + `function schedule(){requestAnimationFrame(promoCalc);}`
     + `promoCalc();`
     + `document.querySelectorAll('.oi-calc input,.oi-calc select').forEach(function(el){`
-    + `el.addEventListener('input',promoCalc);el.addEventListener('change',promoCalc);});`
+    + `el.addEventListener('input',schedule);el.addEventListener('change',schedule);});`
     + `})();`;
 }

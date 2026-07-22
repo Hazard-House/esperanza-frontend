@@ -395,14 +395,16 @@ export function mortgageCalcModalHtml(h) {
     + `<input type="number" class="form-control promo-rate border-0 rounded-end bg-tan-200 ls-md" min="0" value="${promoRate}" disabled>`
     + `<span class="input-group-append"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">%</span></span></div></div></div>` : '';
   const resultsBlock = ratePromo
-    ? `<div class="row w-100 text-center d-flex justify-content-center">`
+    ? `<div class="row w-100 text-center d-flex justify-content-center emi-wrap">`
       + `<div class="form-group col-12 col-md-6"><p class="">Estimated monthly Payment</p>`
       + `<div class="oi-calc-results-form-group text-center f-proxima-bold text-dark-blue">`
       + `<p class="oi-calc-results calc-results mb-0"></p></div></div>`
-      + `<div class="form-group col-12 col-md-6"><p class="">Estimated monthly Payment with Promotional Rate</p>`
-      + `<div class="text-center f-proxima-bold text-dark-blue">`
-      + `<p id="promo-monthly" class="promo-monthly calc-results mb-0"></p></div>`
-      + `<p id="promo-saving" class="promo-saving fs-9 overpass bold text-green mt-2 mb-0"></p></div></div>`
+      + `<div class="form-group col-12 col-md-6 total-results-row-promo py-lg-0 py-4">`
+      + `<p class="">Estimated monthly Payment with<br> Promotional Rate</p>`
+      + `<div><span id="promo-monthly" class="promo-monthly"></span></div></div></div>`
+      + `<div class="row w-100"><div class="col-12 text-center">`
+      + `<p class="mb-0">Savings over <span id="term-selected">30</span> Years:</p>`
+      + `<div><span id="promo-saving" class="promo-saving h1"></span></div></div></div>`
     : `<div class="row w-100 text-center d-flex justify-content-center"><div class="form-group col-12 col-md-6">`
       + `<p class="">Estimated monthly Payment</p>`
       + `<div class="oi-calc-results-form-group text-center f-proxima-bold text-dark-blue">`
@@ -729,7 +731,8 @@ function demo() {
   const calc = mortgageCalcModalHtml({ price: 242990, community: 'Retama Village (55+) at Bentsen Palm', communityObj: { slug: 'retama-village-55-at-bentsen-palm' } });
   assert(calc.includes('id="payment-calculator"') && calc.includes('class="oi-calc"') && calc.includes('242990') && calc.includes('2176') && calc.includes('2.45'), 'mortgageCalcModalHtml');
   const calcPromo = mortgageCalcModalHtml({ price: 212990, promo: '4.99% Rate + up to $5,000 in Closing Costs', community: 'Wolf Creek', communityObj: { slug: 'wolf-creek' } });
-  assert(calcPromo.includes('promo-rate') && calcPromo.includes('promo-monthly') && calcPromo.includes('esperanzaPromoCalc'), 'mortgageCalcModalHtml rate promo');
+  assert(calcPromo.includes('promo-rate') && calcPromo.includes('promo-monthly') && calcPromo.includes('esperanzaPromoCalc')
+    && calcPromo.includes('emi-wrap') && calcPromo.includes('id="term-selected"') && calcPromo.includes('class="promo-saving h1"'), 'mortgageCalcModalHtml rate promo');
 
   // subnav: mobile "Go To..." dropdown + desktop row with `on-scroll` links (active on first item)
   const nav = subnavHtml([['overview', 'Overview'], ['photos', 'Photo Gallery'], ['sales', 'Contact']]);
