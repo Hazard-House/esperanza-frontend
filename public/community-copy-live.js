@@ -58,6 +58,11 @@ if (typeof window === 'undefined') {
   (function () {
     'use strict';
     var CFG = window.__ESPERANZA || {}, API = CFG.API_BASE || '/api/public';
+    // Live O'Neill pages embed promo/grand-opening graphics after overview body copy.
+    // D1 description is text-only — re-append known graphics after the API refresh.
+    var OVERVIEW_GRAPHICS = {
+      'villas-las-lagunas': '<p><img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/7/11/Villas_Las_Lagunas_Community_Grand_Opening.jpg" style="width: 750px;"></p>',
+    };
     var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
     var parts = location.pathname.replace(/^\/+|\/+$/g, '').split('/');
 
@@ -73,7 +78,11 @@ if (typeof window === 'undefined') {
         // Description = first .wysiwyg in #overview (amenities is a separate
         // #amenities-list .wysiwyg). Only overwrite when D1 has a value.
         var desc = document.querySelector('#overview .wysiwyg:not(#amenities-list)');
-        if (desc && f.description != null && String(f.description).trim()) desc.innerHTML = copyToHtml(f.description, false);
+        if (desc && f.description != null && String(f.description).trim()) {
+          var html = copyToHtml(f.description, false);
+          if (OVERVIEW_GRAPHICS[slug]) html += OVERVIEW_GRAPHICS[slug];
+          desc.innerHTML = html;
+        }
         var am = document.getElementById('amenities-list');
         if (am && f.amenities != null && String(f.amenities).trim()) am.innerHTML = copyToHtml(f.amenities, true);
       }).catch(function () {});
