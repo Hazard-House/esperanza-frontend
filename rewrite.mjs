@@ -50,6 +50,14 @@ export function resolveMedia(rawPath, prefix, map) {
   const clean = rawPath.split('%EF%B9%96')[0].split('?')[0];
   return map.get(prefix + stripExt(clean)) || (prefix + clean);
 }
+// Mapped keys -> img.hazardhouse.ai/assets-media; unmapped -> live media CDN (still up).
+// Unmapped assets-media paths 404 on R2 — same fallback harvest-qmi-media.mjs uses.
+export function mediaCdnUrl(rawPath, prefix, map, liveHost) {
+  const clean = rawPath.split('%EF%B9%96')[0].split('?')[0];
+  const key = map.get(prefix + stripExt(clean));
+  if (key) return `//img.hazardhouse.ai/assets-media/${key}`;
+  return `//${liveHost}/${clean}`;
+}
 
 // Third-party analytics/pixel scripts baked into the June-8 scrape. HTTrack localized
 // their URLs to same-origin relative paths, so on the replica each one 404s ->
@@ -215,9 +223,9 @@ export function rewriteCommon(html) {
     // live URL shape — worker.js routes /floorplan-collections/pdf/ to the esperanza-pdf Worker.
     .replace(/href="(?:\.\.\/)*pdf\/Floor-Plan-Collections\.pdf"/g, 'href="/floorplan-collections/pdf/"')
     .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.esperanzahomes\.com\/([^"'\s)]*)/g,
-      (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, '', ESP_KEYS)}`)
+      (_m, p) => mediaCdnUrl(p, '', ESP_KEYS, 'media.esperanzahomes.com'))
     .replace(/(?:https?:\/\/)?(?:\.\.\/)*media\.homefiniti\.com\/([^"'\s)]*)/g,
-      (_m, p) => `//img.hazardhouse.ai/assets-media/${resolveMedia(p, 'homefiniti/', HF_KEYS)}`)
+      (_m, p) => mediaCdnUrl(p, 'homefiniti/', HF_KEYS, 'media.homefiniti.com'))
     .replace(/(?:\.\.\/)*api\.mapbox\.com\//g, 'https://api.mapbox.com/')
     // mapbox-gl.js is ~230KB and was render-blocking in <head>. Defer it (+ our branded
     // -style patch) so it no longer blocks first paint. Safe: island maps load deferred
@@ -310,6 +318,8 @@ function demo() {
     === 'src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2026/5/22/LP047_Rendering.png"', 'media rewrite/decode + resize');
   console.assert(s('content="https://media.homefiniti.com/153/2022/5/16/1-14.jpg"')
     === 'content="//img.hazardhouse.ai/assets-media/homefiniti/153/2022/5/16/1-14.jpg"', 'absolute media');
+  console.assert(s('src="https://media.esperanzahomes.com/153/2026/6/11/unmapped-new-photo.jpg"')
+    === 'src="//media.esperanzahomes.com/153/2026/6/11/unmapped-new-photo.jpg"', 'unmapped media -> live CDN');
   const foot = s('<div class="col-12 oneilinteractive-attribution text-center"><a href="https://oneilinteractive.com/x"><img class="oneil-icon"> Powered by Homefiniti</a>.</div>');
   console.assert(foot.includes('Powered by Hazard House') && !foot.includes('oneilinteractive.com'), 'footer');
   const shell = extractShell('<head></head><body><nav>n</nav><section class="header">HOME</section><section>x</section><footer>f</footer></body>');
