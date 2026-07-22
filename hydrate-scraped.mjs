@@ -79,6 +79,10 @@ const apiImagePath = u => String(u || '').replace(/^https?:\/\/[^/]+\//, '');
 
 export function patchCommunityGalleryImages(html, c) {
   if (!c?.image) return html;
+  // Rich live galleries (many fancybox photos): keep the scraped mosaic in sync with
+  // the lightbox. API hero/secondary are admin thumbnails — wrong for Vista Verde et al.
+  const galleryPhotos = (html.match(/data-fancybox="photos"/g) || []).length;
+  if (galleryPhotos > 2 || (Array.isArray(c.photoGallery) && c.photoGallery.length)) return html;
   const page = `community ${c.slug}`;
   const hero = hostUrl(c.image);
   const heroPath = apiImagePath(c.image);
@@ -436,6 +440,10 @@ function demo() {
   assert(!coOut.includes('$224,990') && !coOut.includes('price-title') && coOut.includes('card-title'), 'close-out infowindow price column removed');
   const spec = '<div class="card oi-map-item" data-listing-type="spec"><a href="new-homes/tx/laredo/vista-verde/18489/1-a-st/99/">x</a>\n</div>\n</div>\n</div>';
   assert(hydrateCommunityStatus(spec, dd) === spec, 'spec (QMI) infowindows untouched');
+  const richGallery = '<div id="detail-gallery"><div class="oi-aspect three-two"><img src="//media.esperanzahomes.com/a.jpg"></div>'
+    + '<div class="d-none">' + '<img data-fancybox="photos" src="/1.jpg">'.repeat(4) + '</div></div>';
+  const patched = patchCommunityGalleryImages(richGallery, { slug: 'vista-verde', name: 'Vista Verde', image: 'https://img.hazardhouse.ai/communities/rec/wrong.jpg' });
+  assert(patched.includes('media.esperanzahomes.com/a.jpg') && !patched.includes('communities/rec/wrong'), 'rich gallery skips API hero override');
   console.log('hydrate-scraped.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
