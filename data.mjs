@@ -4,6 +4,7 @@ import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { resolveQmiHero } from './resolve-qmi-hero.mjs';
 const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
 
 const un = v => (Array.isArray(v) ? v[0] : v);
@@ -135,17 +136,11 @@ export async function loadData() {
     // over D1 image_url, and the original's full gallery wins when D1's is shorter.
     const qm = (QMI_MEDIA.homes || {})[h.slug || slugify(h.address)];
     if (qm) {
-      // A floor-plan DRAWING must never be the hero when D1 already has a real
-      // elevation render — but always prefer a harvested live hero over D1 placeholders
-      // (hero.jpg / photo_N.jpg) even when the same asset appears in planImages.
-      const stem = u => String(u || '').split('/').pop()?.split('?')[0].replace(/\.[^.]+$/i, '').toLowerCase() || '';
-      const heroIsDrawing = qm.hero && (qm.planImages || []).some(u => stem(u) === stem(qm.hero));
-      const apiPlaceholder = !h.image || /\/(hero|photo_\d+)\.jpe?g(?:\?|$)/i.test(String(h.image));
-      if (qm.hero && (qm.source === 'live' || !heroIsDrawing || apiPlaceholder || !h.image)) h.image = fixHost(qm.hero);
       // Prefer harvested live gallery — D1 photo_gallery is often placeholder filenames.
       if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: fixHost(u), alt: h.address }));
       else if (qm.source === 'live') h.gallery = []; // live page has no photo set — hero only
     }
+    h.image = resolveQmiHero({ image: h.image, gallery: h.gallery }, qm, fixHost);
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
     // backfilled), else the original page's own viewer drawing, else the harvested
     // per-plan pool, else the committed _FP.png map (interim). null -> CTA fallback.

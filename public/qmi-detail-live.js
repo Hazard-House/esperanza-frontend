@@ -21,6 +21,9 @@
 
   var un = function (v) { return Array.isArray(v) ? v[0] : v; };
   var QMI_IMAGES = {};
+  function isBadHero(u) {
+    return !u || /\/floor_plans\//i.test(String(u)) || /\/(hero|photo_\d+)\.jpe?g/i.test(String(u));
+  }
   var IMG_TX = 'format=auto,quality=82,width=1600';
   var fixHost = function (u) {
     if (!u) return u;
@@ -35,9 +38,25 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   // Mirror of normalizeHome in available-live.js (same field mapping).
+  function applyResolvedImage(h) {
+    if (h.slug && QMI_IMAGES[h.slug]) h.image = QMI_IMAGES[h.slug];
+    else if (isBadHero(h.image) && h.gallery && h.gallery.length) {
+      for (var i = 0; i < h.gallery.length; i++) {
+        if (h.gallery[i].url && !isBadHero(h.gallery[i].url)) { h.image = h.gallery[i].url; break; }
+      }
+    }
+    return h;
+  }
+
   function normalizeHome(h) {
     var f = h.fields || h;
     var fp = un(f['FP: Image']);
+    var gallery = [];
+    if (Array.isArray(f.photo_gallery)) {
+      gallery = f.photo_gallery.map(function (x) {
+        return { url: fixHost(x.url || x), alt: x.alt || '' };
+      });
+    }
     return {
       id: h.id,
       price: f.Price,
@@ -51,6 +70,7 @@
       city: f.City,
       address: f.address,
       image: fixHost(f.image_url),
+      gallery: gallery,
       fpImage: fp ? fixHost(fp.url || fp) : null,
       floorPlan: f['Floor Plan'],
       collection: un(f['FP: Collection']),
@@ -139,8 +159,7 @@
         return (slug && f.slug === slug) || (id && h.id === id);
       })[0];
       if (!raw) { mount.innerHTML = notFound(); return; }
-      var h = normalizeHome(raw);
-      if (h.slug && QMI_IMAGES[h.slug]) h.image = QMI_IMAGES[h.slug];
+      var h = applyResolvedImage(normalizeHome(raw));
       document.title = h.address + ', ' + (h.city || 'TX') + ' | Esperanza Homes';
       mount.innerHTML = detailHTML(h);
     }).catch(function () { mount.innerHTML = notFound(); });

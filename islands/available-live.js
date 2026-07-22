@@ -53,8 +53,17 @@
       h.pdfUrl || '#';
   }
 
+  function isBadHero(u) {
+    return !u || /\/floor_plans\//i.test(String(u)) || /\/(hero|photo_\d+)\.jpe?g/i.test(String(u));
+  }
+
   function applyResolvedImage(h) {
     if (h.slug && QMI_IMAGES[h.slug]) h.image = QMI_IMAGES[h.slug];
+    else if (isBadHero(h.image) && h.gallery && h.gallery.length) {
+      for (var i = 0; i < h.gallery.length; i++) {
+        if (h.gallery[i].url && !isBadHero(h.gallery[i].url)) { h.image = h.gallery[i].url; break; }
+      }
+    }
     return h;
   }
 
@@ -62,6 +71,12 @@
     var f = h.fields || h;
     var lat = f.latitude != null ? f.latitude : f.geo_latitude;
     var lng = f.longitude != null ? f.longitude : f.geo_longitude;
+    var gallery = [];
+    if (Array.isArray(f.photo_gallery)) {
+      gallery = f.photo_gallery.map(function (x) {
+        return { url: fixHost(x.url || x), alt: x.alt || '' };
+      });
+    }
     return {
       id: h.id,
       price: f.Price,
@@ -81,6 +96,7 @@
       postal: f.postal_code,
       address: f.address,
       image: fixHost(f.image_url),
+      gallery: gallery,
       floorPlan: f['Floor Plan'],
       availability: f.availability_text,
       availableNow: f['Available Now'],
