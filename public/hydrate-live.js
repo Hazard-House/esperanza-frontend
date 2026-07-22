@@ -36,17 +36,19 @@
       el.classList.add(color);
     });
   }
-  if (P.type !== 'qmi') return; // community/floorplan volatiles added later if needed
-  // P&I only — the basis for "Savings Over 30 Years" (tax/ins/PMI cancel at either rate).
-  function principalInterest(price, ratePct) {
-    var loan = price * (1 - 0.035), r = ratePct / 100 / 12;
-    return r ? loan * r / (1 - Math.pow(1 + r, -360)) : loan / 360;
+  function parsePromoRate(text) {
+    var m = String(text || '').match(/([\d.]+)\s*%/);
+    var n = m ? Number(m[1]) : NaN;
+    return Number.isFinite(n) ? n : null;
   }
+  if (P.type !== 'qmi') return; // community/floorplan volatiles added later if needed
   function fillSavings(txt) {
-    ['calculator-promo-saving', 'calc-savings-line'].forEach(function (id) {
+    ['calculator-promo-saving', 'calc-savings-line', 'promo-saving'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.textContent = txt;
     });
+    var header = document.getElementById('calculator-promo-saving');
+    if (header) header.style.display = txt ? '' : 'none';
   }
   Promise.all([
     fetchT(API + '/qmi').then(function (r) { return r.json(); }),
@@ -62,16 +64,29 @@
     set('price', money(f.Price));
     setPromo(f.promo_text, f.promo_banner_style);
     set('availability', f.availability_text);
-    // Live "Savings Over 30 Years" = (standard P&I − promo P&I) × 360, using the company
-    // Settings mortgage rate and the % rate parsed from THIS home's incentive banner.
-    // Flex-discount / no-rate promos have no % → no rate savings (clear the baked label).
     var s = sres.settings || {};
     var mortgageRate = Number(s.mortgage_rate) || 6.2;
-    var promoRate = Number(((f.promo_text || '').match(/([\d.]+)\s*%/) || [])[1]);
+    var promoRate = parsePromoRate(f.promo_text);
     var price = Number(f.Price) || 0;
+    var rateEl = document.querySelector('.oi-calc-rate');
+    if (rateEl) rateEl.value = mortgageRate;
+    var priceEl = document.querySelector('.oi-calc-price');
+    if (priceEl && price) priceEl.value = price;
+    var promoEl = document.querySelector('.promo-rate');
+    if (promoEl && promoRate) promoEl.value = promoRate;
     if (price && promoRate && promoRate < mortgageRate) {
-      var save = (principalInterest(price, mortgageRate) - principalInterest(price, promoRate)) * 360;
-      fillSavings('$' + save.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years');
+      if (typeof window.esperanzaPromoCalc === 'function') {
+        window.esperanzaPromoCalc();
+      } else {
+        // Fallback for pages baked before the promo modal shipped: P&I-only savings.
+        var loan = price * (1 - 0.035), r = function (pct) { return pct / 100 / 12; };
+        var pi = function (ratePct) {
+          var rr = r(ratePct);
+          return rr ? loan * rr / (1 - Math.pow(1 + rr, -360)) : loan / 360;
+        };
+        var save = (pi(mortgageRate) - pi(promoRate)) * 360;
+        fillSavings('$' + save.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years');
+      }
     } else {
       fillSavings('');
     }

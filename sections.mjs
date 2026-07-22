@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 import { freshBannerHtml } from './rewrite.mjs';
+import { isRatePromo, parsePromoRate, promoCalcScript } from './promo-utils.mjs';
 
 // Harvested live-site facts (mortgage rate, per-community taxmultiplier, per-home
 // promo badges) — see harvest-live-facts.mjs. Build-time read; {} if missing.
@@ -57,6 +58,7 @@ const FACTS = (() => {
 // the volatile under-price/calc savings hydrate fully live (hydrate-live.js).
 let BUILD_RATE = FACTS.rate || 6.15;
 export function setBuildRate(r) { if (Number(r) > 0) BUILD_RATE = Number(r); }
+export function getBuildRate() { return BUILD_RATE; }
 // Per-plan Energy Cost Comparison values harvested from the June-8 scrape
 // (see harvest-energy.mjs). {} if missing -> energy section self-hides.
 const ENERGY = (() => {
@@ -386,6 +388,27 @@ export function mortgageCalcModalHtml(h) {
   const rate = BUILD_RATE;
   const taxMult = (FACTS.taxMult || {})[commSlug] || 2.2;
   const hoa = (FACTS.hoa || {})[commSlug] ?? 0;
+  const promoRate = parsePromoRate(h.promo);
+  const ratePromo = isRatePromo(h.promo, rate);
+  const promoRateRow = ratePromo ? `<div class="row form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-4"><label>Promotional Rate</label></div>`
+    + `<div class="col-12 col-lg-8"><div class="input-group">`
+    + `<input type="number" class="form-control promo-rate border-0 rounded-end bg-tan-200 ls-md" min="0" value="${promoRate}" disabled>`
+    + `<span class="input-group-append"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">%</span></span></div></div></div>` : '';
+  const resultsBlock = ratePromo
+    ? `<div class="row w-100 text-center d-flex justify-content-center">`
+      + `<div class="form-group col-12 col-md-6"><p class="">Estimated monthly Payment</p>`
+      + `<div class="oi-calc-results-form-group text-center f-proxima-bold text-dark-blue">`
+      + `<p class="oi-calc-results calc-results mb-0"></p></div></div>`
+      + `<div class="form-group col-12 col-md-6"><p class="">Estimated monthly Payment with Promotional Rate</p>`
+      + `<div class="text-center f-proxima-bold text-dark-blue">`
+      + `<p id="promo-monthly" class="promo-monthly calc-results mb-0"></p></div>`
+      + `<p id="promo-saving" class="promo-saving fs-9 overpass bold text-green mt-2 mb-0"></p></div></div>`
+    : `<div class="row w-100 text-center d-flex justify-content-center"><div class="form-group col-12 col-md-6">`
+      + `<p class="">Estimated monthly Payment</p>`
+      + `<div class="oi-calc-results-form-group text-center f-proxima-bold text-dark-blue">`
+      + `<p class="oi-calc-results calc-results mb-0"></p></div>`
+      + `<p id="calc-savings-line" class="fs-9 overpass bold text-green mt-2 mb-0"></p></div></div>`;
+  const promoScript = ratePromo ? promoCalcScript(promoRate) : '';
   return `<div class="modal fade rounded" id="payment-calculator" tabindex="-1" aria-labelledby="payment-calculator-label" aria-hidden="true">`
     + `<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">`
     + `<button type="button" class="btn-close fs-6 ms-auto me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>`
@@ -416,6 +439,7 @@ export function mortgageCalcModalHtml(h) {
     + `<div class="col-12 col-lg-8"><div class="input-group">`
     + `<input type="number" class="calc-input form-control oi-calc-rate border-0 rounded-end bg-tan-200 ls-md" min="0" value="">`
     + `<span class="input-group-append"><span class="input-group-text p-2 h-100 border-0 rounded-start bg-tan-200 text-green overpass bold">%</span></span></div></div></div>`
+    + promoRateRow
     + `<div class="row form-group align-items-center my-1 my-lg-3"><div class="col-12 col-lg-6 pe-lg-4">`
     + `<div class="form-group oi-calc-term-form-group"><label>Term</label><div class="input-group">`
     + `<select class="calc-input oi-calc-term form-control border-0 rounded-end bg-tan-200 ls-md"><option value="15">15</option><option value="30">30</option><option value="40">40</option></select>`
@@ -435,11 +459,7 @@ export function mortgageCalcModalHtml(h) {
     + `<div class="row align-items-center mt-3 mt-lg-4 mb-2"><div class="col text-center">`
     + `<button class="btn btn-green calc-button oi-calc-calculate mr-1 btn-auto">CALCULATE</button>`
     + `<button class="btn btn-gray draw calc-button oi-calc-reset btn-auto mt-3 mt-sm-0 ms-lg-3">RESET</button></div></div>`
-    + `<div class="row w-100 text-center d-flex justify-content-center"><div class="form-group col-12 col-md-6">`
-    + `<p class="">Estimated monthly Payment</p>`
-    + `<div class="oi-calc-results-form-group text-center f-proxima-bold text-dark-blue">`
-    + `<p class="oi-calc-results calc-results mb-0"></p></div>`
-    + `<p id="calc-savings-line" class="fs-9 overpass bold text-green mt-2 mb-0"></p></div></div></div></div>`
+    + resultsBlock + `</div></div>`
     + `<input type="hidden" class="oi-calc-loanamount" disabled value="">`
     + `<input type="hidden" class="oi-calc-pandi" disabled value="">`
     + `<input type="hidden" class="oi-calc-pmimultiplier" disabled value="0.0075">`
@@ -458,6 +478,7 @@ export function mortgageCalcModalHtml(h) {
     + `var mortgage=new OiCalc.Mortgage('.oi-calc',mcalcoptions);`
     + `mortgage.instance.calculate.on('click',function(e){e.preventDefault();});`
     + `if(location.hash==='#mortgage-calculator'){var el=document.getElementById('payment-calculator');if(el&&window.bootstrap)bootstrap.Modal.getOrCreateInstance(el).show();}`
+    + `${promoScript}`
     + `});</script>`
     + `</div><div class="modal-footer pb-lg-4 fs-10 overpass light-italic col-12 col-lg-11 mx-auto"></div>`
     + `</div></div></div>`;
@@ -589,7 +610,7 @@ export function setHead(html, m) {
 const EMPTY_BANNER_RE = /<div class="alert-banner" style="display:none">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/;
 export function finalizePage(shell, { content, head, page, islands }) {
   let html = setHead(shell, head);
-  html = html.replace('<!--CONTENT-->', content);
+  html = html.replace('<!--CONTENT-->', () => content);
   const slides = FACTS.bannerSlidesCommunity || FACTS.bannerSlides;
   if (slides && slides.length) html = html.replace(EMPTY_BANNER_RE, freshBannerHtml(slides));
   html = injectSiteOverrides(html);
@@ -646,6 +667,8 @@ function demo() {
   assert(head.includes('<title>T</title>') && head.includes('href="/c/"'), 'setHead');
   const page = finalizePage('<head></head><body><!--CONTENT--></body>', { content: '<p>hi</p>', head: { title: 'T', canonical: '/c/', url: '/c/' }, page: { type: 'qmi', id: 'rec1' }, islands: ['detail-extras.js'] });
   assert(page.includes('<p>hi</p>') && page.includes('__ESPERANZA_PAGE') && page.includes('detail-extras.js'), 'finalizePage');
+  const dollarQuote = finalizePage('<body><!--CONTENT--></body>', { content: `<script>var x=save>0?'$'+1:'';</script>`, head: { title: 'T', canonical: '/c/', url: '/c/' }, page: { type: 'qmi', id: 'rec1' }, islands: [] });
+  assert(dollarQuote.includes("save>0?'$'+1"), 'finalizePage preserves $\' in content');
 
   // Fabricated heading pattern must never reappear; real theme pattern must be used
   // in all six section builders (verified against a live QMI detail page).
@@ -705,6 +728,8 @@ function demo() {
 
   const calc = mortgageCalcModalHtml({ price: 242990, community: 'Retama Village (55+) at Bentsen Palm', communityObj: { slug: 'retama-village-55-at-bentsen-palm' } });
   assert(calc.includes('id="payment-calculator"') && calc.includes('class="oi-calc"') && calc.includes('242990') && calc.includes('2176') && calc.includes('2.45'), 'mortgageCalcModalHtml');
+  const calcPromo = mortgageCalcModalHtml({ price: 212990, promo: '4.99% Rate + up to $5,000 in Closing Costs', community: 'Wolf Creek', communityObj: { slug: 'wolf-creek' } });
+  assert(calcPromo.includes('promo-rate') && calcPromo.includes('promo-monthly') && calcPromo.includes('esperanzaPromoCalc'), 'mortgageCalcModalHtml rate promo');
 
   // subnav: mobile "Go To..." dropdown + desktop row with `on-scroll` links (active on first item)
   const nav = subnavHtml([['overview', 'Overview'], ['photos', 'Photo Gallery'], ['sales', 'Contact']]);
