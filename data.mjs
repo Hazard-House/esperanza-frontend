@@ -139,7 +139,7 @@ export async function loadData() {
       if (qm.photos?.length) h.gallery = qm.photos.map(u => ({ url: fixHost(u), alt: h.address }));
       else if (qm.source === 'live') h.gallery = [];
     }
-    h.image = resolveQmiHero({ image: h.image, gallery: h.gallery }, qm, fixHost);
+    h.image = resolveQmiHero({ image: h.image }, qm, fixHost);
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
     // backfilled), else the original page's own viewer drawing, else the harvested
     // per-plan pool, else the committed _FP.png map (interim). null -> CTA fallback.

@@ -81,32 +81,14 @@
     return Math.round((pi + price * (taxMult / 100) / 12 + price * 0.004 / 12 + loan * 0.0075 / 12) * 100) / 100;
   }
 
-  function isBadHero(u) {
-    if (!u) return true;
-    var s = String(u);
-    if (/\/floor_plans\//i.test(s)) return true;
-    if (/\/qmi\/rec[^/]+\//i.test(s)) return false;
-    return /\/(hero|photo_\d+)\.(jpe?g|png|webp|avif)/i.test(s);
-  }
-
   function applyResolvedImage(h) {
     if (h.slug && QMI_IMAGES[h.slug]) h.image = QMI_IMAGES[h.slug];
-    else if (isBadHero(h.image) && h.gallery && h.gallery.length) {
-      for (var i = 0; i < h.gallery.length; i++) {
-        if (h.gallery[i].url && !isBadHero(h.gallery[i].url)) { h.image = h.gallery[i].url; break; }
-      }
-    }
     return h;
   }
 
   function patchCardImage(card, slug) {
     var img = card.querySelector('img.oi-aspect-img, img');
-    if (!img || !slug) return;
-    if (QMI_IMAGES[slug]) img.src = QMI_IMAGES[slug];
-    else if (isBadHero(img.src)) {
-      var cardEl = card.closest('[data-qmi-slug]') || card;
-      // baked cards: only QMI_IMAGES can fix without a full re-render
-    }
+    if (img && slug && QMI_IMAGES[slug]) img.src = QMI_IMAGES[slug];
   }
 
   function normalizeHome(h) {
