@@ -55,6 +55,7 @@
   }
 
   var LINKS = { qmi: {} };
+  var QMI_IMAGES = {};
   var FACTS = { rate: null, taxMult: {}, badges: {}, cardFacts: {}, lotFormat: {} };
   var RATE = 6.15;
 
@@ -78,6 +79,16 @@
     var r = rate / 1200;
     var pi = loan * r / (1 - Math.pow(1 + r, -360));
     return Math.round((pi + price * (taxMult / 100) / 12 + price * 0.004 / 12 + loan * 0.0075 / 12) * 100) / 100;
+  }
+
+  function applyResolvedImage(h) {
+    if (h.slug && QMI_IMAGES[h.slug]) h.image = QMI_IMAGES[h.slug];
+    return h;
+  }
+
+  function patchCardImage(card, slug) {
+    var img = card.querySelector('img.oi-aspect-img, img');
+    if (img && slug && QMI_IMAGES[slug]) img.src = QMI_IMAGES[slug];
   }
 
   function normalizeHome(h) {
@@ -246,8 +257,12 @@
   }
 
   function reconcileBaked(cards) {
-    return fetchT(API + '/qmi').then(function (r) { return r.json(); }).then(function (res) {
-      var homes = (res && res.homes) || [];
+    return Promise.all([
+      fetchT(API + '/qmi').then(function (r) { return r.json(); }),
+      fetch('/qmi-images.json').then(function (r) { return r.json(); }).catch(function () { return { images: {} }; }),
+    ]).then(function (res) {
+      if (res[1] && res[1].images) QMI_IMAGES = res[1].images;
+      var homes = (res[0] && res[0].homes) || [];
       if (!homes.length) return;
 
       var bySlug = {};
@@ -265,6 +280,7 @@
           return;
         }
         patchPromo(card, f);
+        patchCardImage(card, slug);
       });
 
       var grid = document.querySelector('#specs .oi-listings, section#specs .oi-listings');
@@ -282,12 +298,14 @@
       fetchT(API + '/qmi').then(function (r) { return r.json(); }),
       fetchT(API + '/communities').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       fetch('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {} }; }),
+      fetch('/qmi-images.json').then(function (r) { return r.json(); }).catch(function () { return { images: {} }; }),
       fetch('/live-facts.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       fetchT(API + '/settings').then(function (r) { return r.json(); }).catch(function () { return {}; }),
     ]).then(function (res) {
       LINKS = res[2] || LINKS;
-      FACTS = res[3] || FACTS;
-      RATE = ((res[4] && res[4].settings) || {}).mortgage_rate || FACTS.rate || 6.15;
+      if (res[3] && res[3].images) QMI_IMAGES = res[3].images;
+      FACTS = res[4] || FACTS;
+      RATE = ((res[5] && res[5].settings) || {}).mortgage_rate || FACTS.rate || 6.15;
 
       if (!commId || !commName) {
         var comms = (res[1].communities || []);
@@ -307,7 +325,7 @@
       });
       if (!rows.length) return;
 
-      var homes = rows.map(normalizeHome).sort(byPriceAsc);
+      var homes = rows.map(normalizeHome).map(applyResolvedImage).sort(byPriceAsc);
       mountSpecsSection(homes.map(function (h) { return cardHTML(h, commSlug); }).join('\n'));
     });
   }

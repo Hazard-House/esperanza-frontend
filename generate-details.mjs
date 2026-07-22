@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadData } from './data.mjs';
-import { linksMap, qmiPath, communityPath, floorplanPath } from './paths.mjs';
+import { linksMap, imagesMap, qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
@@ -136,6 +136,7 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   for (const c of d.communities) if (!skipC.has(communityPath(c))) { writePage(communityPath(c), renderCommunity(c, shell)); nc++; }
   for (const fp of d.floorplans) if (!skipF.has(floorplanPath(fp))) { writePage(floorplanPath(fp), renderFloorplan(fp, shell)); nf++; }
   writeFileSync(join(OUT, 'qmi-links.json'), JSON.stringify(linksMap(d.qmis, d.communities)));
+  writeFileSync(join(OUT, 'qmi-images.json'), JSON.stringify(imagesMap(d.qmis)));
   const strippedCards = stripIncentivesPages(new Set(d.qmis.map((h) => h.slug)));
   const { updated: rehydrated } = rehydrateScrapedCommunities(d);
   console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); rehydrated ${rehydrated} scraped community pages; stripped ${strippedCards} stale /incentives/ home cards`);
