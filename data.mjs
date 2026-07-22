@@ -167,7 +167,12 @@ export async function loadData() {
     // QMI card shows h.price, plan card (planCardHtml) shows fp.startingPrice.
     cm.homes = qmis.filter(h => h.communityId === cm.id).sort(byPriceAsc(h => h.price));
     cm.plans = floorplans
-      .filter(fp => fp.communityPrices[cm.name] != null || String(fp.communities || '').toLowerCase().includes(String(cm.name).toLowerCase()))
+      // Lineup = the admin "Floor Plans Offered" picker ONLY (fp.communities CSV). The
+      // cep-price OR-clause was dropped: a 32-community scan found every cep-priced pair
+      // is already in the CSV (cep-only = 0), so this hides no real plan, and it stops a
+      // plan appearing on a community page purely because Snowflake priced it there —
+      // matching the backend "picker is the sole lineup source" change (parity 2026-07-21).
+      .filter(fp => String(fp.communities || '').toLowerCase().includes(String(cm.name).toLowerCase()))
       .sort(byPriceAsc(fp => fp.startingPrice));
   }
   for (const fp of floorplans) {
