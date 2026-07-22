@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-07-17T20:23:36.343Z",
+ "generatedAt": "2026-07-22T15:20:33.142Z",
  "homes": {
   "2303-grove-lane": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/6/18/PG347_Rendering.png",
@@ -26,6 +26,30 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/6/18/PG347_FP.png"
    ],
    "plan": "iris",
+   "source": "live"
+  },
+  "2310-emory-trail": {
+   "hero": "https://media.esperanzahomes.com/153/2026/7/21/SD10_Rendering.png",
+   "photos": [
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-16_dojLJqI.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-3_NptKCLM.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-8_CNVFRno.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-9_8tnByRZ.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-6_2J5GGCS.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-7_nojgKgZ.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-5_5oZHUCj.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-4_XwtglNC.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-10_Bd8wBLi.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-15_zvOgbJV.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-13_j8YBrvi.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-14_K8ai7EH.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-12_Axglj1t.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-11_6sdpEeM.jpg"
+   ],
+   "planImages": [
+    "https://media.esperanzahomes.com/153/2026/7/21/SD10_FP.jpg"
+   ],
+   "plan": "bahia",
    "source": "live"
   },
   "7023-cypress-springs-dr": {
@@ -92,9 +116,7 @@
   "1505-e-marquise-st": {
    "hero": "https://media.esperanzahomes.com/153/2026/7/10/SP068.jpeg",
    "photos": [],
-   "planImages": [
-    "https://media.esperanzahomes.com/153/2026/7/10/SP068.jpg"
-   ],
+   "planImages": [],
    "plan": "cedar",
    "source": "live"
   },
@@ -126,9 +148,7 @@
   "1037-w-star-flower-st": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/4/15/RC171.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/4/15/RC171.jpg"
-   ],
+   "planImages": [],
    "plan": "bluebonnet",
    "source": "live"
   },
@@ -170,9 +190,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5738_St_Dominic_Dr_Cuervo_Traditional_Stucco-09.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5738_St_Dominic_Dr_Cuervo_Traditional_Stucco-10.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/1/WC228.jpg"
-   ],
+   "planImages": [],
    "plan": "cuervo",
    "source": "live"
   },
@@ -193,9 +211,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5738_St_Dominic_Dr_Cuervo_Traditional_Stucco-09.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5738_St_Dominic_Dr_Cuervo_Traditional_Stucco-10.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/19/WC157.jpg"
-   ],
+   "planImages": [],
    "plan": "cuervo",
    "source": "live"
   },
@@ -282,9 +298,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/1/21/012025_804_Templo_Dorado_Marigold_Farmhouse_-10.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/1/21/012025_804_Templo_Dorado_Marigold_Farmhouse_-12.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/28/ED913.jpg"
-   ],
+   "planImages": [],
    "plan": "marigold",
    "source": "live"
   },
@@ -295,6 +309,43 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/3/5/AQ088.jpg"
    ],
    "plan": "blanco",
+   "source": "live"
+  },
+  "415-san-antonio-south-lp": {
+   "hero": "https://img.hazardhouse.ai/assets-media/153/2026/6/25/TH093_Rendering.png",
+   "photos": [
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-9.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-4.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-7.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-10.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-13.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-12.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-14.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-11.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-8.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-1.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-2.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-5.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-6.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-34.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-27.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-29.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-33.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-31.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-30.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-25.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-24.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-23.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-15.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-17.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-19.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-20.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2024/11/1/1-16.jpg"
+   ],
+   "planImages": [
+    "https://img.hazardhouse.ai/assets-media/153/2026/6/25/TH093_FP.png"
+   ],
+   "plan": "acuna-ii",
    "source": "live"
   },
   "5309-moses-loop": {
@@ -311,9 +362,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-10.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-11.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/28/WC155.jpg"
-   ],
+   "planImages": [],
    "plan": "chacon",
    "source": "live"
   },
@@ -335,9 +384,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5738_St_Dominic_Dr_Cuervo_Traditional_Stucco-09.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5738_St_Dominic_Dr_Cuervo_Traditional_Stucco-10.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/1/WC041.jpg"
-   ],
+   "planImages": [],
    "plan": "cuervo",
    "source": "live"
   },
@@ -394,9 +441,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/4/3/Stewart_Coves_Model_Home_Encino_-06.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/4/3/Stewart_Coves_Model_Home_Encino_-16.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/24/LB120.jpg"
-   ],
+   "planImages": [],
    "plan": "encino",
    "source": "live"
   },
@@ -421,9 +466,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-20_VKrAeoT.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-21_ngv4SlV.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/11/VT040.jpg"
-   ],
+   "planImages": [],
    "plan": "nikola",
    "source": "live"
   },
@@ -448,9 +491,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_40.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_41.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/28/CV039.jpg"
-   ],
+   "planImages": [],
    "plan": "benanti",
    "source": "live"
   },
@@ -481,9 +522,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5740_St_Dominic_Dr_Bear_Traditional_Brick-_14.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5740_St_Dominic_Dr_Bear_Traditional_Brick-_15.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/1/WC304.jpg"
-   ],
+   "planImages": [],
    "plan": "bear",
    "source": "live"
   },
@@ -531,9 +570,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_40.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_41.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/4/29/VL005.jpg"
-   ],
+   "planImages": [],
    "plan": "benanti",
    "source": "live"
   },
@@ -563,9 +600,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-14_3AMCtE9",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-15_Jvoai7a"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/8/VL037.jpg"
-   ],
+   "planImages": [],
    "plan": "peppoli",
    "source": "live"
   },
@@ -598,9 +633,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/6/9/060725_Fresno_Farmhouse_Portfolio_Photos_13820_Boykin_Creek_19.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/6/9/060725_Fresno_Farmhouse_Portfolio_Photos_13820_Boykin_Creek_20.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/24/CC058.jpg"
-   ],
+   "planImages": [],
    "plan": "fresno",
    "source": "live"
   },
@@ -617,9 +650,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-9_wzQDCyG",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-10_O63UEhb"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/5/CV037.jpg"
-   ],
+   "planImages": [],
    "plan": "cortono",
    "source": "live"
   },
@@ -741,9 +772,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5740_St_Dominic_Dr_Bear_Traditional_Brick-_14.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/6/30/063025_5740_St_Dominic_Dr_Bear_Traditional_Brick-_15.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/1/WC229.jpg"
-   ],
+   "planImages": [],
    "plan": "bear",
    "source": "live"
   },
@@ -770,10 +799,15 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/3/30/022026-Hackberry-AN090-6600_Anaqua_Lp_21.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/3/30/022026-Hackberry-AN090-6600_Anaqua_Lp_22.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/26/AN108.jpg"
-   ],
+   "planImages": [],
    "plan": "hackberry",
+   "source": "live"
+  },
+  "7034-castano-drive": {
+   "hero": "https://media.esperanzahomes.com/153/2026/7/17/ED036.jpeg",
+   "photos": [],
+   "planImages": [],
+   "plan": "bluebonnet",
    "source": "live"
   },
   "7036-castano-drive": {
@@ -803,34 +837,6 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/5/22/LP047_FP.png"
    ],
    "plan": "kestrel",
-   "source": "live"
-  },
-  "1601-e-marquise-st": {
-   "hero": "https://img.hazardhouse.ai/assets-media/153/2026/1/9/010725_14820_Aqualina_2.jpg",
-   "photos": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/1/9/010725_14820_Aqualina_2.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2026/2/13/1-4_2.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_4_BVrksup.png",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_31.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_3_lmLRaks.png",
-    "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_1_veTvc0I.png",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/8/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_04.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/060725_Fresno_Farmhouse_Portfolio_Photos_13820_Boykin_Creek_2.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2026/1/9/1-1_11.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/6/26/062625_PORTFOLIO_Pecan_13812_Boykin_Tuscan_Stucco_01.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/Lorenzo_I_Porfolio_Photos_14818_Aqualina_Way_0_2.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/8/062025_PORTFOLIO_7031_Cypress_Springs_Sage_Farmhouse_02.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_5_L5t108x.png",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/051625_Agave_Tuscan_Stucco_Portfolio_02_1.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/14/071425-San-Saba-14917-Aqualina-Way-Tuscan-Stucco-01.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/052523_EHI_Lorenzo_I_Contemporary_-_1522_Silos_-_01.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_10.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_13.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_11.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_2_dZlRa3K.png"
-   ],
-   "planImages": [],
-   "plan": null,
    "source": "live"
   },
   "3921-peggy-dr": {
@@ -893,9 +899,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-14_3AMCtE9",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-15_Jvoai7a"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/14/VT052.jpg"
-   ],
+   "planImages": [],
    "plan": "peppoli",
    "source": "live"
   },
@@ -990,9 +994,7 @@
   "5128-carambola-ln": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/5/28/ED014.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/28/ED014.jpg"
-   ],
+   "planImages": [],
    "plan": "bluebonnet",
    "source": "live"
   },
@@ -1035,9 +1037,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-9_wzQDCyG",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-10_O63UEhb"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/4/29/VL004.jpg"
-   ],
+   "planImages": [],
    "plan": "cortono",
    "source": "live"
   },
@@ -1058,9 +1058,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-14_3AMCtE9",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-15_Jvoai7a"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/19/VT039.jpg"
-   ],
+   "planImages": [],
    "plan": "peppoli",
    "source": "live"
   },
@@ -1138,9 +1136,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-10.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-11.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/1/WC305.jpg"
-   ],
+   "planImages": [],
    "plan": "chacon",
    "source": "live"
   },
@@ -1167,9 +1163,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-20_VKrAeoT.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-21_ngv4SlV.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/19/VT051.jpg"
-   ],
+   "planImages": [],
    "plan": "nikola",
    "source": "live"
   },
@@ -1185,10 +1179,17 @@
   "2102-sambar-loop": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/3/2/AC334.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/2/AC334.jpg"
-   ],
+   "planImages": [],
    "plan": "juniper",
+   "source": "live"
+  },
+  "1407-s-moorefield-rd": {
+   "hero": "https://media.esperanzahomes.com/153/2026/7/21/SD022_Rendering.png",
+   "photos": [],
+   "planImages": [
+    "https://media.esperanzahomes.com/153/2026/7/21/SD022_FP.jpg"
+   ],
+   "plan": "bluebonnet",
    "source": "live"
   },
   "4104-appaloosa-dr": {
@@ -1291,9 +1292,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-10.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-11.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/29/WC153.jpg"
-   ],
+   "planImages": [],
    "plan": "chacon",
    "source": "live"
   },
@@ -1341,9 +1340,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-10.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-11.jpg"
    ],
-   "planImages": [
-    "https://media.esperanzahomes.com/153/2026/7/14/WC226.jpg"
-   ],
+   "planImages": [],
    "plan": "chacon",
    "source": "live"
   },
@@ -1406,9 +1403,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_39_v5vkhbY.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_41_w5P4S4F.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/9/AN016.jpg"
-   ],
+   "planImages": [],
    "plan": "oak",
    "source": "live"
   },
@@ -1431,9 +1426,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_39_v5vkhbY.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_41_w5P4S4F.jpg"
    ],
-   "planImages": [
-    "https://media.esperanzahomes.com/153/2026/7/10/SP019.jpg"
-   ],
+   "planImages": [],
    "plan": "oak",
    "source": "live"
   },
@@ -1487,9 +1480,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/9/9/Traditional_Brick_-_2269_Grove_Ln_-19.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/9/9/Traditional_Brick_-_2269_Grove_Ln_-13.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/2/24/LB112.jpg"
-   ],
+   "planImages": [],
    "plan": "iris",
    "source": "live"
   },
@@ -1575,6 +1566,35 @@
    "plan": "jasmine",
    "source": "live"
   },
+  "7012-cypress-springs-dr": {
+   "hero": "https://img.hazardhouse.ai/assets-media/153/2026/3/19/071425_San-Saba_14917_Aqualina_Way_Tuscan_Stucco_01.jpg",
+   "photos": [
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_013.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_04.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_05.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_06.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_02.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_03.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/0714_San_Saba_14917_Aqualina_Way_Portfolio_Photos_014.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_07.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_08.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_09.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_010.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_011.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_012.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_014.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_015.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_017.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/071425_San_Saba_14917_Aqualina_Way_Tuscan_Stucco_018.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/0714_San_Saba_14917_Aqualina_Way_Portfolio_Photos_011.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/1/30/0714_San_Saba_14917_Aqualina_Way_Portfolio_Photos_012.jpg"
+   ],
+   "planImages": [
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/19/AQ128.jpg"
+   ],
+   "plan": "san-saba",
+   "source": "live"
+  },
   "5315-moses-loop": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/2/18/021126-Cuervo-CTB-WC003-5428_St_Francis_Dr-MH_13.jpg",
    "photos": [
@@ -1634,9 +1654,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_39_v5vkhbY.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/3/2/022026-Oak-TUS-AN117-6508_Anaqua_Lp-MH_41_w5P4S4F.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/11/AN100.jpg"
-   ],
+   "planImages": [],
    "plan": "oak",
    "source": "live"
   },
@@ -1647,6 +1665,25 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/4/17/TW310_FP.png"
    ],
    "plan": "mulberry",
+   "source": "live"
+  },
+  "944-w-star-flower-st": {
+   "hero": "https://img.hazardhouse.ai/assets-media/153/2026/4/16/040626-Bahia-FHH-SD107-1304_S_Moorefield_1.jpg",
+   "photos": [
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-3_NptKCLM.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-5_5oZHUCj.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/13/1-4_6m6pxi2",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/13/1-5_c98zxa5",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-4_XwtglNC.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/13/1-10_1fIVxLB",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/13/1-14_ydXOc2X.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-12_Axglj1t.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-11_6sdpEeM.jpg"
+   ],
+   "planImages": [
+    "https://img.hazardhouse.ai/assets-media/153/2025/11/8/RC138.jpg"
+   ],
+   "plan": "bahia",
    "source": "live"
   },
   "2012-sambar-loop": {
@@ -1764,9 +1801,7 @@
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-11_6sdpEeM.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2022/6/27/1-16_dojLJqI.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/4/ED918_V2.jpg"
-   ],
+   "planImages": [],
    "plan": "bahia",
    "source": "live"
   },
@@ -1805,10 +1840,27 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_40.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_41.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2025/12/17/CV024.jpg"
-   ],
+   "planImages": [],
    "plan": "benanti",
+   "source": "live"
+  },
+  "5117-carambola-ln": {
+   "hero": "https://img.hazardhouse.ai/assets-media/153/2025/12/17/ED909.jpg",
+   "photos": [
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-09.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-06.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-04.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-13.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-03.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-01.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-07.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-05.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-08.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-10.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/23/063025_5732_St_Dominic_Dr_Chacon_Contemporary_Brick-11.jpg"
+   ],
+   "planImages": [],
+   "plan": "chacon",
    "source": "live"
   },
   "1806-e-bella-st": {
@@ -1870,31 +1922,10 @@
    "plan": "bear",
    "source": "live"
   },
-  "2309-grove-lane": {
-   "hero": "https://img.hazardhouse.ai/assets-media/153/2026/6/17/PG345_Rendering.png",
-   "photos": [
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-2.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-4.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-5.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-3.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-6.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-7.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-8.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-9.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2023/10/24/1-10.jpg"
-   ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/17/PG345_FP.png"
-   ],
-   "plan": "san-luis",
-   "source": "live"
-  },
   "6631-anaqua-loop": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/3/25/AN022.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/25/AN022.jpg"
-   ],
+   "planImages": [],
    "plan": "cedar",
    "source": "live"
   },
@@ -1902,6 +1933,14 @@
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/1/9/010725_14820_Aqualina_2.jpg",
    "photos": [
     "https://img.hazardhouse.ai/assets-media/153/2026/1/9/010725_14820_Aqualina_2.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_33.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_37.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_47.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_27.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_25.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_40.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_16.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_21.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/2/13/1-4_2.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_4_BVrksup.png",
     "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_31.jpg",
@@ -1920,7 +1959,48 @@
     "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_10.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_13.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2025/7/18/031724_EHI_Lorenzo_I_Farmhouse_-_1565_E_Silos_Ave_-_11.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_2_dZlRa3K.png"
+    "https://img.hazardhouse.ai/assets-media/153/2025/12/8/Sapphire_2_dZlRa3K.png",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_1.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_2.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_3.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_4.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_5.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_6.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_7.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_8.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_9.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_10.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_11.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_12.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_13.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_14.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_15.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_17.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_18.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_19.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_20.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_22.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_23.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_24.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_26.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_28.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_29.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_30.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_31.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_32.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_34.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_35.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_36.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_38.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_39.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_41.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_42.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_43.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_44.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_45.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_46.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_48.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_49.jpg"
    ],
    "planImages": [],
    "plan": null,
@@ -1929,9 +2009,7 @@
   "15400-n-brisas-st": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/6/11/LB110.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/11/LB110.jpg"
-   ],
+   "planImages": [],
    "plan": "bluebonnet",
    "source": "live"
   },
@@ -1972,9 +2050,7 @@
   "1708-e-marquise-st": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/5/12/SP013_V2.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/12/SP013_V2.jpg"
-   ],
+   "planImages": [],
    "plan": "cimarron",
    "source": "live"
   },
@@ -2006,27 +2082,21 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_39.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/1/26/012026-Benanti-TSS-VW055-4923_N._35th_Ln_41.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/3/20/CV010.jpg"
-   ],
+   "planImages": [],
    "plan": "benanti",
    "source": "live"
   },
   "6608-anaqua-loop": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/5/14/AN088.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/14/AN088.jpg"
-   ],
+   "planImages": [],
    "plan": "laurel",
    "source": "live"
   },
   "6617-anaqua-loop": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/5/14/AN015.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/5/14/AN015.jpg"
-   ],
+   "planImages": [],
    "plan": "laurel",
    "source": "live"
   },
@@ -2132,17 +2202,29 @@
    "source": "live"
   },
   "14005-sugarberry-ln": {
-   "hero": "https://img.hazardhouse.ai/assets-media/153/2025/11/24/AN106.jpg",
+   "hero": "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_7.jpg",
    "photos": [
-    "https://img.hazardhouse.ai/assets-media/153/2019/6/27/5008_Escondido_WEB-15.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2019/6/27/5008_Escondido_WEB-31.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2019/6/27/5008_Escondido_WEB-33.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2022/7/1/1-8_OQTgn7J.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2022/11/18/Kingfisher__Retama_PRINT-5.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2022/11/18/Kingfisher__Retama_PRINT-6.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2022/7/1/1-17.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2022/7/1/1-19_azBI0OB.jpg",
-    "https://img.hazardhouse.ai/assets-media/153/2022/7/1/1-21_OLAcvfE.jpg"
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_3.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_12.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_15.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_13.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_6.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_14.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_9.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_1.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_2.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_4.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_5.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_10.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_11.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_16.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_17.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_18.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_19.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_20.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_21.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_22.jpg",
+    "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_23.jpg"
    ],
    "planImages": [
     "https://img.hazardhouse.ai/assets-media/153/2025/11/24/AN106.jpg"
@@ -2153,9 +2235,7 @@
   "1812-e-marquise-st": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/4/30/SP013.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/4/30/SP013.jpg"
-   ],
+   "planImages": [],
    "plan": "nueces",
    "source": "live"
   },
@@ -2217,9 +2297,7 @@
   "14924-aqualina-way": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/4/2/AQ109.jpg",
    "photos": [],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/4/2/AQ109.jpg"
-   ],
+   "planImages": [],
    "plan": "nueces",
    "source": "live"
   },
@@ -2237,10 +2315,17 @@
     "https://img.hazardhouse.ai/assets-media/153/2026/4/28/021126-Presidio-TSS-ED009-5101_Carambola_Ln-MH_9.jpg",
     "https://img.hazardhouse.ai/assets-media/153/2026/4/28/021126-Presidio-TSS-ED009-5101_Carambola_Ln-MH_10.jpg"
    ],
-   "planImages": [
-    "https://img.hazardhouse.ai/assets-media/153/2026/6/29/ED916.jpg"
-   ],
+   "planImages": [],
    "plan": "presidio",
+   "source": "live"
+  },
+  "218-san-antonio-south-lp": {
+   "hero": "https://img.hazardhouse.ai/assets-media/153/2026/6/18/TH178_Rendering.png",
+   "photos": [],
+   "planImages": [
+    "https://img.hazardhouse.ai/assets-media/153/2026/6/18/TH178_FP.png"
+   ],
+   "plan": "indigo",
    "source": "live"
   },
   "4109-appaloosa-dr": {
@@ -2457,11 +2542,48 @@
    ],
    "plan": "encino",
    "source": "live"
+  },
+  "5136-carambola-ln": {
+   "hero": "https://media.esperanzahomes.com/153/2026/7/16/ED018.jpeg",
+   "photos": [
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_6.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_33.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_26.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_2.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_4.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_5.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_9.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_10.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_12.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_14.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_17.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_24.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_25.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_27.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_28.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_29.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_30.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_37.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_31.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_32.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_34.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_35.jpg",
+    "https://img.hazardhouse.ai/assets-media/153/2026/3/30/123025_SD_Model_Home_36.jpg"
+   ],
+   "planImages": [],
+   "plan": "jasmine",
+   "source": "live"
   }
  },
  "plans": {
   "iris": [
    "https://img.hazardhouse.ai/assets-media/153/2026/6/18/PG347_FP.png"
+  ],
+  "bahia": [
+   "https://media.esperanzahomes.com/153/2026/7/21/SD10_FP.jpg",
+   "https://img.hazardhouse.ai/assets-media/153/2026/6/18/PS102_FP.png",
+   "https://img.hazardhouse.ai/assets-media/153/2025/11/21/RC176.jpg",
+   "https://img.hazardhouse.ai/assets-media/153/2025/11/8/RC138.jpg"
   ],
   "brazos": [
    "https://img.hazardhouse.ai/assets-media/153/2026/4/9/AQ093.jpg"
@@ -2472,9 +2594,6 @@
    "https://media.esperanzahomes.com/153/2026/7/10/HC112_FP.png",
    "https://img.hazardhouse.ai/assets-media/153/2026/5/5/TH090_FP.png",
    "https://img.hazardhouse.ai/assets-media/153/2026/1/6/RC179.jpg"
-  ],
-  "cedar": [
-   "https://media.esperanzahomes.com/153/2026/7/10/SP068.jpg"
   ],
   "paloma": [
    "https://img.hazardhouse.ai/assets-media/153/2026/6/12/LB020_IyHKG8u.jpg"
@@ -2491,7 +2610,8 @@
    "https://img.hazardhouse.ai/assets-media/153/2026/3/16/SD020_FP.png",
    "https://img.hazardhouse.ai/assets-media/153/2026/1/21/PS171_FP.png",
    "https://img.hazardhouse.ai/assets-media/153/2026/4/8/SD012_FP_WWK7Nky.png",
-   "https://img.hazardhouse.ai/assets-media/153/2025/12/15/HC068_FP.png"
+   "https://img.hazardhouse.ai/assets-media/153/2025/12/15/HC068_FP.png",
+   "https://img.hazardhouse.ai/assets-media/153/2026/6/18/TH178_FP.png"
   ],
   "encino": [
    "https://img.hazardhouse.ai/assets-media/153/2026/3/10/TH182_FP.png",
@@ -2500,6 +2620,9 @@
   ],
   "blanco": [
    "https://img.hazardhouse.ai/assets-media/153/2026/3/5/AQ088.jpg"
+  ],
+  "acuna-ii": [
+   "https://img.hazardhouse.ai/assets-media/153/2026/6/25/TH093_FP.png"
   ],
   "magnolia": [
    "https://img.hazardhouse.ai/assets-media/153/2026/3/5/HC082_FP.png",
@@ -2527,10 +2650,6 @@
   "allegrini": [
    "https://img.hazardhouse.ai/assets-media/153/2025/12/17/CV011.jpg"
   ],
-  "bahia": [
-   "https://img.hazardhouse.ai/assets-media/153/2026/6/18/PS102_FP.png",
-   "https://img.hazardhouse.ai/assets-media/153/2025/11/21/RC176.jpg"
-  ],
   "agave": [
    "https://img.hazardhouse.ai/assets-media/153/2025/11/1/AQ60V2.jpg"
   ],
@@ -2543,6 +2662,10 @@
    "https://img.hazardhouse.ai/assets-media/153/2025/11/12/SW067_FP.png",
    "https://img.hazardhouse.ai/assets-media/153/2026/6/29/SW062_FP.png"
   ],
+  "bluebonnet": [
+   "https://media.esperanzahomes.com/153/2026/7/21/SD022_FP.jpg",
+   "https://img.hazardhouse.ai/assets-media/153/2026/6/18/PG342_FP.png"
+  ],
   "hickory": [
    "https://media.esperanzahomes.com/153/2026/7/10/TW303_FP.png"
   ],
@@ -2551,19 +2674,15 @@
    "https://img.hazardhouse.ai/assets-media/153/2026/2/16/cv022.jpg",
    "https://img.hazardhouse.ai/assets-media/153/2026/7/1/VF192.jpg"
   ],
-  "chacon": [
-   "https://media.esperanzahomes.com/153/2026/7/14/WC226.jpg"
-  ],
   "san-luis": [
    "https://img.hazardhouse.ai/assets-media/153/2026/2/12/PS137_FP.png",
-   "https://img.hazardhouse.ai/assets-media/153/2026/6/17/PG345_FP.png",
    "https://img.hazardhouse.ai/assets-media/153/2026/6/13/PS130_FP.png"
-  ],
-  "oak": [
-   "https://media.esperanzahomes.com/153/2026/7/10/SP019.jpg"
   ],
   "fresno": [
    "https://img.hazardhouse.ai/assets-media/153/2026/2/18/TW275_FP_zMC5CtZ.png"
+  ],
+  "san-saba": [
+   "https://img.hazardhouse.ai/assets-media/153/2026/3/19/AQ128.jpg"
   ],
   "mulberry": [
    "https://img.hazardhouse.ai/assets-media/153/2026/4/17/TW310_FP.png",
@@ -2571,9 +2690,6 @@
   ],
   "cottage": [
    "https://img.hazardhouse.ai/assets-media/153/2026/5/15/RV377_FP.png"
-  ],
-  "bluebonnet": [
-   "https://img.hazardhouse.ai/assets-media/153/2026/6/18/PG342_FP.png"
   ],
   "lunelli": [
    "https://img.hazardhouse.ai/assets-media/153/2026/6/8/VL007.jpg"
@@ -2590,6 +2706,9 @@
   ],
   "capistrano": [
    "https://img.hazardhouse.ai/assets-media/153/2026/3/4/AQ111.jpg"
+  ],
+  "francisco-ii": [
+   "https://img.hazardhouse.ai/assets-media/153/2025/11/24/AN106.jpg"
   ]
  },
  "unmapped": [
@@ -2745,6 +2864,85 @@
   "https://media.esperanzahomes.com/153/2026/7/16/070526-Magnolia-TSS-HC082-3702_Westwat_Ct_6.jpg",
   "https://media.esperanzahomes.com/153/2026/7/16/070526-Magnolia-TSS-HC082-3702_Westwat_Ct_7.jpg",
   "https://media.esperanzahomes.com/153/2026/7/16/070526-Magnolia-TSS-HC082-3702_Westwat_Ct_8.jpg",
-  "https://media.esperanzahomes.com/153/2026/7/16/070526-Magnolia-TSS-HC082-3702_Westwat_Ct_9.jpg"
+  "https://media.esperanzahomes.com/153/2026/7/16/070526-Magnolia-TSS-HC082-3702_Westwat_Ct_9.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/16/ED018.jpeg",
+  "https://media.esperanzahomes.com/153/2026/7/16/ED018.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/17/ED036.jpeg",
+  "https://media.esperanzahomes.com/153/2026/7/17/ED036.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_1.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_10.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_11.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_12.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_13.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_14.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_15.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_16.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_17.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_18.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_19.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_2.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_20.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_21.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_22.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_23.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_3.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_4.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_5.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_6.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_7.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070326-Francisco_II-TDS-AN106-14005_Sugarberry_Ln_9.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_1.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_10.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_11.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_12.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_13.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_14.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_15.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_16.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_17.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_18.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_19.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_2.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_20.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_21.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_22.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_23.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_24.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_25.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_26.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_27.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_28.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_29.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_3.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_30.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_31.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_32.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_33.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_34.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_35.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_36.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_37.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_38.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_39.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_4.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_40.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_41.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_42.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_43.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_44.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_45.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_46.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_47.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_48.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_49.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_5.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_6.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_7.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_8.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/070726-Cedar-TSS-SP002-1600_E_Marquise_St-Model_Home_9.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/SD022_FP.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/SD022_Rendering.png",
+  "https://media.esperanzahomes.com/153/2026/7/21/SD10_FP.jpg",
+  "https://media.esperanzahomes.com/153/2026/7/21/SD10_Rendering.png"
  ]
 }
