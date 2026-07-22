@@ -142,14 +142,15 @@ export async function loadData() {
     h.image = resolveQmiHero({ image: h.image }, qm, fixHost);
     // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
     // backfilled), else the original page's own viewer drawing, else the harvested
-    // per-plan pool, else the committed _FP.png map (interim). null -> CTA fallback.
+    // per-plan pool, else the committed _FP.png map (interim). When none exist, live
+    // O'Neill embeds the home hero in the iviewer (not the FP elevation art).
     const fpSlug = (h.floorplanObj && h.floorplanObj.slug) || slugify(h.floorPlan);
     h.planImage = fixHost((h.floorplanObj && h.floorplanObj.floorPlanImage)
       || (qm && qm.planImages && qm.planImages[0])
       || ((QMI_MEDIA.plans || {})[fpSlug] || [])[0]
       || FP_MAP[fpSlug]
-      || h.fpImage
       || h.image
+      || h.fpImage
       || null);
     // Galleryless homes (e.g. under construction): fall back to the community's model
     // photos (already in R2) until real photo_gallery_json lands in D1 — but not when
@@ -217,6 +218,8 @@ async function demo() {
   const aq14924 = d.qmis.find(h => h.slug === '14924-aqualina-way');
   assert(aq14924 && aq14924.planImage && aq14924.planViewerUrl && !Array.isArray(aq14924.planViewerUrl),
     '14924-aqualina-way resolves planImage + scalar planViewerUrl');
+  assert(aq14924.planImage === aq14924.image,
+    '14924-aqualina-way plan viewer uses home hero (live parity), not FP elevation art');
   console.log('data.mjs demo() passed:', d.qmis.length, 'qmi', d.communities.length, 'comm', d.floorplans.length, 'fp');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
