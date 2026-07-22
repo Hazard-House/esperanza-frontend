@@ -27,7 +27,7 @@ export function floorplanContent(fp) {
     galleryHtml(fp.image ? [{ url: fp.image, alt: fp.name }] : [], fp.image, fp.name),
     `<section id="overview" class="pagejump pt-4 pt-lg-5 bg-tan-white reverse pb-4"><div class="container-lg pt-3"><div class="row mb-3"><div class="col-12 col-md-7">${fp.description ? `<div class="wysiwyg">${fp.description}</div>` : ''}<div class="mt-4">${fp.brochurePdfUrl ? `<a href="${esc(fp.brochurePdfUrl)}" target="_blank" rel="noopener" class="btn btn-green oi-brochure-download me-2 mb-2">Download Brochure</a>` : ''}<a href="#request-a-tour" class="btn btn-auto btn-learn mb-2">Request Information</a></div></div><div class="col-12 col-md-5 col-lg-4 offset-lg-1 mt-4"><div class="row stat-group border-gray py-2">${stats}</div></div></div></div></section>`,
     tourHtml(fp.virtualTourUrl),
-    idaproPlanHtml(fp.planViewerUrl, fp.image, fp.name, ''),
+    idaproPlanHtml(fp.floorPlanImage || fp.image, fp.name, fp.planViewerUrl),
     locs ? `<section id="mp-locations" class="pagejump py-4 py-lg-5"><div class="container"><h2 class="bodoni text-gray fs-3 mb-4">Available Locations</h2><div class="row oi-listings">${locs}</div></div></section>` : '',
     homes ? `<section id="specs" class="pagejump py-4 py-lg-5 bg-tan-white"><div class="container"><h2 class="bodoni text-gray fs-3 mb-4">Quick Move-Ins with this Plan</h2><div class="row oi-listings">${homes}</div></div></section>` : '',
     formSlotHtml('general', fp.name),

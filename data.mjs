@@ -67,7 +67,7 @@ function normQmi(h) {
     slug: f.slug, city: f.City, postalCode: f.postal_code, address: f.address,
     image: fixHost(f.image_url), gallery,
     fpImage: fp ? fixHost(fp.url || fp) : null, fpDescription: f['FP: Description'],
-    planViewerUrl: f['FP: Plan Viewer'], virtualTourUrl: f['FP: Virtual Tour'],
+    planViewerUrl: un(f['FP: Plan Viewer']), virtualTourUrl: un(f['FP: Virtual Tour']),
     elevation: f.elevation,
     availability: f.availability_text, availableNow: f['Available Now'], moveInDate: f['Move-In Date'],
     description: f.Description, promo: f.promo_text, promoStyle: f.promo_banner_style,
@@ -147,7 +147,10 @@ export async function loadData() {
     h.planImage = fixHost((h.floorplanObj && h.floorplanObj.floorPlanImage)
       || (qm && qm.planImages && qm.planImages[0])
       || ((QMI_MEDIA.plans || {})[fpSlug] || [])[0]
-      || FP_MAP[fpSlug] || null);
+      || FP_MAP[fpSlug]
+      || h.fpImage
+      || h.image
+      || null);
     // Galleryless homes (e.g. under construction): fall back to the community's model
     // photos (already in R2) until real photo_gallery_json lands in D1 — but not when
     // a live harvest explicitly found no gallery photos for this home.
@@ -211,6 +214,9 @@ async function demo() {
   assert(byPriceAsc(x => x.p)({ p: null }, { p: 100 }) > 0, 'byPriceAsc: null sorts after a price');
   assert(byPriceAsc(x => x.p)({ p: 100 }, { p: 200 }) < 0, 'byPriceAsc: lower price first');
   assert(typeof slugify('El Edén!') === 'string' && slugify('El Eden') === 'el-eden', 'slugify');
+  const aq14924 = d.qmis.find(h => h.slug === '14924-aqualina-way');
+  assert(aq14924 && aq14924.planImage && aq14924.planViewerUrl && !Array.isArray(aq14924.planViewerUrl),
+    '14924-aqualina-way resolves planImage + scalar planViewerUrl');
   console.log('data.mjs demo() passed:', d.qmis.length, 'qmi', d.communities.length, 'comm', d.floorplans.length, 'fp');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
