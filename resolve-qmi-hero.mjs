@@ -1,6 +1,6 @@
 // resolve-qmi-hero.mjs — QMI hero/card image selection shared by build + runtime islands.
-// Mirrors esperanza-api PR #171: never surface a floor-plan schematic or D1 placeholder
-// when a real exterior/construction photo exists in photo_gallery or harvested media.
+// Priority: live O'Neill hero (harvested elevation) → admin panel image_url → safe fallbacks.
+// Never surface a floor-plan schematic or D1 placeholder when a better hero exists.
 
 export const PLACEHOLDER_HERO = /\/(hero|photo_\d+)\.jpe?g(?:\?|$)/i;
 
@@ -18,29 +18,32 @@ export function isBadHeroUrl(u) {
 
 /** Pick the hero/card image for one QMI. `gallery` is [{url, alt}]. `qm` is harvested media. */
 export function resolveQmiHero({ image, gallery = [] }, qm, fixHost = u => u) {
-  const realGallery = gallery.filter(g => g && g.url && !isBadHeroUrl(g.url));
-  if (realGallery.length) return fixHost(realGallery[0].url);
+  // 1. Live O'Neill mosaic lead (harvested from detail-gallery) — source of truth for parity.
+  if (qm?.hero) return fixHost(qm.hero);
+
+  // 2. Admin panel hero (D1 image_url) when it is a real photo/render.
   if (image && !isBadHeroUrl(image)) return fixHost(image);
 
-  if (qm) {
-    const stem = u => String(u || '').split('/').pop()?.split('?')[0].replace(/\.[^.]+$/i, '').toLowerCase() || '';
-    const heroIsDrawing = qm.hero && (qm.planImages || []).some(u => stem(u) === stem(qm.hero));
-    if (qm.photos?.length) return fixHost(qm.photos[0]);
-    if (qm.hero && !heroIsDrawing) return fixHost(qm.hero);
-    if (qm.hero && isBadHeroUrl(image)) return fixHost(qm.hero);
-  }
+  // 3. First real photo from D1 gallery.
+  const realGallery = (gallery || []).filter(g => g && g.url && !isBadHeroUrl(g.url));
+  if (realGallery.length) return fixHost(realGallery[0].url);
+
+  // 4. Harvested construction photos, then whatever admin sent.
+  if (qm?.photos?.length) return fixHost(qm.photos[0]);
   return image ? fixHost(image) : image;
 }
 
 function demo() {
   const fix = u => u;
-  const qm = { hero: 'https://x/ED916.jpg', photos: ['https://x/photo1.jpg'], planImages: ['https://x/ED916.jpg'], source: 'live' };
+  const qm = { hero: 'https://x/ED916.jpg', photos: ['https://x/photo1.jpg'], planImages: [], source: 'live' };
   const fromFp = resolveQmiHero({ image: 'https://img/floor_plans/recZ/PRESIDIO.jpg', gallery: [] }, qm, fix);
-  if (fromFp !== 'https://x/photo1.jpg') throw new Error('expected harvested photo over floor plan');
+  if (fromFp !== 'https://x/ED916.jpg') throw new Error('expected live hero over floor plan');
   const fromGallery = resolveQmiHero({ image: 'https://img/floor_plans/x.jpg', gallery: [{ url: 'https://img/real.jpg' }] }, null, fix);
-  if (fromGallery !== 'https://img/real.jpg') throw new Error('expected D1 gallery photo');
-  const keepGood = resolveQmiHero({ image: 'https://img/good.jpg', gallery: [] }, qm, fix);
-  if (keepGood !== 'https://img/good.jpg') throw new Error('expected good D1 image kept');
+  if (fromGallery !== 'https://img/real.jpg') throw new Error('expected D1 gallery photo when no harvest');
+  const liveWins = resolveQmiHero({ image: 'https://img/good.jpg', gallery: [{ url: 'https://x/photo1.jpg' }] }, qm, fix);
+  if (liveWins !== 'https://x/ED916.jpg') throw new Error('expected live hero over admin/gallery');
+  const adminOnly = resolveQmiHero({ image: 'https://img/good.jpg', gallery: [] }, null, fix);
+  if (adminOnly !== 'https://img/good.jpg') throw new Error('expected admin hero when no harvest');
   console.log('resolve-qmi-hero.mjs demo() passed');
 }
 
