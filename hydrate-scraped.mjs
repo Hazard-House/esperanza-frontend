@@ -200,6 +200,8 @@ function injectOverviewGraphic(html, c) {
 // rehydrate can re-run every build. Used on scraped community AND plan-in-community pages.
 const HOA_ANCHOR_RE = /<a [^>]+>\s*<div class="text-dark-green[^"]*">\s*<img[^>]*>\s*<u>Download Community Resources<\/u>\s*<\/div>\s*<\/a>/;
 const HOA_BLOCK_RE = /<!--hoa-links-->[\s\S]*?<!--\/hoa-links-->/;
+const HOA_DOCS_BLOCK_RE = /<!--hoa-documents-->[\s\S]*?<!--\/hoa-documents-->/;
+const HOA_DOCS_SECTION_RE = /(<section class="hoa-documents">[\s\S]*?<div class="pt-3">)[\s\S]*?(<\/div>\s*<\/div>\s*<\/div>\s*<\/div>\s*<\/section>)/;
 export function applyHoaLinks(html, c) {
   const links = (c && Array.isArray(c.hoaLinks) ? c.hoaLinks : []).filter(l => l && l.link);
   if (!links.length) return html;
@@ -211,9 +213,25 @@ export function applyHoaLinks(html, c) {
   const block = '<!--hoa-links-->'
     + links.map(l => anchor(l.link, links.length > 1 ? 'Download ' + esc(l.title || 'Community Resources') : 'Download Community Resources')).join('\n')
     + '<!--/hoa-links-->';
-  if (HOA_BLOCK_RE.test(html)) return html.replace(HOA_BLOCK_RE, block); // re-run: refresh in place
-  if (HOA_ANCHOR_RE.test(html)) return html.replace(HOA_ANCHOR_RE, block);
-  return html; // page has no Community Resources anchor
+  if (HOA_BLOCK_RE.test(html)) html = html.replace(HOA_BLOCK_RE, block);
+  else if (HOA_ANCHOR_RE.test(html)) html = html.replace(HOA_ANCHOR_RE, block);
+  // Dark footer .hoa-documents block (separate from #location-features CCR links).
+  if (html.includes('class="hoa-documents"')) {
+    const docLink = (href, title) =>
+      `<a href="${esc(href)}" class="text-link" target="_blank">`
+      + `<div class="text-white overpass bold ls-sm fs-7 mt-4">`
+      + `<img class="mb-1 me-2" src="/static/esperanza_homes/images/download-icon-white.svg?v=c661eb7" aria-hidden="true" loading="lazy" width="18">`
+      + `${esc(title || 'Document')}`
+      + `</div></a>`;
+    const docsBlock = '<!--hoa-documents-->\n'
+      + links.map(l => docLink(l.link, l.title)).join('\n')
+      + '\n<!--/hoa-documents-->';
+    if (HOA_DOCS_BLOCK_RE.test(html)) html = html.replace(HOA_DOCS_BLOCK_RE, docsBlock);
+    else if (HOA_DOCS_SECTION_RE.test(html)) {
+      html = html.replace(HOA_DOCS_SECTION_RE, (_, pre, post) => pre + '\n                            ' + docsBlock + '\n                        ' + post);
+    }
+  }
+  return html;
 }
 
 // Legacy dynamic /pdf-features/<region-path>/ links -> the committed mirror PDF at the
@@ -495,6 +513,13 @@ function demo() {
   const pf = fixPdfFeaturesLinks('<a href="/pdf-features/tx/brownsville/villas-las-lagunas/17778/">x</a>');
   assert(pf.includes('href="/pdf-features/tx/brownsville/villas-las-lagunas/17778/Features%20List.pdf"'), 'pdf-features direct file link');
   assert(fixPdfFeaturesLinks(pf) === pf, 'fixPdfFeaturesLinks idempotent');
+  const docsPage = '<section class="hoa-documents"><div class="pt-3">'
+    + '<a href="//img.hazardhouse.ai/assets-media/OLD.pdf" class="text-link" target="_blank">'
+    + '<div class="text-white overpass bold ls-sm fs-7 mt-4"><img src="/i.svg">Old Doc</div></a>'
+    + '</div></div></div></div></section>';
+  const docsOut = applyHoaLinks(docsPage, { hoaLinks: [{ title: 'Phase 1 CCRs', link: 'https://img.hazardhouse.ai/communities/rec/hoa/phase-1.pdf' }] });
+  assert(docsOut.includes('phase-1.pdf') && !docsOut.includes('OLD.pdf') && docsOut.includes('<!--hoa-documents-->'), 'hoa-documents footer refreshed');
+  assert(applyHoaLinks(docsOut, { hoaLinks: [{ title: 'Phase 1 CCRs', link: 'https://img.hazardhouse.ai/communities/rec/hoa/phase-1.pdf' }] }) === docsOut, 'hoa-documents idempotent');
   console.log('hydrate-scraped.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
