@@ -1,0 +1,49 @@
+name: Rebuild detail pages (commit back)
+
+# Nightly + on-demand: regenerate the API-driven detail pages (community / floor-plan /
+# QMI / blog, plus the HOA-link + /pdf-features/ link refresh baked into the generator)
+# and COMMIT the result to main, so the committed public/ mirror never drifts from live
+# D1 again. The push then triggers deploy.yml. deploy.yml also regenerates at deploy
+# time, but never commits — this workflow is what keeps the repo itself fresh.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 8 * * *" # 08:30 UTC, ahead of deploy.yml's 09:00 nightly
+
+concurrency:
+  group: rebuild-details
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Zero npm deps — npm ci is a no-op guard in case deps ever appear.
+      - run: npm ci --ignore-scripts || true
+
+      - name: Rebuild detail pages from the live API (scrape-free)
+        run: npm run build:details
+
+      - name: Commit & push if anything changed
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes — public/ already matches live D1."
+            exit 0
+          fi
+          git config user.name "esperanza-rebuild-bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "Nightly detail-page rebuild from live API"
+          git push origin main
