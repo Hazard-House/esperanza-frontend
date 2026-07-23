@@ -1,7 +1,7 @@
-// locale.mjs — shared Accept-Language / cookie / ?lang= resolution for worker + dev server.
-// Display parity: www.esperanzahomes.com keeps English chrome (only "Hablamos Español"
-// is Spanish). We persist locale preference via cookie but do not translate the UI yet.
+// locale.mjs — locale resolution for worker + dev server.
+// Spanish: /es/… prefix, ?lang=es, cookie, or Accept-Language. Applies via locale-live.js + es.json.
 export const LOCALE_COOKIE = 'esperanza_lang';
+export const ES_PREFIX = '/es';
 
 export function parseCookie(header) {
   const out = {};
@@ -14,8 +14,29 @@ export function parseCookie(header) {
   return out;
 }
 
-/** Prefer explicit ?lang= → cookie → Accept-Language (any es-*). Default en. */
-export function resolveLocale({ url, cookieHeader, acceptLanguage }) {
+export function isEsPath(pathname) {
+  return pathname === '/es' || pathname.startsWith('/es/');
+}
+
+/** Strip leading /es from a pathname (assets are stored without the prefix). */
+export function stripEsPrefix(pathname) {
+  if (pathname === '/es') return '/';
+  if (pathname.startsWith('/es/')) return pathname.slice(3) || '/';
+  return pathname;
+}
+
+/** Build the Spanish URL for a same-origin path (always under /es/). */
+export function toEsPath(pathname) {
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  if (isEsPath(p)) return p.endsWith('/') ? p : `${p}/`;
+  const bare = p === '/' ? '' : p;
+  return `${ES_PREFIX}${bare}${bare.endsWith('/') || bare === '' ? '' : '/'}`;
+}
+
+/** Prefer /es/ path → ?lang= → cookie → Accept-Language. Default en. */
+export function resolveLocale({ url, cookieHeader, acceptLanguage, pathname }) {
+  const p = pathname || url?.pathname || '/';
+  if (isEsPath(p)) return 'es';
   const q = url?.searchParams?.get('lang');
   if (q === 'es' || q === 'en') return q;
   const cookie = parseCookie(cookieHeader)[LOCALE_COOKIE];
@@ -28,10 +49,20 @@ export function resolveLocale({ url, cookieHeader, acceptLanguage }) {
   return 'en';
 }
 
-/** Keep <html lang="en"> like the live site; record preference for cookie only. */
-export function patchHtmlLocale(html, _locale) {
+/** Set <html lang>, bootstrap locale-live.js, inject Spanish dictionary path. */
+export function patchHtmlLocale(html, lang) {
   if (!html || !/<html/i.test(html)) return html;
-  html = html.replace(/(<html[^>]*\blang=)(["'])([^"']*)\2/i, `$1$2en$2`);
+  html = html.replace(/(<html[^>]*\blang=)(["'])([^"']*)\2/i, `$1$2${lang}$2`);
+  if (!html.includes('__ESPERANZA_LOCALE')) {
+    const boot =
+      `<script>window.__ESPERANZA_LOCALE=${JSON.stringify(lang)};window.__ESPERANZA_ES_PREFIX=${JSON.stringify(ES_PREFIX)};</script>`;
+    html = html.replace(/<head([^>]*)>/i, `<head$1>\n${boot}`);
+  }
+  if (!html.includes('locale-live.js')) {
+    const tag = '\n<script src="/locale-live.js" defer></script>\n';
+    const i = html.lastIndexOf('</body>');
+    html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
+  }
   return html;
 }
 

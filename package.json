@@ -7,6 +7,7 @@
     "dev": "bash scripts/dev.sh",
     "link-static": "node scripts/link-static-assets.mjs",
     "build": "node build.mjs",
+    "build:locale": "node scripts/build-es-locale.mjs",
     "build:details": "node generate-details.mjs",
     "generate": "node generate-details.mjs",
     "check": "node build.mjs --check && npm run check:render",

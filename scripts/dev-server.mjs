@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveLocale, patchHtmlLocale, localeCookieHeader } from '../locale.mjs';
+import { resolveLocale, patchHtmlLocale, localeCookieHeader, stripEsPrefix, isEsPath } from '../locale.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const PORT = Number(process.env.PORT || 8787);
@@ -71,6 +71,7 @@ function patchDevHtml(html, req) {
   }
   const locale = resolveLocale({
     url: new URL(req.url || '/', `http://localhost:${PORT}`),
+    pathname: new URL(req.url || '/', `http://localhost:${PORT}`).pathname,
     cookieHeader: req.headers.cookie,
     acceptLanguage: req.headers['accept-language'],
   });
@@ -97,6 +98,15 @@ createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `http://localhost:${PORT}`);
     let path = decodeURIComponent(url.pathname);
+
+    if (path === '/es') {
+      res.writeHead(301, { Location: '/es/' + url.search });
+      res.end();
+      log(req, 301, 'es root');
+      return;
+    }
+    const esPath = isEsPath(path);
+    if (esPath) path = stripEsPrefix(path);
 
     if (path.startsWith('/api/')) {
       await proxyApi(req, res);
@@ -146,8 +156,9 @@ createServer(async (req, res) => {
     };
     if (ext === '.html') {
       body = Buffer.from(patchDevHtml(body.toString('utf8'), req), 'utf8');
-      const langQ = new URL(req.url || '/', `http://localhost:${PORT}`).searchParams.get('lang');
+      const langQ = url.searchParams.get('lang');
       if (langQ === 'es' || langQ === 'en') headers['Set-Cookie'] = localeCookieHeader(langQ);
+      else if (esPath) headers['Set-Cookie'] = localeCookieHeader('es');
     }
 
     res.writeHead(200, headers);
