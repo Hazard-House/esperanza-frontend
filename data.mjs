@@ -140,13 +140,17 @@ export async function loadData() {
       else if (qm.source === 'live') h.gallery = [];
     }
     h.image = resolveQmiHero({ image: h.image }, qm, fixHost);
-    // Floor-plan drawing: prefer the R1 field (once floor_plans.floor_plan_image is
-    // backfilled), else the original page's own viewer drawing, else the harvested
-    // per-plan pool, else the committed _FP.png map (interim), else FP elevation art.
-    // Never reuse the admin hero photo — it is the home elevation render, not the plan.
+    // Floor-plan drawing, HOME-specific first (mirrors the PDF worker's precedence:
+    // qmi.floor_plan_image admin override, THEN the plan's floor_plan_image). The
+    // public /qmi API doesn't expose the per-home override column yet, so the
+    // original page's own harvested viewer drawing is our home-specific source; the
+    // plan-level R1 field must not outrank it (it's the "default plan image" bug —
+    // 2310 Emory Trail's custom Bahia drawing). Then the harvested per-plan pool,
+    // then the committed _FP.png map (interim). When none exist, live O'Neill embeds
+    // the home hero in the iviewer (not the FP elevation art).
     const fpSlug = (h.floorplanObj && h.floorplanObj.slug) || slugify(h.floorPlan);
-    h.planImage = fixHost((h.floorplanObj && h.floorplanObj.floorPlanImage)
-      || (qm && qm.planImages && qm.planImages[0])
+    h.planImage = fixHost((qm && qm.planImages && qm.planImages[0])
+      || (h.floorplanObj && h.floorplanObj.floorPlanImage)
       || ((QMI_MEDIA.plans || {})[fpSlug] || [])[0]
       || FP_MAP[fpSlug]
       || h.fpImage

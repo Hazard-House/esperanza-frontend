@@ -127,7 +127,7 @@
     var coord = coordOf(c); if (!coord) return;
     el.innerHTML = '';
     resolveStyle(STYLE_DETAIL, function (style) {
-      var map = new mapboxgl.Map({ container: 'map', style: style, center: coord, zoom: 10, minZoom: 3, maxZoom: 17 });
+      var map = new mapboxgl.Map({ container: el, style: style, center: coord, zoom: 10, minZoom: 3, maxZoom: 17 });
       map.addControl(new mapboxgl.NavigationControl(), 'top-right');
       whenStyleReady(map, function () { addPins(map, toGeoJSON([{ c: c, coord: coord }])); });
     });
@@ -135,7 +135,9 @@
 
   function boot() {
     var home = document.getElementById('home-map');
-    var detail = document.getElementById('map');
+    // Sales-office map container: generated pages emit #map.gmap; scraped pages use
+    // O'Neill's #oi-map.gmap (their #map is the lotvue Community-Map section — skip it).
+    var detail = document.querySelector('#map.gmap, #oi-map.gmap');
     if ((!home && !detail) || typeof mapboxgl === 'undefined') return;
     mapboxgl.accessToken = TOKEN;
     Promise.all([
