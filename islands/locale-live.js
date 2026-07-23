@@ -1,9 +1,13 @@
-/* locale-live.js — apply Spanish UI copy when the visitor prefers es (Accept-Language,
- * cookie, or ?lang=). Translates shared chrome (nav, footer, forms, CTAs) from
- * /locales/es.json; community names and long-form body copy stay as published. */
+/* locale-live.js — full-site Spanish when the visitor prefers es (Accept-Language,
+ * cookie, or ?lang=). Loads /locales/es.json and replaces matching text nodes,
+ * attributes, and titles; re-applies when live islands inject content. */
 (function () {
   'use strict';
   var COOKIE = 'esperanza_lang';
+  var map = null;
+  var applying = false;
+  var observer = null;
+  var debounceTimer = null;
 
   function prefersSpanish() {
     var forced = window.__ESPERANZA_LOCALE;
@@ -51,45 +55,79 @@
     });
   }
 
-  function applyMap(map) {
-    var keys = Object.keys(map).filter(function (k) { return k && map[k]; });
-    keys.sort(function (a, b) { return b.length - a.length; });
-
-    function translateString(s) {
-      if (!s) return s;
-      var trimmed = s.trim();
-      if (map[trimmed]) return s.replace(trimmed, map[trimmed]);
-      return s;
+  function translateString(s, dict, keys) {
+    if (!s || !dict) return s;
+    var trimmed = s.trim();
+    if (dict[trimmed]) {
+      var lead = s.match(/^\s*/)[0];
+      var trail = s.match(/\s*$/)[0];
+      return lead + dict[trimmed] + trail;
     }
+    var out = s;
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k.length < 3 || !dict[k] || out.indexOf(k) === -1) continue;
+      out = out.split(k).join(dict[k]);
+    }
+    return out;
+  }
+
+  function applyMap(dict) {
+    if (!dict || applying) return;
+    applying = true;
+    if (observer) observer.disconnect();
+    map = dict;
+    window.__ESPERANZA_I18N = dict;
+    var keys = Object.keys(dict).filter(function (k) { return k && dict[k]; });
+    keys.sort(function (a, b) { return b.length - a.length; });
 
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
       acceptNode: function (node) {
         if (!node.textContent || !node.textContent.trim()) return NodeFilter.FILTER_REJECT;
         var p = node.parentElement;
-        if (!p || p.closest('script,style,noscript,code,pre')) return NodeFilter.FILTER_REJECT;
+        if (!p || p.closest('script,style,noscript,code,pre,.locale-switcher')) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       },
     });
     var textNodes = [];
     while (walker.nextNode()) textNodes.push(walker.currentNode);
     textNodes.forEach(function (node) {
-      var next = translateString(node.textContent);
+      if (node.__esOrig == null) node.__esOrig = node.textContent;
+      var next = translateString(node.__esOrig, dict, keys);
       if (next !== node.textContent) node.textContent = next;
     });
 
-    ['placeholder', 'aria-label', 'title', 'data-bs-original-title', 'data-placeholder'].forEach(function (attr) {
+    ['placeholder', 'aria-label', 'title', 'alt', 'data-bs-original-title', 'data-placeholder', 'value'].forEach(function (attr) {
       document.querySelectorAll('[' + attr + ']').forEach(function (el) {
-        var v = el.getAttribute(attr);
-        var next = translateString(v || '');
-        if (next !== v) el.setAttribute(attr, next);
+        if (attr === 'value' && (el.tagName !== 'INPUT' || el.type !== 'button')) return;
+        var origKey = '__esOrig_' + attr;
+        if (el[origKey] == null) el[origKey] = el.getAttribute(attr) || '';
+        var next = translateString(el[origKey], dict, keys);
+        if (next !== el.getAttribute(attr)) el.setAttribute(attr, next);
       });
     });
 
-    if (document.title) {
-      var t = translateString(document.title);
-      if (t !== document.title) document.title = t;
-    }
+    if (document.__esTitleOrig == null) document.__esTitleOrig = document.title;
+    var t = translateString(document.__esTitleOrig, dict, keys);
+    if (t !== document.title) document.title = t;
+    applying = false;
+    if (document.body) watchDom();
   }
+
+  function scheduleApply() {
+    if (!map || !prefersSpanish()) return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function () { applyMap(map); }, 80);
+  }
+
+  function watchDom() {
+    if (!document.body) return;
+    if (observer) observer.disconnect();
+    observer = new MutationObserver(scheduleApply);
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+
+  window.__applyEsperanzaLocale = function () { scheduleApply(); };
 
   var active = prefersSpanish() ? 'es' : 'en';
   document.documentElement.lang = active;
@@ -98,6 +136,15 @@
 
   fetch('/locales/es.json', { credentials: 'same-origin' })
     .then(function (r) { return r.json(); })
-    .then(applyMap)
+    .then(function (dict) {
+      applyMap(dict);
+      watchDom();
+    })
     .catch(function () {});
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', watchDom);
+  } else {
+    watchDom();
+  }
 })();

@@ -3,3 +3,4 @@ node_modules/
 *.log
 .wrangler/
 .bin/
+assets/locales/.es-build-progress.json
