@@ -1,4 +1,6 @@
 // locale.mjs — shared Accept-Language / cookie / ?lang= resolution for worker + dev server.
+// Display parity: www.esperanzahomes.com keeps English chrome (only "Hablamos Español"
+// is Spanish). We persist locale preference via cookie but do not translate the UI yet.
 export const LOCALE_COOKIE = 'esperanza_lang';
 
 export function parseCookie(header) {
@@ -26,19 +28,10 @@ export function resolveLocale({ url, cookieHeader, acceptLanguage }) {
   return 'en';
 }
 
-/** Set <html lang>, persist cookie hint, inject locale island bootstrap. */
-export function patchHtmlLocale(html, lang) {
+/** Keep <html lang="en"> like the live site; record preference for cookie only. */
+export function patchHtmlLocale(html, _locale) {
   if (!html || !/<html/i.test(html)) return html;
-  html = html.replace(/(<html[^>]*\blang=)(["'])([^"']*)\2/i, `$1$2${lang}$2`);
-  if (!html.includes('__ESPERANZA_LOCALE')) {
-    const boot = `<script>window.__ESPERANZA_LOCALE=${JSON.stringify(lang)};</script>`;
-    html = html.replace(/<head([^>]*)>/i, `<head$1>\n${boot}`);
-  }
-  if (!html.includes('locale-live.js')) {
-    const tag = '\n<script src="/locale-live.js" defer></script>\n';
-    const i = html.lastIndexOf('</body>');
-    html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
-  }
+  html = html.replace(/(<html[^>]*\blang=)(["'])([^"']*)\2/i, `$1$2en$2`);
   return html;
 }
 
