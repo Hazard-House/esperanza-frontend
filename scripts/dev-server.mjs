@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveLocale, patchHtmlLocale, localeCookieHeader } from '../locale.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const PORT = Number(process.env.PORT || 8787);
@@ -62,13 +63,18 @@ function resolveFile(urlPath) {
   return null;
 }
 
-function patchDevHtml(html) {
+function patchDevHtml(html, req) {
   // Strip ?v= from same-origin asset refs — Cursor preview drops query strings.
   let out = html.replace(/((?:href|src)="\/[^"?#]+)\?v=[A-Za-z0-9]+(")/g, '$1$2');
   if (!out.includes('name="dev-preview"')) {
     out = out.replace('</head>', '<meta name="dev-preview" content="bare-asset-paths"></head>');
   }
-  return out;
+  const locale = resolveLocale({
+    url: new URL(req.url || '/', `http://localhost:${PORT}`),
+    cookieHeader: req.headers.cookie,
+    acceptLanguage: req.headers['accept-language'],
+  });
+  return patchHtmlLocale(out, locale);
 }
 
 async function proxyApi(req, res) {
@@ -133,13 +139,18 @@ createServer(async (req, res) => {
     const type = MIME[ext] || 'application/octet-stream';
     let body = readFileSync(file);
 
-    if (ext === '.html') body = Buffer.from(patchDevHtml(body.toString('utf8')), 'utf8');
-
-    res.writeHead(200, {
+    const headers = {
       'Content-Type': type,
       'Cache-Control': 'no-store',
       'X-Dev-Server': 'esperanza-dev-server',
-    });
+    };
+    if (ext === '.html') {
+      body = Buffer.from(patchDevHtml(body.toString('utf8'), req), 'utf8');
+      const langQ = new URL(req.url || '/', `http://localhost:${PORT}`).searchParams.get('lang');
+      if (langQ === 'es' || langQ === 'en') headers['Set-Cookie'] = localeCookieHeader(langQ);
+    }
+
+    res.writeHead(200, headers);
     res.end(body);
     log(req, 200, ext);
   } catch (e) {
