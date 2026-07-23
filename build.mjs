@@ -119,7 +119,7 @@ function writeOut(rel, html) {
 // source is committed (islands/, assets/) — no scrape dependency. Extracted so the
 // scrape-free fallback can reuse it verbatim.
 function copyRuntimeAssets() {
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js', 'community-homes-live.js', 'incentives-live.js']);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js', 'community-homes-live.js', 'incentives-live.js', 'promotions-live.js']);
   for (const island of islands) cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
   cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));

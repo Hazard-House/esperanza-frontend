@@ -1,0 +1,161 @@
+/* promotions-live.js — refresh site-wide banner + /incentives/ cards/hero from
+ * /api/public/promotions so admin edits reach the site without a full rebuild. */
+(function () {
+  'use strict';
+  var CFG = window.__ESPERANZA || {};
+  var API = CFG.API_BASE || '/api/public';
+  var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var slugify = function (s) { return String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  var IMG_TX = 'format=auto,quality=82,width=1920';
+  var fixHost = function (u) {
+    if (!u) return u;
+    var s = String(u).replace(/^https:\/\//, '//').replace(/^http:\/\//, '//');
+    if (/^\/\/img\.hazardhouse\.ai\//.test(s) && s.indexOf('/cdn-cgi/image/') === -1 && /\.(jpe?g|png|webp|avif)($|\?)/i.test(s)) {
+      s = s.replace('//img.hazardhouse.ai/', '//img.hazardhouse.ai/cdn-cgi/image/' + IMG_TX + '/');
+    }
+    return s;
+  };
+
+  // Scraped incentive detail pages that still ship from the June-8 mirror.
+  var STATIC_INCENTIVE = {
+    '499-interest-rates': true,
+    '499-rate-up-to-5000-in-closing-costs': true,
+    'receive-up-to-25000-off-on-your-dream-home-with-esperanza-flex-cash': true,
+  };
+
+  function normalizeLink(link) {
+    return String(link || '').trim().replace(/^https:\/\/www\.esperanzahomes\.com/i, '');
+  }
+
+  function promoHref(p) {
+    var link = normalizeLink(p.ctaLink);
+    if (link.indexOf(':slug') !== -1) {
+      var derived = slugify(String(p.title || '').replace(/\*/g, ''));
+      if (STATIC_INCENTIVE[derived]) link = '/incentives/' + derived + '/';
+      else if (/flex/i.test(p.title || '')) link = '/incentives/receive-up-to-25000-off-on-your-dream-home-with-esperanza-flex-cash/';
+      else if (/4\.99|rate|fixed/i.test(p.title || '')) link = '/incentives/499-interest-rates/';
+      else link = '/incentives/' + derived + '/';
+    }
+    if (!link) return '#';
+    if (!link.endsWith('/')) link += '/';
+    return link;
+  }
+
+  function communityBlurb(p) {
+    var names = p.communityNames || [];
+    if (!names.length) return '';
+    return 'Available in ' + names.length + ' communit' + (names.length === 1 ? 'y' : 'ies') + '.';
+  }
+
+  function incentiveCard(p) {
+    var href = promoHref(p);
+    var img = fixHost(p.image);
+    var title = p.title || '';
+    var cta = p.ctaLabel || 'View Details';
+    var blurb = communityBlurb(p);
+    var imgHtml = img
+      ? '<div class="oi-aspect four-three"><img src="' + esc(img) + '" loading="lazy" class="oi-aspect-img rounded-4"></div>'
+      : '';
+    var blurbHtml = blurb ? '<p class="small">' + esc(blurb) + '</p>' : '';
+    var availBtn = href.indexOf('/incentives/') === 0
+      ? '<div class="col-lg-6"><a class="btn btn-outline-primary" href="' + esc(href) + '#available" role="button">View Available Homes</a></div>'
+      : '';
+    return '<div class="col-md-6 col-xl-4 mb-4" data-promo-id="' + esc(p.id) + '">' +
+      '<div class="incentive-card d-flex flex-column rounded-4 h-100">' +
+      '<a href="' + esc(href) + '">' + imgHtml + '</a>' +
+      '<div class="d-flex flex-column h-100 p-3">' +
+      '<a href="' + esc(href) + '"><div class="h4 text-dark fw-bold">' + esc(title) + '</div></a>' +
+      '<div class="green-bar-light my-2"></div>' + blurbHtml +
+      '<div class="row g-2 mt-auto pt-2">' +
+      '<div class="col-lg-6"><a class="btn btn-primary" href="' + esc(href) + '" role="button">' + esc(cta) + '</a></div>' +
+      availBtn + '</div></div></div></div>';
+  }
+
+  function refreshIncentivesIndex(promos) {
+    var section = document.querySelector('#incentives .row');
+    if (!section) return;
+    var cards = promos.filter(function (p) { return p.active && p.showIncentivePage; });
+    cards.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+    if (!cards.length) return;
+    section.innerHTML = cards.map(incentiveCard).join('');
+  }
+
+  function refreshBanner(promos) {
+    var slides = promos.filter(function (p) { return p.active && p.showSiteBanner && (p.bannerText || p.title); });
+    slides.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+    if (!slides.length) return;
+    var wrap = document.querySelector('.alert-banner .swiper-wrapper');
+    if (!wrap) return;
+    wrap.innerHTML = slides.map(function (p) {
+      var text = p.bannerText || p.title || '';
+      var href = normalizeLink(p.ctaLink);
+      var btn = (p.showBannerButton !== false && href)
+        ? '<a href="' + esc(href) + '" class="btn btn-primary">' + esc(p.ctaLabel || 'Learn More!') + '</a>'
+        : '';
+      return '<div class="swiper-slide"><p>' + esc(text) + '</p>' + btn + '</div>';
+    }).join('');
+    var swEl = document.querySelector('.swiper-alert-banner');
+    if (swEl && swEl.swiper) {
+      swEl.swiper.update();
+      swEl.swiper.slideTo(0, 0);
+    }
+  }
+
+  function detailSlug() {
+    var m = location.pathname.match(/^\/incentives\/([^/]+)\/?$/);
+    return m ? m[1] : '';
+  }
+
+  function promoForDetail(slug, promos) {
+    if (!slug) return null;
+    var byLink = promos.filter(function (p) {
+      if (!p.active) return false;
+      var link = normalizeLink(p.ctaLink).replace(':slug', slug);
+      return link.indexOf('/incentives/' + slug) !== -1;
+    });
+    if (byLink.length) {
+      byLink.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+      return byLink[0];
+    }
+    if (slug === '499-interest-rates' || slug === '499-rate-up-to-5000-in-closing-costs') {
+      var ratePromos = promos.filter(function (p) {
+        return p.active && p.showIncentivePage && (/4\.99|rate|fixed/i.test(p.title || '') || p.rate === '4.99');
+      });
+      ratePromos.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+      return ratePromos[0] || null;
+    }
+    if (slug.indexOf('flex') !== -1 || slug.indexOf('25000') !== -1) {
+      var flexPromos = promos.filter(function (p) {
+        return p.active && p.showIncentivePage && /flex/i.test(p.title || '');
+      });
+      flexPromos.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+      return flexPromos[0] || null;
+    }
+    return null;
+  }
+
+  function refreshDetailHero(p) {
+    if (!p) return;
+    var hero = document.querySelector('section.container.my-4, section.container.my-md-7');
+    if (!hero) hero = document.querySelector('section.container');
+    if (!hero) return;
+    var h1 = hero.querySelector('h1.fw-bold');
+    if (h1 && p.title) h1.textContent = p.title;
+    var img = hero.querySelector('.oi-aspect-img');
+    if (img && p.image) {
+      var src = fixHost(p.image);
+      img.src = src;
+      img.removeAttribute('srcset');
+    }
+  }
+
+  var path = location.pathname.replace(/\/index\.html$/, '/');
+  fetchT(API + '/promotions').then(function (r) { return r.json(); }).then(function (res) {
+    var promos = res.promotions || [];
+    if (path === '/incentives/') refreshIncentivesIndex(promos);
+    refreshBanner(promos);
+    var slug = detailSlug();
+    if (slug) refreshDetailHero(promoForDetail(slug, promos));
+  }).catch(function () {});
+})();

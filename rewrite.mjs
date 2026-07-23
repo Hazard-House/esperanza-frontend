@@ -283,7 +283,14 @@ export function rewriteCommon(html) {
   if (!html.includes('site-overrides.css')) {
     html = injectSiteOverrides(html);
   }
-  return html;
+  return ensurePromotionsLive(html);
+}
+
+// Admin promotions drive the incentives hub cards, detail heroes, and site-wide ticker.
+export function ensurePromotionsLive(html) {
+  if (html.includes('promotions-live.js')) return html;
+  if (!html.includes('class="alert-banner"') && !html.includes('id="incentives"') && !html.includes('/incentives/')) return html;
+  return injectIsland(html, 'promotions-live.js');
 }
 
 // Disable oilib's map/filter/form init + stub `oi` so orphaned inline calls are silent.
