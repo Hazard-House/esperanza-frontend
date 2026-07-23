@@ -347,7 +347,25 @@
     });
   }
 
+  // Scraped community pages with baked QMI cards get this island injected, which
+  // removes oilib — the code that ran their data-oi-map-autoload sales-office map
+  // (#oi-map on scraped pages; on those, #map is the lotvue Community-Map section).
+  // Nothing re-injects community-maps-live.js there (CONTAINER_ISLANDS is bypassed
+  // for scraped detail pages), so the map dies. Rescue: load community-maps-live.js
+  // when a .gmap sales-map container exists and neither oilib nor the map island is
+  // on the page.
+  function rescueSalesMap() {
+    if (!document.querySelector('#map.gmap, #oi-map.gmap')) return;
+    if (document.querySelector('script[src*="community-maps-live"]')) return; // generated pages already have it
+    if (document.querySelector('script[src*="/oilib"]')) return;              // oilib still owns the map
+    if (typeof mapboxgl === 'undefined') return;                              // no mapbox-gl on this page
+    var s = document.createElement('script');
+    s.src = '/community-maps-live.js';
+    document.body.appendChild(s);
+  }
+
   function boot() {
+    rescueSalesMap();
     // Community listing pages always re-render QMI cards from the live API so per-home
     // promo_text + promo_banner_style stay current (baked cards go stale between deploys).
     if (isCommunityListingPage()) {
