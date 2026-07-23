@@ -5,6 +5,7 @@
 // survives rebuilds.
 
 import { REDIRECTS } from "./redirects.mjs";
+import { resolveLocale, patchHtmlLocale, localeCookieHeader } from "./locale.mjs";
 
 const LIVE = "https://www.esperanzahomes.com";
 const API = "https://esperanza-api.round-base-ed8c.workers.dev";
@@ -379,10 +380,14 @@ export default {
     }
 
     const ct = resp.headers.get("content-type") || "";
-    // Inject promotions-live.js on HTML pages that still ship frozen incentive/banner
-    // markup from the June scrape — admin edits in D1 reach the browser immediately.
     if (resp.ok && ct.includes("text/html")) {
-      const html = await resp.text();
+      let html = await resp.text();
+      const locale = resolveLocale({
+        url,
+        cookieHeader: request.headers.get("cookie"),
+        acceptLanguage: request.headers.get("accept-language"),
+      });
+      html = patchHtmlLocale(html, locale);
       const needsPromo =
         !html.includes("promotions-live.js") &&
         (html.includes('class="alert-banner"') || html.includes('id="incentives"') || slashed.startsWith("/incentives/"));
@@ -390,15 +395,13 @@ export default {
         const cfg = JSON.stringify({ API_BASE: "/api/public" });
         const tag = `\n<script>window.__ESPERANZA=Object.assign(window.__ESPERANZA||{},${cfg});</script>\n<script src="/promotions-live.js" defer></script>\n`;
         const i = html.lastIndexOf("</body>");
-        const body = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
-        const out = new Response(body, resp);
-        for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
-        out.headers.set("Cache-Control", "public, max-age=300");
-        return out;
+        html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }
       const out = new Response(html, resp);
       for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
       out.headers.set("Cache-Control", "public, max-age=300");
+      const langQ = url.searchParams.get("lang");
+      if (langQ === "es" || langQ === "en") out.headers.append("Set-Cookie", localeCookieHeader(langQ));
       return out;
     }
 

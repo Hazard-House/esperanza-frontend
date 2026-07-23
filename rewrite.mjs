@@ -283,7 +283,15 @@ export function rewriteCommon(html) {
   if (!html.includes('site-overrides.css')) {
     html = injectSiteOverrides(html);
   }
-  return ensurePromotionsLive(html);
+  return ensureLocaleLive(ensurePromotionsLive(html));
+}
+
+// Browser-language Spanish: locale-live.js + /locales/es.json (see locale.mjs).
+export function ensureLocaleLive(html) {
+  if (html.includes('locale-live.js') || !/<html/i.test(html)) return html;
+  const tag = '\n<script src="/locale-live.js" defer></script>\n';
+  const i = html.lastIndexOf('</body>');
+  return i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
 }
 
 // Admin promotions drive the incentives hub cards, detail heroes, and site-wide ticker.
