@@ -187,10 +187,14 @@
 
   if (active !== 'es') return;
 
-  fetch('/locales/es.json', { credentials: 'same-origin' })
-    .then(function (r) { return r.json(); })
-    .then(function (dict) {
-      applyMap(dict);
+  Promise.all([
+    fetch('/locales/es.json', { credentials: 'same-origin' }).then(function (r) { return r.json(); }),
+    fetch('/locales/es-extra.json', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .catch(function () { return {}; }),
+  ])
+    .then(function (parts) {
+      applyMap(Object.assign({}, parts[0], parts[1]));
       watchDom();
     })
     .catch(function () {});
