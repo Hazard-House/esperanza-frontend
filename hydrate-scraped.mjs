@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { qmiCardHtml, qmiSectionHtml } from './sections.mjs';
+import { esc, qmiCardHtml, qmiSectionHtml } from './sections.mjs';
 import { slugify } from './data.mjs';
 import { rewriteCommon, freshBannerHtml } from './rewrite.mjs';
 
@@ -192,6 +192,38 @@ function injectOverviewGraphic(html, c) {
     (_, pre, br, close) => pre + graphic + (br || '') + close,
     page, 'overview graphic');
 }
+// "Download Community Resources" (CCRs): the scraped anchor points at a frozen June-8
+// assets-media PDF, which goes dead the moment admin re-uploads the doc (e.g. Villas
+// Las Lagunas' 062526_VLL_CCR_Summary.pdf, 404 since the 7/19 re-upload). When the API
+// exposes admin HOA uploads (c.hoaLinks = [{title, link}]), rebuild the anchor(s) from
+// them; communities with no uploads keep the frozen link. Idempotent via markers so
+// rehydrate can re-run every build. Used on scraped community AND plan-in-community pages.
+const HOA_ANCHOR_RE = /<a [^>]+>\s*<div class="text-dark-green[^"]*">\s*<img[^>]*>\s*<u>Download Community Resources<\/u>\s*<\/div>\s*<\/a>/;
+const HOA_BLOCK_RE = /<!--hoa-links-->[\s\S]*?<!--\/hoa-links-->/;
+export function applyHoaLinks(html, c) {
+  const links = (c && Array.isArray(c.hoaLinks) ? c.hoaLinks : []).filter(l => l && l.link);
+  if (!links.length) return html;
+  const anchor = (href, label) =>
+    `<a href="${esc(href)}" class="oi-brochure-download text-link d-inline-block me-4 me-lg-5" target="_blank">`
+    + `<div class="text-dark-green overpass fs-7">`
+    + `<img class="mb-1 me-1" src="/static/esperanza_homes/images/download-icon.svg?v=a6d2151" aria-hidden="true" loading="lazy" width="18">`
+    + `<u>${label}</u></div></a>`;
+  const block = '<!--hoa-links-->'
+    + links.map(l => anchor(l.link, links.length > 1 ? 'Download ' + esc(l.title || 'Community Resources') : 'Download Community Resources')).join('\n')
+    + '<!--/hoa-links-->';
+  if (HOA_BLOCK_RE.test(html)) return html.replace(HOA_BLOCK_RE, block); // re-run: refresh in place
+  if (HOA_ANCHOR_RE.test(html)) return html.replace(HOA_ANCHOR_RE, block);
+  return html; // page has no Community Resources anchor
+}
+
+// Legacy dynamic /pdf-features/<region-path>/ links -> the committed mirror PDF at the
+// same path (worker.js maps the slash form onto "<path>/Features List.pdf"; linking the
+// file directly means every "Download Included Features" resolves to a committed asset).
+// Idempotent: the rewritten href ends in .pdf, not "/", so it never re-matches.
+export function fixPdfFeaturesLinks(html) {
+  return html.replace(/href="(\/pdf-features\/[^"]+\/)"/g, 'href="$1Features%20List.pdf"');
+}
+
 // Scraped pages ship the O'Neill header (title + green-bar-light [+ download CTA]).
 // Generated/inserted sections use qmiSectionHtml — replace the whole block when the
 // frozen header is missing the bar so rehydrate normalizes styling.
@@ -285,6 +317,8 @@ export function hydrateCommunity(html, c, d) {
     });
   } catch (e) { miss(page, `plan prices (${e.message})`); }
   html = injectOverviewGraphic(html, c);
+  html = applyHoaLinks(html, c);
+  html = fixPdfFeaturesLinks(html);
   return html;
 }
 
@@ -444,6 +478,23 @@ function demo() {
     + '<div class="d-none">' + '<img data-fancybox="photos" src="/1.jpg">'.repeat(4) + '</div></div>';
   const patched = patchCommunityGalleryImages(richGallery, { slug: 'vista-verde', name: 'Vista Verde', image: 'https://img.hazardhouse.ai/communities/rec/wrong.jpg' });
   assert(patched.includes('media.esperanzahomes.com/a.jpg') && !patched.includes('communities/rec/wrong'), 'rich gallery skips API hero override');
+  // applyHoaLinks: frozen assets-media CCR anchor -> admin hoaLinks; idempotent re-run
+  const hoaPage = '<div class="py-3"><a href="//img.hazardhouse.ai/assets-media/OLD_CCR.pdf" class="oi-brochure-download text-link d-inline-block me-4 me-lg-5" target="_blank">\n<div class="text-dark-green overpass fs-7">\n<img class="mb-1 me-1" src="/static/esperanza_homes/images/download-icon.svg?v=a6d2151" aria-hidden="true" loading="lazy" width="18"/>\n<u>Download Community Resources</u>\n</div>\n</a></div>';
+  const hoaC = { hoaLinks: [{ title: 'VLL CCRs', link: 'https://img.hazardhouse.ai/communities/rec1/hoa-0-new.pdf' }] };
+  const hoaOut = applyHoaLinks(hoaPage, hoaC);
+  assert(hoaOut.includes('hoa-0-new.pdf') && !hoaOut.includes('OLD_CCR.pdf') && hoaOut.includes('Download Community Resources'), 'hoa anchor href swapped');
+  assert(applyHoaLinks(hoaOut, hoaC) === hoaOut, 'applyHoaLinks idempotent');
+  // multi-doc communities (Retama) expand to one anchor per upload, titled
+  const multi = applyHoaLinks(hoaPage, { hoaLinks: [{ title: 'Phase 1 CCRs', link: '/1.pdf' }, { title: 'Phase 2 CCRs', link: '/2.pdf' }] });
+  assert(multi.includes('Download Phase 1 CCRs') && multi.includes('Download Phase 2 CCRs') && !multi.includes('OLD_CCR.pdf'), 'multi hoa anchors');
+  // plan-in-community attribute order (class before href) matches too
+  const planAnchor = '<a class="text-link d-inline-block me-4 me-lg-5 oi-brochure-download" href="//img.hazardhouse.ai/assets-media/OLD_CCR.pdf" target="_blank">\n<div class="text-dark-green overpass fs-7">\n<img src="/i.svg">\n<u>Download Community Resources</u>\n</div>\n</a>';
+  assert(applyHoaLinks(planAnchor, hoaC).includes('hoa-0-new.pdf'), 'plan-page anchor attr order matched');
+  assert(applyHoaLinks(hoaPage, { hoaLinks: [] }) === hoaPage, 'no hoaLinks -> frozen');
+  // fixPdfFeaturesLinks: dynamic route -> committed file; idempotent
+  const pf = fixPdfFeaturesLinks('<a href="/pdf-features/tx/brownsville/villas-las-lagunas/17778/">x</a>');
+  assert(pf.includes('href="/pdf-features/tx/brownsville/villas-las-lagunas/17778/Features%20List.pdf"'), 'pdf-features direct file link');
+  assert(fixPdfFeaturesLinks(pf) === pf, 'fixPdfFeaturesLinks idempotent');
   console.log('hydrate-scraped.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

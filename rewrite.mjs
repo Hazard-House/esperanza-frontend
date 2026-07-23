@@ -191,6 +191,10 @@ export function rewriteCommon(html) {
   html = stripBakedCalcResults(html);
   html = restorePrehydratedAccordion(html);
   html = html
+    // Menu label rename (2026-07): "E-Customization" -> "E-Personalization". Label text
+    // only — the /design-studio/ href and page slug are unchanged, and body-copy
+    // mentions ("…E-Simplicity, and E-Customization—…") aren't >…<-bounded so stay.
+    .replace(/>E-Customization</g, '>E-Personalization<')
     .replace(/https:\/\/www\.esperanzahomes\.com\/xhr\//g, '/xhr/')
     // Blog category <option value>s are absolute live-domain URLs HTTrack left alone.
     .replace(/(<option[^>]*value=")https:\/\/www\.esperanzahomes\.com\//g, '$1/')

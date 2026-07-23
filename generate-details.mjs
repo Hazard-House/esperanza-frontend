@@ -9,7 +9,8 @@ import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
 import { setBuildRate } from './sections.mjs';
-import { hydrateCommunity, hydrateCommunityStatus } from './hydrate-scraped.mjs';
+import { hydrateCommunity, hydrateCommunityStatus, applyHoaLinks } from './hydrate-scraped.mjs';
+import { slugify } from './data.mjs';
 import { ensureCommunityHomesLive } from './rewrite.mjs';
 import { classifyDetail } from './build.mjs';
 import { generateBlogs } from './generate-blogs.mjs';
@@ -121,6 +122,32 @@ function scrapedCommunitySkipSet(communities) {
   return skip;
 }
 
+// Scraped plan-in-community pages carry the same frozen "Download Community Resources"
+// CCR anchor as the community page, but rehydrateScrapedCommunities never touches them.
+// For every community with admin HOA uploads, walk its whole page tree and refresh the
+// anchor from hoaLinks (applyHoaLinks is idempotent + a no-op on pages without it).
+function refreshHoaLinksInCommunityTrees(d, { outDir = OUT } = {}) {
+  let updated = 0;
+  for (const c of d.communities) {
+    if (!c.hoaLinks.length || !c.slug) continue;
+    const stack = [join(outDir, 'new-homes', 'tx', slugify(c.city), c.slug)];
+    while (stack.length) {
+      const dir = stack.pop();
+      if (!existsSync(dir)) continue;
+      for (const ent of readdirSync(dir, { withFileTypes: true })) {
+        if (ent.isDirectory()) stack.push(join(dir, ent.name));
+        else if (ent.name === 'index.html') {
+          const file = join(dir, ent.name);
+          const raw = readFileSync(file, 'utf8');
+          const html = applyHoaLinks(raw, c);
+          if (html !== raw) { writeFileSync(file, html); updated++; }
+        }
+      }
+    }
+  }
+  return updated;
+}
+
 // data + skip-sets are injectable so build.mjs can load the API once and skip
 // entities it already shipped as hydrated scrape copies (clean paths in the sets).
 export async function generateDetails(data, { skipCommunities, skipFloorplans } = {}) {
@@ -140,11 +167,12 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   writeFileSync(join(OUT, 'qmi-images.json'), JSON.stringify(imagesMap(d.qmis)));
   const strippedCards = stripIncentivesPages(new Set(d.qmis.map((h) => h.slug)));
   const { updated: rehydrated } = rehydrateScrapedCommunities(d);
+  const hoaUpdated = refreshHoaLinksInCommunityTrees(d);
   // Blog pages from D1 (was: frozen June-8 scrape). Non-fatal so a blog hiccup never blocks
   // the pricing/inventory deploy; the count-parity guard still logs loudly on a shortfall.
   const blogs = await generateBlogs().catch(e => { console.error('generate-blogs:', e.message); return 0; });
-  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; stripped ${strippedCards} stale /incentives/ home cards`);
-  return { qmi: d.qmis.length, community: nc, floorplan: nf, blogs, strippedCards, rehydrated };
+  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards`);
+  return { qmi: d.qmis.length, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();
