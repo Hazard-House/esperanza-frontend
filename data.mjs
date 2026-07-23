@@ -153,7 +153,6 @@ export async function loadData() {
       || (h.floorplanObj && h.floorplanObj.floorPlanImage)
       || ((QMI_MEDIA.plans || {})[fpSlug] || [])[0]
       || FP_MAP[fpSlug]
-      || h.image
       || h.fpImage
       || null);
     // Galleryless homes (e.g. under construction): fall back to the community's model
@@ -222,8 +221,10 @@ async function demo() {
   const aq14924 = d.qmis.find(h => h.slug === '14924-aqualina-way');
   assert(aq14924 && aq14924.planImage && aq14924.planViewerUrl && !Array.isArray(aq14924.planViewerUrl),
     '14924-aqualina-way resolves planImage + scalar planViewerUrl');
-  assert(aq14924.planImage === aq14924.image,
-    '14924-aqualina-way plan viewer uses home hero (live parity), not FP elevation art');
+  assert(aq14924.planImage.includes('AQ109'),
+    '14924-aqualina-way plan viewer uses harvested floor-plan drawing (live parity)');
+  assert(aq14924.planImage !== aq14924.image,
+    '14924-aqualina-way plan viewer must not reuse admin hero photo');
   console.log('data.mjs demo() passed:', d.qmis.length, 'qmi', d.communities.length, 'comm', d.floorplans.length, 'fp');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

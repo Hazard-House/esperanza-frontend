@@ -2297,7 +2297,9 @@
   "14924-aqualina-way": {
    "hero": "https://img.hazardhouse.ai/assets-media/153/2026/4/2/AQ109.jpg",
    "photos": [],
-   "planImages": [],
+   "planImages": [
+    "https://img.hazardhouse.ai/assets-media/153/2026/4/2/AQ109.jpg"
+   ],
    "plan": "nueces",
    "source": "live"
   },
@@ -2687,6 +2689,9 @@
   "mulberry": [
    "https://img.hazardhouse.ai/assets-media/153/2026/4/17/TW310_FP.png",
    "https://img.hazardhouse.ai/assets-media/153/2026/5/8/PS159_FP.png"
+  ],
+  "nueces": [
+   "https://img.hazardhouse.ai/assets-media/153/2026/4/2/AQ109.jpg"
   ],
   "cottage": [
    "https://img.hazardhouse.ai/assets-media/153/2026/5/15/RV377_FP.png"

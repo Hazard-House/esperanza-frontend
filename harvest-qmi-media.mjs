@@ -113,9 +113,10 @@ async function fetchLiveHome(h, commIds) {
       if (!r.ok) { lastErr = `HTTP ${r.status}`; continue; }
       const e = extractQmiMedia(await r.text());
       if (!e.hero && !e.photos.length) { lastErr = 'no media extracted'; continue; }
-      const stem = u => String(u || '').split('/').pop()?.split('?')[0].replace(/\.[^.]+$/i, '').toLowerCase() || '';
+      // O'Neill often uses the same base file for gallery hero and plan viewer with
+      // different Image-Service crops — drop only exact URL duplicates, not same basename.
       if (e.hero && e.planImages?.length) {
-        e.planImages = e.planImages.filter(u => stem(u) !== stem(e.hero));
+        e.planImages = e.planImages.filter(u => u !== e.hero);
       }
       e.source = 'live';
       return e;
