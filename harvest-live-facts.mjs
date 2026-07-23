@@ -6,6 +6,7 @@
 // No deps — global fetch only.  Usage: node harvest-live-facts.mjs
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fixMediaHosts } from './rewrite.mjs';
 
 const ORIGIN = 'https://www.esperanzahomes.com';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -186,5 +187,14 @@ try {
 
 const out = { rate, taxMult, hoa, badges, lotFormat, cardFacts, bannerSlides, bannerSlidesCommunity, recommendHtml, communityPromos };
 const dst = join(import.meta.dirname, 'assets', 'live-facts.json');
-writeFileSync(dst, JSON.stringify(out, null, 2) + '\n');
+// Harvested HTML (recommendHtml cards etc.) carries legacy media-CDN URLs; re-point
+// mirrored assets at our R2 CDN so the committed snapshot survives O'Neill cutover.
+const json = fixMediaHosts(JSON.stringify(out, null, 2) + '\n');
+const leftover = json.match(/media\.(?:esperanzahomes|homefiniti)\.com\/[^"'\\\s)]*/g) || [];
+if (leftover.length) {
+  console.error(`⚠ ${new Set(leftover).size} harvested media asset(s) are NOT in the R2 mirror and keep their legacy host (dead at O'Neill cutover). Mirror to R2 esperanza-cms/assets-media/<path>, append to media-keys-esperanza.txt, re-run:`);
+  for (const u of new Set(leftover)) console.error('  ' + u);
+  process.exitCode = 1;
+}
+writeFileSync(dst, json);
 console.log(`live-facts.json: rate=${rate}, taxMult=${Object.keys(taxMult).length} communities, hoa=${Object.keys(hoa).length}, badges=${Object.keys(badges).length} homes, cardFacts=${Object.keys(cardFacts).length}, lotFormat=${Object.keys(lotFormat).length}, bannerSlides=${bannerSlides.length}, communityPromos=${Object.keys(communityPromos).length}, communitySlides=${bannerSlidesCommunity.length}, recommend=${Object.keys(recommendHtml).join("+")}`);
