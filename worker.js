@@ -378,6 +378,30 @@ export default {
       return new Response(nf.status === 200 ? nf.body : "Page not found", { status: 404, headers });
     }
 
+    const ct = resp.headers.get("content-type") || "";
+    // Inject promotions-live.js on HTML pages that still ship frozen incentive/banner
+    // markup from the June scrape — admin edits in D1 reach the browser immediately.
+    if (resp.ok && ct.includes("text/html")) {
+      const html = await resp.text();
+      const needsPromo =
+        !html.includes("promotions-live.js") &&
+        (html.includes('class="alert-banner"') || html.includes('id="incentives"') || slashed.startsWith("/incentives/"));
+      if (needsPromo) {
+        const cfg = JSON.stringify({ API_BASE: "/api/public" });
+        const tag = `\n<script>window.__ESPERANZA=Object.assign(window.__ESPERANZA||{},${cfg});</script>\n<script src="/promotions-live.js" defer></script>\n`;
+        const i = html.lastIndexOf("</body>");
+        const body = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
+        const out = new Response(body, resp);
+        for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
+        out.headers.set("Cache-Control", "public, max-age=300");
+        return out;
+      }
+      const out = new Response(html, resp);
+      for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
+      out.headers.set("Cache-Control", "public, max-age=300");
+      return out;
+    }
+
     const out = new Response(resp.body, resp);
     for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
     // Never stamp long-lived caching on a non-200 (ASSETS 307-normalizes the legacy
@@ -386,8 +410,6 @@ export default {
       out.headers.set("Cache-Control", "no-store");
     } else if (p.startsWith("/static/")) {
       out.headers.set("Cache-Control", "public, max-age=31536000, immutable");
-    } else if ((resp.headers.get("content-type") || "").includes("text/html")) {
-      out.headers.set("Cache-Control", "public, max-age=300");
     }
     return out;
   },
