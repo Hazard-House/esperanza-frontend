@@ -8,8 +8,10 @@
 // URLs are converted to final https://img.hazardhouse.ai/assets-media/<key> form
 // here (crop queries stripped) because the data-driven detail pages do NOT pass
 // section HTML through rewriteCommon — they emit URLs as-is. Keys missing from
-// the R2 mirror keep their original media.esperanzahomes.com URL (still live)
-// and are reported. Run: node harvest-qmi-media.mjs
+// the R2 mirror keep their original media.esperanzahomes.com URL and FAIL the run
+// (exit 1) — that host dies at O'Neill cutover, so mirror the reported keys to R2
+// (esperanza-cms/assets-media/<path>), append them to media-keys-esperanza.txt,
+// and re-run. Run: node harvest-qmi-media.mjs
 import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -186,6 +188,11 @@ async function main() {
   console.log(`scrape pages: ${pages} -> ${Object.keys(homes).length} homes harvested (${liveFetched} live-fetched)`);
   console.log(`API homes: ${apiHomes.length}, matched: ${matched.length}, with plan drawing: ${withDraw.length}`);
   console.log(`plan pool: ${Object.keys(plans).length} plans; media keys not in R2 mirror (kept original URL): ${unmapped.size}`);
+  if (unmapped.size) {
+    console.error(`⚠ ${unmapped.size} media key(s) are NOT in the R2 mirror and keep a legacy-host URL that dies at O'Neill cutover. Mirror each to R2 (esperanza-cms/assets-media/<path>, --remote), append to media-keys-esperanza.txt, then re-run:`);
+    for (const u of unmapped) console.error('  ' + u);
+    process.exitCode = 1;
+  }
   if (failed.length) console.log('live fetch failures:', failed);
   const unmatched = apiHomes.filter(h => !homes[h.slug]).map(h => h.slug);
   if (unmatched.length) console.log('API homes unmatched:', unmatched);

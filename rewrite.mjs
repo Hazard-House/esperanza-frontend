@@ -59,6 +59,19 @@ export function mediaCdnUrl(rawPath, prefix, map, liveHost) {
   return `//${liveHost}/${clean}`;
 }
 
+// Host-fix media CDN URLs inside any harvested string (HTML or serialized JSON):
+// mirrored keys -> https://img.hazardhouse.ai/assets-media/<key>; unmapped keys keep
+// the legacy host (dies at O'Neill cutover — mirror to R2 esperanza-cms/assets-media/
+// and append to media-keys-*.txt). Used by harvest-live-facts.mjs so legacy hosts
+// never enter the committed snapshots.
+export function fixMediaHosts(s) {
+  return String(s)
+    .replace(/(?:https?:)?\/\/media\.esperanzahomes\.com\/([^"'\\\s)]*)/g,
+      (_m, p) => 'https:' + mediaCdnUrl(p, '', ESP_KEYS, 'media.esperanzahomes.com'))
+    .replace(/(?:https?:)?\/\/media\.homefiniti\.com\/([^"'\\\s)]*)/g,
+      (_m, p) => 'https:' + mediaCdnUrl(p, 'homefiniti/', HF_KEYS, 'media.homefiniti.com'));
+}
+
 // Third-party analytics/pixel scripts baked into the June-8 scrape. HTTrack localized
 // their URLs to same-origin relative paths, so on the replica each one 404s ->
 // handle_errors redirects to the dead live path -> ORB-blocked: a ~60-80 request
