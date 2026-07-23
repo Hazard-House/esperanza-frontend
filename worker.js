@@ -323,6 +323,31 @@ export default {
       }
       if (ASSET_RE.test(p)) return new Response("Not found", { status: 404 });
 
+      // The live D1 sitesearch index links communities as bare "/new-homes/<slug>" —
+      // no city, no numeric id — so every community result in the header search 404'd.
+      // Resolve the city from the public communities API and 301 onto the canonical
+      // /new-homes/tx/<city>/<slug>/ page (through REDIRECTS so the rich id-path pages
+      // are reached in one hop). Only runs on a 404, so it can never shadow real pages.
+      const bareComm = p.match(/^\/new-homes\/([^/]+?)\/?$/);
+      if (bareComm && bareComm[1] !== "tx") {
+        const clean = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const want = clean(decodeURIComponent(bareComm[1]));
+        try {
+          const h = new Headers({ accept: "application/json", origin: LIVE });
+          const sub = new Request(API + "/api/public/communities", { headers: h, redirect: "manual" });
+          let r = env.API ? await env.API.fetch(sub) : null;
+          if (!r || r.status === 503) r = await fetch(new Request(sub, { redirect: "manual" }), { cf: { cacheTtl: 300 } });
+          if (r.ok) {
+            const { communities = [] } = await r.json();
+            const c = communities.find((c) => clean(c.slug || c.name) === want);
+            if (c && c.town) {
+              const target = `/new-homes/tx/${clean(c.town)}/${clean(c.slug || c.name)}/`;
+              return Response.redirect(url.origin + (REDIRECTS[target] || target), 301);
+            }
+          }
+        } catch { /* fall through to the 404 page */ }
+      }
+
       // Un-built QMI home page (draft or newly-published — no static page baked). Serve
       // the LIVE detail shell so qmi-detail-live.js renders the home by slug from the API
       // (drafts included on staging via the preview passthrough). Keeps the canonical URL
