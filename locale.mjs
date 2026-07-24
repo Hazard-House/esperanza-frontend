@@ -1,5 +1,5 @@
-// locale.mjs — locale resolution for worker + dev server.
-// Spanish: /es/… prefix, ?lang=es, cookie, or Accept-Language. Applies via locale-live.js + es.json.
+// locale.mjs — English-only HTML patching for worker + dev server.
+// Spanish i18n (/es/, locale-live.js, es.json) is disabled until rebuilt.
 export const LOCALE_COOKIE = 'esperanza_lang';
 export const ES_PREFIX = '/es';
 
@@ -18,51 +18,32 @@ export function isEsPath(pathname) {
   return pathname === '/es' || pathname.startsWith('/es/');
 }
 
-/** Strip leading /es from a pathname (assets are stored without the prefix). */
+/** Strip leading /es from a pathname (legacy Spanish URLs). */
 export function stripEsPrefix(pathname) {
   if (pathname === '/es') return '/';
   if (pathname.startsWith('/es/')) return pathname.slice(3) || '/';
   return pathname;
 }
 
-/** Build the Spanish URL for a same-origin path (always under /es/). */
+/** @deprecated Spanish URLs removed; kept for redirect helpers. */
 export function toEsPath(pathname) {
-  const p = pathname.startsWith('/') ? pathname : `/${pathname}`;
-  if (isEsPath(p)) return p.endsWith('/') ? p : `${p}/`;
-  const bare = p === '/' ? '' : p;
-  return `${ES_PREFIX}${bare}${bare.endsWith('/') || bare === '' ? '' : '/'}`;
+  return stripEsPrefix(pathname);
 }
 
-/** Prefer /es/ path → ?lang= → cookie → Accept-Language. Default en. */
-export function resolveLocale({ url, cookieHeader, acceptLanguage, pathname }) {
-  const p = pathname || url?.pathname || '/';
-  if (isEsPath(p)) return 'es';
-  const q = url?.searchParams?.get('lang');
-  if (q === 'es' || q === 'en') return q;
-  const cookie = parseCookie(cookieHeader)[LOCALE_COOKIE];
-  if (cookie === 'es' || cookie === 'en') return cookie;
-  const al = String(acceptLanguage || '');
-  for (const tag of al.split(',')) {
-    const code = tag.trim().split(';')[0].trim().toLowerCase();
-    if (code === 'es' || code.startsWith('es-')) return 'es';
-  }
+/** Always English (Spanish auto-detect disabled). */
+export function resolveLocale() {
   return 'en';
 }
 
-/** Set <html lang>, bootstrap locale-live.js, inject Spanish dictionary path. */
-export function patchHtmlLocale(html, lang) {
+const LOCALE_LIVE_RE = /\n?<script[^>]*src=["']\/locale-live\.js["'][^>]*>\s*<\/script>\s*/gi;
+const LOCALE_BOOT_RE = /<script>window\.__ESPERANZA_LOCALE=[^<]*<\/script>\s*/gi;
+
+/** Force English document language; strip disabled locale-live bootstrap. */
+export function patchHtmlLocale(html) {
   if (!html || !/<html/i.test(html)) return html;
-  html = html.replace(/(<html[^>]*\blang=)(["'])([^"']*)\2/i, `$1$2${lang}$2`);
-  if (!html.includes('__ESPERANZA_LOCALE')) {
-    const boot =
-      `<script>window.__ESPERANZA_LOCALE=${JSON.stringify(lang)};window.__ESPERANZA_ES_PREFIX=${JSON.stringify(ES_PREFIX)};</script>`;
-    html = html.replace(/<head([^>]*)>/i, `<head$1>\n${boot}`);
-  }
-  if (!html.includes('locale-live.js')) {
-    const tag = '\n<script src="/locale-live.js" defer></script>\n';
-    const i = html.lastIndexOf('</body>');
-    html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
-  }
+  html = html.replace(/(<html[^>]*\blang=)(["'])([^"']*)\2/i, '$1$2en$2');
+  html = html.replace(LOCALE_BOOT_RE, '');
+  html = html.replace(LOCALE_LIVE_RE, '\n');
   return html;
 }
 

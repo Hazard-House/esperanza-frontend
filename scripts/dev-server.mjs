@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveLocale, patchHtmlLocale, localeCookieHeader, stripEsPrefix, isEsPath } from '../locale.mjs';
+import { patchHtmlLocale, localeCookieHeader, stripEsPrefix, isEsPath, parseCookie, LOCALE_COOKIE } from '../locale.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const PORT = Number(process.env.PORT || 8787);
@@ -69,15 +69,8 @@ function patchDevHtml(html, req) {
   if (!out.includes('name="dev-preview"')) {
     out = out.replace('</head>', '<meta name="dev-preview" content="bare-asset-paths"></head>');
   }
-  const url = new URL(req.url || '/', `http://localhost:${PORT}`);
-  const locale = resolveLocale({
-    url,
-    pathname: url.pathname,
-    cookieHeader: req.headers.cookie,
-    acceptLanguage: req.headers['accept-language'],
-  });
-  out = patchHtmlLocale(out, locale);
-  const path = url.pathname.replace(/\/index\.html$/, '/');
+  out = patchHtmlLocale(out);
+  const path = new URL(req.url || '/', `http://localhost:${PORT}`).pathname.replace(/\/index\.html$/, '/');
   const incentiveDetail = /^\/incentives\/[^/]+\/?$/.test(path) && out.includes('id="available"');
   if (incentiveDetail && !out.includes('incentive-live.js')) {
     if (!out.includes('__ESPERANZA')) {
@@ -120,14 +113,17 @@ createServer(async (req, res) => {
     const url = new URL(req.url || '/', `http://localhost:${PORT}`);
     let path = decodeURIComponent(url.pathname);
 
-    if (path === '/es') {
-      res.writeHead(301, { Location: '/es/' + url.search });
+    if (isEsPath(path)) {
+      const bare = stripEsPrefix(path);
+      const dest = bare.endsWith('/') ? bare : `${bare}/`;
+      const u = new URL(req.url || '/', `http://localhost:${PORT}`);
+      u.pathname = dest;
+      u.searchParams.delete('lang');
+      res.writeHead(301, { Location: u.pathname + (u.search || '') });
       res.end();
-      log(req, 301, 'es root');
+      log(req, 301, 'es -> en');
       return;
     }
-    const esPath = isEsPath(path);
-    if (esPath) path = stripEsPrefix(path);
 
     if (path.startsWith('/api/')) {
       await proxyApi(req, res);
@@ -178,8 +174,8 @@ createServer(async (req, res) => {
     if (ext === '.html') {
       body = Buffer.from(patchDevHtml(body.toString('utf8'), req), 'utf8');
       const langQ = url.searchParams.get('lang');
-      if (langQ === 'es' || langQ === 'en') headers['Set-Cookie'] = localeCookieHeader(langQ);
-      else if (esPath) headers['Set-Cookie'] = localeCookieHeader('es');
+      const hadEs = langQ === 'es' || parseCookie(req.headers.cookie)[LOCALE_COOKIE] === 'es';
+      if (langQ === 'es' || langQ === 'en' || hadEs) headers['Set-Cookie'] = localeCookieHeader('en');
     }
 
     res.writeHead(200, headers);
