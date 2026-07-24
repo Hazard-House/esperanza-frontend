@@ -31,6 +31,15 @@
     return m ? m[1] : '';
   }
 
+  function promoFromQuery(promos) {
+    var id = new URLSearchParams(location.search).get('promo');
+    if (!id) return null;
+    for (var i = 0; i < promos.length; i++) {
+      if (promos[i].id === id && promos[i].active) return promos[i];
+    }
+    return null;
+  }
+
   function fallbackPromo(slug) {
     if (slug === '499-rate-up-to-5000-in-closing-costs') {
       return {
@@ -110,21 +119,30 @@
     return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   }
 
+  function flexAmount(s) {
+    var m = String(s || '').match(/\$?\s*([\d,]+)\s*[kK]?/);
+    if (!m) return null;
+    var n = m[1].replace(/,/g, '');
+    if (/k/i.test(m[0]) && n.length <= 2) return String(Number(n) * 1000);
+    return n;
+  }
+
   function homeMatchesPromo(fields, promo, slug) {
     if (!fields || !promo) return false;
     var text = String(fields.promo_text || '').trim();
     if (!text) return false;
     var badge = String(promo.cardBadgeText || promo.bannerText || promo.title || '').trim();
     if (normPromoText(text) === normPromoText(badge)) return true;
+    if (normPromoText(text) === normPromoText(promo.title || '')) return true;
     if (/499-rate-up-to-5000-in-closing-costs/.test(slug)) {
       return /4\.99/i.test(text) && /closing/i.test(text);
     }
     if (/499-interest-rates/.test(slug)) {
       return /4\.99/i.test(text) && !/closing/i.test(text);
     }
-    if (/flex|25000|15000|10000|20000/i.test(slug + badge)) {
-      var want = (slug.match(/(\d+)/) || badge.match(/(\d+)/) || [])[1];
-      var got = (text.match(/(\d+)/) || [])[1];
+    if (/flex|25000|15000|10000|20000/i.test(slug + badge + (promo.title || ''))) {
+      var want = flexAmount(badge) || flexAmount(promo.title) || flexAmount(slug);
+      var got = flexAmount(text);
       if (want && got) return want === got;
       return /flex/i.test(text);
     }
@@ -138,13 +156,113 @@
   }
 
   function slugFromCard(card) {
+    var slugKey = card.getAttribute('data-home-slug');
+    if (slugKey) return slugKey;
     var a = card.querySelector('a[href*="/new-homes/tx/"]');
     if (!a) return null;
-    var m = String(a.getAttribute('href') || '').match(/\/([^/]+)\/\d+\/?(?:#|$)/);
+    var href = String(a.getAttribute('href') || '');
+    var m = href.match(/\/([^/]+)\/(\d+)\/?(?:#|$)/);
     return m ? m[1] : null;
   }
 
-  function pruneAvailable(promo, qmiHomes, slug) {
+  function promoBannerClass(style, text) {
+    if (style === 'green') return 'green';
+    if (style === 'gold') return 'tan';
+    return /flex/i.test(text || '') ? 'tan' : 'green';
+  }
+
+  function homeUrl(fields, links) {
+    var key = slugify(fields.Community) + '/' + fields.slug;
+    if (links && links.qmi && links.qmi[key]) return links.qmi[key];
+    if (fields.slug) return '/new-homes/available/home/?slug=' + encodeURIComponent(fields.slug);
+    return '#';
+  }
+
+  function updateCardColumn(col, fields, links) {
+    var card = col.querySelector('.card.spec-card');
+    if (!card || !fields) return col;
+    card.setAttribute('data-listing-id', fields.slug || card.getAttribute('data-listing-id') || '');
+    if (fields.slug) card.setAttribute('data-home-slug', fields.slug);
+    var url = homeUrl(fields, links);
+    col.querySelectorAll('a[href]').forEach(function (a) {
+      var href = a.getAttribute('href') || '';
+      if (href.indexOf('new-homes') === -1 && href.indexOf('available') === -1) return;
+      var hash = href.indexOf('#') !== -1 ? href.slice(href.indexOf('#')) : '';
+      a.setAttribute('href', url + hash);
+    });
+    var aspect = col.querySelector('.oi-aspect');
+    if (aspect) {
+      var promoText = String(fields.promo_text || '').trim();
+      var promoEl = aspect.querySelector('.banner.overlay-promo');
+      if (promoText) {
+        var color = promoBannerClass(fields.promo_banner_style, promoText);
+        if (!promoEl) {
+          promoEl = document.createElement('div');
+          promoEl.className = 'banner overlay-promo ' + color;
+          aspect.insertBefore(promoEl, aspect.firstChild);
+        } else {
+          promoEl.className = 'banner overlay-promo ' + color;
+        }
+        promoEl.textContent = promoText;
+        var avail = aspect.querySelector('.banner.green:not(.overlay-promo), .banner.gray:not(.overlay-promo)');
+        if (avail) avail.style.top = '2.5rem';
+      } else if (promoEl) promoEl.remove();
+    }
+    var img = col.querySelector('.oi-aspect-img');
+    if (img && fields.image_url) {
+      img.src = String(fields.image_url).replace(/^https:\/\//, '//');
+      img.removeAttribute('srcset');
+    }
+    var priceEl = col.querySelector('.spec-price');
+    if (priceEl && fields.Price) priceEl.textContent = '$' + Number(fields.Price).toLocaleString('en-US');
+    var title = col.querySelector('.card-title');
+    if (title && fields.address) title.textContent = fields.address;
+    var loc = col.querySelector('.card-location');
+    if (loc && fields.City) {
+      loc.textContent = fields.City + ', TX' + (fields.postal_code ? ' ' + fields.postal_code : '');
+    }
+    col.classList.remove('d-none');
+    col.removeAttribute('data-incentive-hidden');
+    return col;
+  }
+
+  function syncLiveCards(promo, qmiHomes, slug, links, qualifies) {
+    var root = document.getElementById('available');
+    if (!root) return;
+    var templateCol = root.querySelector('.col-12.col-md-6.mb-4 .card.spec-card');
+    if (!templateCol) return;
+    templateCol = templateCol.closest('.col-12.col-md-6.mb-4');
+
+    var grouped = {};
+    (qmiHomes || []).forEach(function (h) {
+      var f = h.fields || h;
+      if (!qualifies(f)) return;
+      var cs = slugify(f.Community);
+      if (!cs) return;
+      (grouped[cs] = grouped[cs] || []).push(f);
+    });
+
+    var containers = root.querySelectorAll('.container');
+    var list = containers[containers.length - 1];
+    if (!list) return;
+    var kids = Array.prototype.slice.call(list.children);
+    for (var i = 0; i < kids.length; i++) {
+      var el = kids[i];
+      if (!el.matches('.row.mb-2') || !el.id || !el.querySelector('h3')) continue;
+      var homes = grouped[el.id];
+      var cardRow = kids[i + 1];
+      if (!cardRow || !cardRow.classList.contains('row')) continue;
+      cardRow.innerHTML = '';
+      if (homes && homes.length) {
+        homes.forEach(function (f) {
+          cardRow.appendChild(updateCardColumn(templateCol.cloneNode(true), f, links));
+        });
+      }
+      i++;
+    }
+  }
+
+  function pruneAvailable(promo, qmiHomes, slug, links) {
     var root = document.getElementById('available');
     if (!root || !promo) return;
 
@@ -161,9 +279,8 @@
     });
 
     function fieldsForCard(card) {
-      var id = card.getAttribute('data-listing-id');
-      var slugKey = slugFromCard(card);
-      return (id && byId[id]) || (slugKey && bySlug[slugKey]) || null;
+      var slugKey = card.getAttribute('data-home-slug') || slugFromCard(card);
+      return (slugKey && bySlug[slugKey]) || null;
     }
 
     function qualifies(fields) {
@@ -176,6 +293,8 @@
       if (cid && allowedIds.has(cid)) return true;
       return false;
     }
+
+    syncLiveCards(promo, qmiHomes, slug, links, qualifies);
 
     root.querySelectorAll('.card.spec-card[data-listing-id]').forEach(function (card) {
       var col = card.closest('.col-12.col-md-6, .col-12.col-md-6.mb-4, .col-12');
@@ -210,8 +329,7 @@
         });
       }
 
-      var allowedCommunity = !useApiList || allowedNames.has(commName) || allowedNames.has(normName(commAnchor.replace(/-/g, ' ')));
-      if (!allowedCommunity || visibleCards === 0) {
+      if (visibleCards === 0) {
         hide(el);
         if (cardRow) hide(cardRow);
       } else {
@@ -250,11 +368,13 @@
   Promise.all([
     fetchT(API + '/promotions').then(function (r) { return r.json(); }),
     fetchT(API + '/qmi').then(function (r) { return r.json(); }),
+    fetchT('/qmi-links.json').then(function (r) { return r.json(); }).catch(function () { return { qmi: {} }; }),
   ]).then(function (parts) {
     var promos = (parts[0] && parts[0].promotions) || [];
     var homes = (parts[1] && parts[1].homes) || [];
-    var promo = promoForDetail(slug, promos);
+    var links = parts[2] || { qmi: {} };
+    var promo = promoFromQuery(promos) || promoForDetail(slug, promos);
     if (!promo) return;
-    pruneAvailable(promo, homes, slug);
+    pruneAvailable(promo, homes, slug, links);
   }).catch(function () {});
 })();

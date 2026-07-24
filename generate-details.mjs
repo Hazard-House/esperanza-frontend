@@ -57,18 +57,58 @@ export function stripStaleHomeCards(html, publishedSlugs) {
   return { html: out, dropped };
 }
 
+// Drop community header rows whose following card row has no QMI cards left (after stale strip).
+export function stripEmptyIncentiveCommunitySections(html) {
+  const marker = 'id="available"';
+  const idx = html.indexOf(marker);
+  if (idx === -1) return html;
+  const tail = html.slice(idx);
+  const head = html.slice(0, idx);
+  const re = /<div id="([^"]+)" class="row mb-2">[\s\S]*?<h3>[\s\S]*?<\/div>\s*<div class="row mb-4 mb-lg-5">([\s\S]*?)<\/div>/g;
+  let out = tail;
+  out = out.replace(re, (block, _id, inner) => {
+    if (inner.includes(CARD_OPEN)) return block;
+    return '';
+  });
+  return head + out;
+}
+
 // Rewrite every /incentives/<slug>/index.html in place, dropping stale home cards.
 function stripIncentivesPages(publishedSlugs) {
   const incDir = join(OUT, 'incentives');
   if (!existsSync(incDir)) return 0;
+  const templateAvail = existsSync(join(incDir, '499-interest-rates', 'index.html'))
+    ? extractAvailableSection(readFileSync(join(incDir, '499-interest-rates', 'index.html'), 'utf8'))
+    : null;
   let total = 0;
   for (const name of readdirSync(incDir)) {
     const idx = join(incDir, name, 'index.html');
     if (!existsSync(idx)) continue;
-    const { html, dropped } = stripStaleHomeCards(readFileSync(idx, 'utf8'), publishedSlugs);
-    if (dropped) { writeFileSync(idx, html); total += dropped; }
+    let html = readFileSync(idx, 'utf8');
+    if (templateAvail && name !== '499-interest-rates' && name !== 'index.html') {
+      html = replaceAvailableSection(html, templateAvail);
+    }
+    const stripped = stripStaleHomeCards(html, publishedSlugs);
+    const cleaned = stripEmptyIncentiveCommunitySections(stripped.html);
+    if (stripped.dropped || cleaned !== html) { writeFileSync(idx, cleaned); total += stripped.dropped; }
   }
   return total;
+}
+
+function extractAvailableSection(html) {
+  const start = html.indexOf('<section id="available"');
+  if (start === -1) return null;
+  const end = html.indexOf('</section>', start);
+  if (end === -1) return null;
+  return html.slice(start, end + '</section>'.length);
+}
+
+function replaceAvailableSection(html, block) {
+  const start = html.indexOf('<section id="available"');
+  if (start === -1 || !block) return html;
+  const end = html.indexOf('</section>', start);
+  if (end === -1) return html;
+  return html.slice(0, start) + block + html.slice(end + '</section>'.length);
 }
 
 const SHIP_PATH = join(import.meta.dirname, 'ship.txt');
