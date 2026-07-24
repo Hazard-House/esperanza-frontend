@@ -7,9 +7,13 @@
     "dev": "bash scripts/dev.sh",
     "link-static": "node scripts/link-static-assets.mjs",
     "build": "node build.mjs",
+    "build:locale": "node scripts/build-es-locale.mjs",
     "build:details": "node generate-details.mjs",
     "generate": "node generate-details.mjs",
     "check": "node build.mjs --check && npm run check:render",
     "check:render": "node resolve-qmi-hero.mjs --check && node data.mjs --check && node paths.mjs --check && node sections.mjs --check && node hydrate-scraped.mjs --check && node render-qmi.mjs --check && node render-community.mjs --check && node render-floorplan.mjs --check && node generate-blogs.mjs --check && node islands/detail-extras.js --check"
+  },
+  "devDependencies": {
+    "@vitalets/google-translate-api": "^9.2.1"
   }
 }
