@@ -118,18 +118,30 @@
       byLink.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
       return byLink[0];
     }
-    if (slug === '499-interest-rates' || slug === '499-rate-up-to-5000-in-closing-costs') {
-      var ratePromos = promos.filter(function (p) {
-        return p.active && p.showIncentivePage && (/4\.99|rate|fixed/i.test(p.title || '') || p.rate === '4.99');
+    if (slug === '499-rate-up-to-5000-in-closing-costs') {
+      var closing = promos.filter(function (p) {
+        return p.active && p.showIncentivePage && /closing|\$5,?000/i.test((p.title || '') + (p.cardBadgeText || ''));
       });
-      ratePromos.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
-      return ratePromos[0] || null;
+      closing.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+      return closing[0] || null;
+    }
+    if (slug === '499-interest-rates') {
+      var rateOnly = promos.filter(function (p) {
+        if (!p.active || !p.showIncentivePage || /flex/i.test(p.title || '')) return false;
+        return /4\.99|rate|fixed/i.test(p.title || '') && !/closing|\$5,?000/i.test(p.title || '');
+      });
+      rateOnly.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+      return rateOnly[0] || null;
     }
     if (slug.indexOf('flex') !== -1 || slug.indexOf('25000') !== -1) {
       var flexPromos = promos.filter(function (p) {
         return p.active && p.showIncentivePage && /flex/i.test(p.title || '');
       });
       flexPromos.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+      if (slug.indexOf('25000') !== -1) {
+        var big = flexPromos.filter(function (p) { return /25,?000|25000/i.test(p.title || ''); });
+        if (big.length) return big[0];
+      }
       return flexPromos[0] || null;
     }
     return null;

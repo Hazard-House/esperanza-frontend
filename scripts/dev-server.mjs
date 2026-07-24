@@ -69,13 +69,34 @@ function patchDevHtml(html, req) {
   if (!out.includes('name="dev-preview"')) {
     out = out.replace('</head>', '<meta name="dev-preview" content="bare-asset-paths"></head>');
   }
+  const url = new URL(req.url || '/', `http://localhost:${PORT}`);
   const locale = resolveLocale({
-    url: new URL(req.url || '/', `http://localhost:${PORT}`),
-    pathname: new URL(req.url || '/', `http://localhost:${PORT}`).pathname,
+    url,
+    pathname: url.pathname,
     cookieHeader: req.headers.cookie,
     acceptLanguage: req.headers['accept-language'],
   });
-  return patchHtmlLocale(out, locale);
+  out = patchHtmlLocale(out, locale);
+  const path = url.pathname.replace(/\/index\.html$/, '/');
+  const incentiveDetail = /^\/incentives\/[^/]+\/?$/.test(path) && out.includes('id="available"');
+  if (incentiveDetail && !out.includes('incentive-live.js')) {
+    if (!out.includes('__ESPERANZA')) {
+      const cfg = JSON.stringify({ API_BASE: '/api/public' });
+      out = out.replace('</body>', `<script>window.__ESPERANZA=${cfg};</script>\n</body>`);
+    }
+    out = out.replace('</body>', '<script src="/incentive-live.js" defer></script>\n</body>');
+  }
+  const needsPromo =
+    !out.includes('promotions-live.js') &&
+    (out.includes('class="alert-banner"') || out.includes('id="incentives"') || path.startsWith('/incentives/'));
+  if (needsPromo) {
+    if (!out.includes('__ESPERANZA')) {
+      const cfg = JSON.stringify({ API_BASE: '/api/public' });
+      out = out.replace('</body>', `<script>window.__ESPERANZA=${cfg};</script>\n</body>`);
+    }
+    out = out.replace('</body>', '<script src="/promotions-live.js" defer></script>\n</body>');
+  }
+  return out;
 }
 
 async function proxyApi(req, res) {

@@ -300,6 +300,15 @@ export function ensurePromotionsLive(html) {
   return injectIsland(html, 'promotions-live.js');
 }
 
+/** Trim baked promo #available blocks on /incentives/{slug}/ detail pages. */
+export function ensureIncentiveLive(html, pathname) {
+  if (html.includes('incentive-live.js')) return html;
+  var p = pathname || '';
+  if (!/^\/incentives\/[^/]+\/?$/.test(p.replace(/\/index\.html$/, '/'))) return html;
+  if (!html.includes('id="available"') && !html.includes("id='available'")) return html;
+  return injectIsland(html, 'incentive-live.js');
+}
+
 // Disable oilib's map/filter/form init + stub `oi` so orphaned inline calls are silent.
 // oilib also owned the header-search autocomplete, so every oilib-disabled page gets
 // the sitesearch-live.js island as its replacement (same /sitesearch.json data).
