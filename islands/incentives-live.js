@@ -17,7 +17,8 @@
   function slugFromCard(card) {
     var a = card.querySelector('a[href*="/new-homes/tx/"]');
     if (!a) return null;
-    var m = String(a.getAttribute('href') || '').match(/\/([^/]+)\/\d+\/?(?:#|$)/);
+    var href = String(a.getAttribute('href') || '');
+    var m = href.match(/\/([^/]+)\/(\d+)\/?(?:#|$)/);
     return m ? m[1] : null;
   }
 
