@@ -34,7 +34,7 @@ jobs:
       - run: npm ci --ignore-scripts || true
 
       - name: Rebuild detail pages from the live API (scrape-free)
-        run: npm run build:details
+        run: node generate-details.mjs
 
       - name: Commit & push if anything changed
         run: |
