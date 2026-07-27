@@ -95,9 +95,23 @@ export const GTAG = `<!-- Google tag (gtag.js) -->
 // Presence check keys on the LOADER url, not the bare id — the theme's kept
 // oi_preload/dataLayer config already carries "GA4id":"G-3GPKQFB5M1" on every page.
 export const hasGtag = (html) => html.includes(`gtag/js?id=${GTAG_ID}`);
+// Our restored Meta Pixel + Facebook SDK (same ids/URLs as the legacy site — kept
+// as-is for launch; a GTM container migration can come later). Both srcs match
+// TRACKER_SIG (connect.facebook.net / fbq(), so like GTAG they are exempted in
+// stripTrackers via hasMetaPixel/hasFbSdk — otherwise a re-run would strip them.
+export const META_PIXEL_ID = '705389823345369';
+export const META_PIXEL = `<!-- Meta Pixel -->
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META_PIXEL_ID}');fbq('track','PageView');</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1"/></noscript>`;
+// Presence check keys on OUR init call (loader URL alone also appears in the SDK block).
+export const hasMetaPixel = (html) => html.includes(`fbq('init','${META_PIXEL_ID}')`);
+export const FB_SDK = `<!-- Facebook SDK (social embeds, same as legacy) -->
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v15.0"></script>`;
+export const hasFbSdk = (html) => html.includes('connect.facebook.net/en_US/sdk.js#xfbml=1');
+
 export function stripTrackers(html) {
   return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,
-    m => TRACKER_SIG.test(m) && !THEME_KEEP.test(m) && !hasGtag(m) ? '' : m);
+    m => TRACKER_SIG.test(m) && !THEME_KEEP.test(m) && !hasGtag(m) && !hasMetaPixel(m) && !hasFbSdk(m) ? '' : m);
 }
 
 // Warm up the connection to the image CDN early (detail pages pull ~270 images from
@@ -270,9 +284,12 @@ export function rewriteCommon(html) {
   html = stripTrackers(html);
   html = resizeImages(html);
   html = html.replace(/<head([^>]*)>/i, `<head$1>\n${PRECONNECT}`);
-  // Restore GA4 (stripTrackers removed the vendor's broken loader above). Idempotent:
-  // stripTrackers exempts our loader, so hasGtag() holds on re-runs.
+  // Restore GA4 + Meta Pixel + FB SDK (stripTrackers removed the vendor's broken
+  // loaders above). Idempotent: stripTrackers exempts our snippets, so the has*()
+  // checks hold on re-runs.
   if (!hasGtag(html)) html = html.replace(/<\/head>/i, `${GTAG}\n</head>`);
+  if (!hasMetaPixel(html)) html = html.replace(/<\/head>/i, `${META_PIXEL}\n</head>`);
+  if (!hasFbSdk(html)) html = html.replace(/<\/head>/i, `${FB_SDK}\n</head>`);
   if (BANNER_SLIDES) html = html.replace(FROZEN_BANNER_RE, freshBannerHtml(BANNER_SLIDES));
   if (NOINDEX) {
     const meta = '<meta name="robots" content="noindex,nofollow">';
@@ -371,6 +388,11 @@ function demo() {
   console.assert(ga.includes(`gtag/js?id=${GTAG_ID}"></script>`) && /googletagmanager[\s\S]*<\/head>/.test(ga), 'gtag injected before </head>');
   console.assert((s(ga).match(/googletagmanager\.com\/gtag\/js/g) || []).length === 1, 'gtag idempotent');
   console.assert(stripTrackers(GTAG) === GTAG, 'gtag exempt from stripTrackers');
+  // Meta Pixel + FB SDK: injected once, survive stripTrackers, idempotent on re-run
+  console.assert(ga.includes(`fbq('init','${META_PIXEL_ID}')`) && ga.includes('en_US/sdk.js#xfbml=1'), 'meta pixel + fb sdk injected');
+  console.assert((s(ga).match(/fbevents\.js/g) || []).length === 1, 'meta pixel idempotent');
+  console.assert(stripTrackers(META_PIXEL) === META_PIXEL, 'meta pixel exempt from stripTrackers');
+  console.assert(stripTrackers(FB_SDK) === FB_SDK, 'fb sdk exempt from stripTrackers');
   console.assert(s('<option value="https://www.esperanzahomes.com/blog/category/news/">') === '<option value="/blog/category/news/">', 'option value same-origin');
   console.assert(s('<input type="hidden" value="https://www.esperanzahomes.com/blog/">').includes('www.esperanzahomes.com'), 'non-option values untouched (forms PR owns those)');
   // baked hydrated map innards stripped; container + siblings preserved
