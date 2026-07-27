@@ -3,6 +3,22 @@
  * Hides empty baked sections and Jump To dropdown entries without a full rebuild. */
 (function () {
   'use strict';
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
+  // ponytail: /es/ is a URL namespace, not a different site — routing logic must see the bare
+  // English path, or every path-gated island silently no-ops on the Spanish twin.
+  function barePath() {
+    var p = location.pathname;
+    if (p === '/es') return '/';
+    return p.indexOf('/es/') === 0 ? (p.slice(3) || '/') : p;
+  }
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
   var fetchT = function (u, ms) {
@@ -27,7 +43,7 @@
   }
 
   function detailSlug() {
-    var m = location.pathname.match(/^\/incentives\/([^/]+)\/?$/);
+    var m = barePath().match(/^\/incentives\/([^/]+)\/?$/);
     return m ? m[1] : '';
   }
 
@@ -173,8 +189,8 @@
 
   function homeUrl(fields, links) {
     var key = slugify(fields.Community) + '/' + fields.slug;
-    if (links && links.qmi && links.qmi[key]) return links.qmi[key];
-    if (fields.slug) return '/new-homes/available/home/?slug=' + encodeURIComponent(fields.slug);
+    if (links && links.qmi && links.qmi[key]) return u(links.qmi[key]);
+    if (fields.slug) return u('/new-homes/available/home/?slug=' + encodeURIComponent(fields.slug));
     return '#';
   }
 

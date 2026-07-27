@@ -14,6 +14,7 @@ import { slugify } from './data.mjs';
 import { ensureCommunityHomesLive } from './rewrite.mjs';
 import { classifyDetail } from './build.mjs';
 import { generateBlogs } from './generate-blogs.mjs';
+import { bakeSpanish } from './es-bake.mjs';
 
 const OUT = join(import.meta.dirname, 'public');
 const SHELL_PATH = join(import.meta.dirname, 'templates', 'detail-shell.html');
@@ -211,8 +212,13 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // Blog pages from D1 (was: frozen June-8 scrape). Non-fatal so a blog hiccup never blocks
   // the pricing/inventory deploy; the count-parity guard still logs loudly on a shortfall.
   const blogs = await generateBlogs().catch(e => { console.error('generate-blogs:', e.message); return 0; });
-  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards`);
-  return { qmi: d.qmis.length, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated };
+  // Spanish LAST: es-bake mirrors the finished English tree, so it must see every page
+  // this run rewrote (QMI prices, incentive strips, blogs) or /es/ ships yesterday's data.
+  // Non-fatal for the same reason blogs are — a locale hiccup must never block a pricing
+  // deploy; the existing /es/ pages just stay one build behind.
+  const es = await bakeSpanish().catch(e => { console.error('es-bake:', e.message); return { pages: 0 }; });
+  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${es.pages} Spanish pages`);
+  return { qmi: d.qmis.length, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, es: es.pages };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();

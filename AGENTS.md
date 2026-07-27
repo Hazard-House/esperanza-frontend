@@ -25,6 +25,14 @@ is just lazy-loaded, not broken — scroll it into view before judging.
 - Islands are copied to `public/` at build. For an island-only fix that must ship without a full
   build, edit BOTH `islands/<name>.js` and the committed `public/<name>.js`.
 
+## Spanish (`/es/`)
+Every English page has a committed Spanish twin under `/es/`, baked by `es-bake.mjs` at the
+end of `generate-details.mjs` (so both CI paths produce it). Strings live ONLY in
+`assets/locales/`; never hand-edit a page under `public/es/`. Runtime translation is banned
+— it flickered and was ripped out in PR #105. Read `docs/SPANISH_LOCALE.md` before touching
+any of it. The bake must stay idempotent: `rebuild-details.yml` commits the tree back
+nightly, so run it twice and confirm the second run changes zero files.
+
 ## Live vs static
 - LIVE (reflect D1 immediately): `/new-homes/available/` grid, per-home detail shell
   (`/new-homes/available/home/?slug=`), which `worker.js` also serves for un-built home canonical URLs.

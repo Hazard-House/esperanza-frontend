@@ -3,7 +3,14 @@
  * each home's live promo_text from D1 wins (flex vs rate vs none). */
 (function () {
   'use strict';
-  if (!/^\/incentives\//.test(location.pathname)) return;
+  // ponytail: /es/ is a URL namespace, not a different site — routing logic must see the bare
+  // English path, or every path-gated island silently no-ops on the Spanish twin.
+  function barePath() {
+    var p = location.pathname;
+    if (p === '/es') return '/';
+    return p.indexOf('/es/') === 0 ? (p.slice(3) || '/') : p;
+  }
+  if (!/^\/incentives\//.test(barePath())) return;
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
   var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
