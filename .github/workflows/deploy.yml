@@ -4,11 +4,19 @@ name: Deploy (Cloudflare)
 # Push/merge to `main` -> deploys production (esperanzahomes.hazardhouse.ai)
 #
 # public/ is committed to the repo. CI does NOT run the full `node build.mjs` (that
-# needs the source O'Neill scrape). It DOES run the scrape-free detail refresh
-# (`node generate-details.mjs`), which re-renders the API-driven detail pages
-# (community / floor-plan / QMI) from the live public API using committed templates +
-# harvested assets — no scrape, no local machine. So every deploy ships fresh detail
-# data from D1 with zero local dependency; flagship/theme/blog pages ship as committed.
+# needs the source O'Neill scrape). It DOES run the scrape-free refresh
+# (`node generate-details.mjs`), which re-renders from the live public API using committed
+# templates + harvested assets — no scrape, no local machine:
+#   * detail pages    community / floor-plan / QMI
+#   * LIST pages      /new-homes/available/, /new-homes/<city>/available-homes/,
+#                     /new-homes/available/filter/<hash>/ (render-lists.mjs)
+#   * promo copy      public/live-facts.json badges + a site-wide sweep of promo ribbons
+#                     for incentives that no longer exist in D1
+# So every deploy ships fresh inventory AND fresh incentive copy with zero local
+# dependency; flagship/theme pages ship as committed.
+# Before render-lists.mjs landed the list pages were frozen June-8 scrape output that only
+# a human running `node build.mjs` locally ever refreshed — they advertised unpublished
+# homes, hid published ones, and kept a deleted 4.99% promotion on ~30 committed files.
 #
 # Requires two repo secrets:
 #   CLOUDFLARE_API_TOKEN   - token with "Edit Cloudflare Workers" scope
@@ -48,10 +56,11 @@ jobs:
       - name: Regression self-tests (scrape-free)
         run: npm run --if-present check:render
 
-      # Refresh API-driven detail pages (community / floor-plan / QMI) from the live
-      # public API into public/ before shipping. Scrape-free + no npm deps (bare node),
-      # so CI needs no local scrape — the whole point of removing the local dependency.
-      - name: Refresh detail pages from the live API (scrape-free)
+      # Refresh the API-driven pages from the live public API into public/ before shipping:
+      # detail pages (community / floor-plan / QMI), the QMI list/index pages, and the
+      # promo copy. Scrape-free + no npm deps (bare node), so CI needs no local scrape —
+      # the whole point of removing the local dependency.
+      - name: Refresh detail + list pages from the live API (scrape-free)
         run: node generate-details.mjs
 
       - name: Deploy to Cloudflare Workers

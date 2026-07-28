@@ -19,6 +19,8 @@ import { loadData } from './data.mjs';
 import { communityPath, floorplanPath } from './paths.mjs';
 import { hydrateCommunity, hydrateFloorplan, hydratePlanInCommunity, swapCommunityBanner, bakeRecommend, hydrateCommunityStatus } from './hydrate-scraped.mjs';
 import { renderCommunity } from './render-community.mjs';
+import { writeLiveFacts } from './render-lists.mjs';
+import { livePromoTexts } from './promo-utils.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -125,8 +127,11 @@ function copyRuntimeAssets() {
   cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));
   cpSync(join(import.meta.dirname, 'islands', 'esperanza-common.json'), join(OUT, 'esperanza-common.json'));
   cpSync(join(import.meta.dirname, 'assets', 'sitesearch.json'), join(OUT, 'sitesearch.json'));
+  // live-facts.json is NOT a straight copy: writeLiveFacts prunes per-home promo badges
+  // whose promotion is gone from D1 (see render-lists.mjs). generateDetails writes it too
+  // — same function, same input, so the two are order-independent.
   const facts = join(import.meta.dirname, 'assets', 'live-facts.json');
-  if (existsSync(facts)) cpSync(facts, join(OUT, 'live-facts.json'));
+  if (existsSync(facts)) writeLiveFacts(LIVE_DATA ? livePromoTexts(LIVE_DATA) : null, { outDir: OUT });
   else console.warn('skip live-facts.json (run harvest-live-facts.mjs)');
   if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   linkCleanThemeNames(join(OUT, 'static'));
@@ -179,8 +184,10 @@ async function build() {
   // to the same result instead of crashing on the missing theme copy.
   if (!existsSync(WWW)) {
     console.warn(`scrape absent (${SCRAPE}) -> details-only refresh: regenerating API-driven detail pages + islands into committed public/. Run the full build where the scrape lives to refresh flagship/theme pages.`);
-    await generateDetails(d, {}); // empty skip-sets => every community/floorplan/qmi rendered from the API
+    // Islands FIRST, then generateDetails — same order as the full build below, so the
+    // list-page re-render + dead-promo sweep always run over the final island copies.
     copyRuntimeAssets();
+    await generateDetails(d, {}); // empty skip-sets => every community/floorplan/qmi rendered from the API
     execSync('node scripts/gen-blog-index.mjs', { cwd: import.meta.dirname, stdio: 'inherit' });
     console.log('public/ detail pages + islands refreshed (scrape-free)');
     return;

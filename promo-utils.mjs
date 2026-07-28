@@ -1,4 +1,49 @@
-// promo-utils.mjs — parse QMI incentive banners and shared payment/savings math.
+// promo-utils.mjs — parse QMI incentive banners and shared payment/savings math,
+// plus the "is this promo copy still live?" gate used to evict deleted incentives.
+
+import assert from 'node:assert';
+import { fileURLToPath } from 'node:url';
+
+/** Compare promo copy case/punctuation-insensitively — the June-8 harvest and the API
+ *  disagree on casing, trailing asterisks AND thousands separators for the SAME
+ *  promotion ("$5,000" vs "$5000" both occur in public/, see demo()). Digit-group
+ *  commas are dropped BEFORE punctuation is squashed to spaces, or "5,000" would
+ *  normalise to "5 000" and read as a different offer — which would evict a promo
+ *  the API still vouches for. */
+export function normPromoText(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/(\d),(?=\d{3}\b)/g, '$1')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/** Every piece of promo copy the LIVE API still vouches for: per-entity promo text
+ *  (qmi.promo_text / community.promoBannerText / floorplan.promoBannerText) plus the
+ *  title/banner/badge of every ACTIVE promotion. Anything baked into public/ that is
+ *  not in here belongs to a promotion that was deleted or deactivated in D1. */
+export function livePromoTexts({ qmis = [], communities = [], floorplans = [], promotions = [] } = {}) {
+  const set = new Set();
+  const add = t => { const n = normPromoText(t); if (n) set.add(n); };
+  for (const h of qmis) add(h.promo);
+  for (const c of communities) add(c.promo);
+  for (const fp of floorplans) add(fp.promo);
+  for (const p of promotions) {
+    if (!p || p.active === false) continue;
+    add(p.title); add(p.bannerText); add(p.cardBadgeText);
+  }
+  return set;
+}
+
+/** Fail OPEN: an empty/absent corpus (API hiccup, caller never set one) means "can't
+ *  tell" and every string is treated as live. A bad fetch must never strip the promo
+ *  copy off every card in public/. */
+export function isLivePromoText(text, live) {
+  const n = normPromoText(text);
+  if (!n) return true;
+  if (!(live instanceof Set) || live.size === 0) return true;
+  return live.has(n);
+}
 
 /** Percent rate from promo text (e.g. "4.99% Rate + …" → 4.99). */
 export function parsePromoRate(text) {
@@ -95,3 +140,41 @@ export function promoCalcScript(promoRate) {
     + `el.addEventListener('input',schedule);el.addEventListener('change',schedule);});`
     + `})();`;
 }
+
+// ponytail self-check: the live-copy gate decides whether baked promo copy survives a
+// rebuild, so assert both directions AND the fail-open guard.
+function demo() {
+  assert(normPromoText('4.99% 30 YEAR FIXED RATE*') === normPromoText('4.99% 30 Year Fixed Rate'),
+    'normPromoText: case/punctuation-insensitive');
+  assert(normPromoText('4.99% 30-Year Fixed Rate*') === normPromoText('4.99% 30 Year Fixed Rate'),
+    'normPromoText: hyphenation-insensitive');
+  // Both spellings are live in public/ for the SAME promotion — they must compare equal
+  // or the sweep would strip a promo the API still vouches for.
+  assert(normPromoText('4.99% Rate + up to $5,000 in Closing Costs') === normPromoText('4.99% Rate + up to $5000 in Closing Costs'),
+    'normPromoText: thousands separator-insensitive');
+  assert(normPromoText('$3,000 off') !== normPromoText('$5,000 off'), 'normPromoText: different amounts stay different');
+  assert(normPromoText('Save 1,2,3') === 'save 1 2 3', 'normPromoText: only 3-digit groups are joined');
+  const live = livePromoTexts({
+    qmis: [{ promo: 'Unlock Your $15K Flex Discount Now!' }, { promo: '' }],
+    communities: [{ promo: 'Eligible for Homebuyer Advantage Program' }],
+    floorplans: [{ promo: null }],
+    promotions: [
+      { active: true, title: '4.99% ARM*', bannerText: '', cardBadgeText: '' },
+      { active: false, title: '4.99% 30 YEAR FIXED RATE*', bannerText: '', cardBadgeText: '' },
+    ],
+  });
+  assert(live.has(normPromoText('unlock your $15k flex discount now!')), 'per-home promo text in corpus');
+  assert(live.has(normPromoText('4.99% arm*')), 'active promotion title in corpus');
+  assert(live.has(normPromoText('Eligible for Homebuyer Advantage Program')), 'community promo in corpus');
+  assert(!live.has(normPromoText('4.99% 30 YEAR FIXED RATE*')), 'deactivated promotion NOT in corpus');
+  assert(isLivePromoText('4.99% ARM*', live), 'live copy kept');
+  assert(isLivePromoText('4.99% 30 Year Fixed Rate*', live) === false, 'dead copy rejected (any casing)');
+  assert(isLivePromoText('', live), 'empty text is a no-op, not "dead"');
+  assert(isLivePromoText('4.99% 30 YEAR FIXED RATE*', new Set()), 'fail open on empty corpus');
+  assert(isLivePromoText('4.99% 30 YEAR FIXED RATE*', null), 'fail open on missing corpus');
+  assert(parsePromoRate('4.99% Rate + up to $5,000') === 4.99, 'parsePromoRate');
+  assert(isRatePromo('4.99% ARM*', 6.35) && !isRatePromo('Flex Cash', 6.35), 'isRatePromo');
+  assert(savingsOverTerm(2000, 1800, 30).startsWith('$72,000.00 Savings Over 30 Years'), 'savingsOverTerm');
+  console.log('promo-utils.mjs demo() passed');
+}
+if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

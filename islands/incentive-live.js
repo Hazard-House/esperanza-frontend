@@ -51,10 +51,15 @@
       };
     }
     if (slug === '499-interest-rates') {
+      // No cardBadgeText. It used to hardcode the legacy fixed-rate ribbon copy, and
+      // that promotion was later DELETED from D1 — the hardcoded string resurrected the
+      // dead badge on every card this island rebuilt, on a page no rebuild could clean.
+      // homeMatchesPromo falls through to `title` (and to its own /499-interest-rates/
+      // rate test), i.e. to live data instead of frozen marketing copy.
       return {
         active: true,
         title: '4.99% Interest Rates',
-        cardBadgeText: '4.99% 30 YEAR FIXED RATE*',
+        cardBadgeText: '',
         communityNames: [],
         communityIds: [],
       };
