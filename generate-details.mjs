@@ -10,8 +10,8 @@ import { linksMap, imagesMap, qmiPath, communityPath, floorplanPath } from './pa
 import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
-import { setBuildRate, setLivePromoTexts } from './sections.mjs';
-import { livePromoTexts } from './promo-utils.mjs';
+import { setBuildRate, setLivePromoTexts, setHomePromoEntitlements } from './sections.mjs';
+import { livePromoTexts, homePromoEntitlements } from './promo-utils.mjs';
 import { regenerateListPages, isRenderableHome } from './render-lists.mjs';
 import { hydrateCommunity, hydrateCommunityStatus, applyHoaLinks } from './hydrate-scraped.mjs';
 import { slugify } from './data.mjs';
@@ -293,6 +293,12 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // empty corpus — see promo-utils.isLivePromoText.
   const promoCorpus = livePromoTexts(d);
   setLivePromoTexts(promoCorpus);
+  // …and narrow the fallback to the homes actually ENTITLED to each string. The corpus is
+  // site-wide, so a PARTIALLY retired promotion (live for one home, gone for the rest) still
+  // passes it — that shipped the 4.99% + $5,000 closing-costs ribbon on 9 cards for 1
+  // entitled home. Fails open on an unplaceable home — see promo-utils.isPromoTextForHome.
+  const promoEntitlements = homePromoEntitlements(d);
+  setHomePromoEntitlements(promoEntitlements);
   // shell nav carries frozen June-8 "Coming Soon" badges — refresh from the API once
   const shell = hydrateCommunityStatus(readFileSync(SHELL_PATH, 'utf8'), d);
   const skipC = skipCommunities || scrapedCommunitySkipSet(d.communities);
@@ -331,7 +337,7 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // the June-8 scrape — advertising unpublished homes, hiding new ones, and carrying promo
   // copy for incentives long since deleted. Re-render them from the same live payload the
   // detail pages use, then sweep dead promo ribbons off everything else in public/.
-  const lists = regenerateListPages(d, { live: promoCorpus });
+  const lists = regenerateListPages(d, { live: promoCorpus, entitlements: promoEntitlements });
   const islands = refreshIslands();
   // Spanish must be baked before stale-QMI pruning: its bake only writes, so removing
   // English pages first leaves their old /es/ twins with no source to overwrite. Prune

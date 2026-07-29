@@ -20,7 +20,7 @@ import { communityPath, floorplanPath } from './paths.mjs';
 import { hydrateCommunity, hydrateFloorplan, hydratePlanInCommunity, swapCommunityBanner, bakeRecommend, hydrateCommunityStatus } from './hydrate-scraped.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { writeLiveFacts } from './render-lists.mjs';
-import { livePromoTexts } from './promo-utils.mjs';
+import { livePromoTexts, homePromoEntitlements } from './promo-utils.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -131,7 +131,7 @@ function copyRuntimeAssets() {
   // whose promotion is gone from D1 (see render-lists.mjs). generateDetails writes it too
   // — same function, same input, so the two are order-independent.
   const facts = join(import.meta.dirname, 'assets', 'live-facts.json');
-  if (existsSync(facts)) writeLiveFacts(LIVE_DATA ? livePromoTexts(LIVE_DATA) : null, { outDir: OUT });
+  if (existsSync(facts)) writeLiveFacts(LIVE_DATA ? livePromoTexts(LIVE_DATA) : null, { outDir: OUT, entitlements: LIVE_DATA ? homePromoEntitlements(LIVE_DATA) : null });
   else console.warn('skip live-facts.json (run harvest-live-facts.mjs)');
   if (NOINDEX) writeFileSync(join(OUT, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   linkCleanThemeNames(join(OUT, 'static'));

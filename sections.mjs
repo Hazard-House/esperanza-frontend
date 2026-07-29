@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 import { freshBannerHtml } from './rewrite.mjs';
-import { isRatePromo, parsePromoRate, promoCalcScript, isLivePromoText, normPromoText } from './promo-utils.mjs';
+import { isRatePromo, parsePromoRate, promoCalcScript, isLivePromoText, isPromoTextForHome, homePromoEntitlements, normPromoText } from './promo-utils.mjs';
 
 // Harvested live-site facts (mortgage rate, per-community taxmultiplier, per-home
 // promo badges) — see harvest-live-facts.mjs. Build-time read; {} if missing.
@@ -25,13 +25,26 @@ let LIVE_PROMO_TEXTS = null;
 export function setLivePromoTexts(set) { LIVE_PROMO_TEXTS = set instanceof Set && set.size ? set : null; }
 export function getLivePromoTexts() { return LIVE_PROMO_TEXTS; }
 
+// Per-home gate, layered ON TOP of the corpus gate above. The corpus is site-wide, so it
+// only evicts a FULLY retired promotion; a PARTIALLY retired one keeps its string alive
+// for every home that ever had it baked. That is how "4.99% Rate + up to $5,000 in
+// Closing Costs" rendered on 9 cards when exactly ONE home carries it in D1 (and no
+// promotions row carries the copy at all). setHomePromoEntitlements() is called once per
+// build alongside setLivePromoTexts(); unset/empty map = fail open (see
+// promo-utils.isPromoTextForHome), same philosophy as the corpus gate.
+let PROMO_ENTITLEMENTS = null;
+export function setHomePromoEntitlements(map) { PROMO_ENTITLEMENTS = map instanceof Map && map.size ? map : null; }
+export function getHomePromoEntitlements() { return PROMO_ENTITLEMENTS; }
+
 // Harvested badge for a home ({text,color}) — address-slug key first, then the
-// per-home cardFacts entry — gated on the live promo corpus. null when there is none
-// or its copy is dead.
+// per-home cardFacts entry — gated on the live promo corpus AND on this home's own
+// entitlement. null when there is none, its copy is dead, or this home was never
+// entitled to it.
 export function harvestBadge(h) {
   const b = factOf(h).badge || (FACTS.badges || {})[slugify(h.address)] || null;
   if (!b || !b.text) return null;
-  return isLivePromoText(b.text, LIVE_PROMO_TEXTS) ? b : null;
+  if (!isLivePromoText(b.text, LIVE_PROMO_TEXTS)) return null;
+  return isPromoTextForHome(b.text, h, PROMO_ENTITLEMENTS) ? b : null;
 }
 
 // Per-community property-tax multiplier (%) used by the payment calc. Stable value,
@@ -708,6 +721,7 @@ function demo() {
   // "deleted incentive kept showing" bug (a promotion dropped from D1 lived on in the
   // June-8 snapshot's per-home badge fallback).
   const savedCorpus = getLivePromoTexts();
+  const savedEnt = getHomePromoEntitlements();
   const harvested = Object.entries(FACTS.badges || {})[0];
   if (harvested) {
     const [addrSlug, b] = harvested;
@@ -720,8 +734,28 @@ function demo() {
     assert(!qmiCardHtml(home).includes('overlay-promo'), 'dead harvested badge renders NO promo banner');
     // API promo_text always wins, gate or no gate.
     assert(qmiCardHtml({ ...home, promo: 'Live Only Promo' }).includes('Live Only Promo'), 'API promo_text is authoritative');
+
+    // PARTIALLY-retired promo copy: still live for home A, never earned by home B. The
+    // site-wide corpus cannot tell them apart — A keeps the string alive for everyone —
+    // so B's harvested badge fallback re-rendered it. This is the 9-live-banners /
+    // 1-entitled-home defect (RESEARCH/ESPERANZA_POST_DAY0_LIVE_STATE_2026_07_29.md).
+    const homeA = { ...home, slug: 'entitled-home', promo: b.text };
+    const homeB = { ...home, slug: 'unentitled-home' };
+    setLivePromoTexts(new Set([normPromoText(b.text)])); // copy IS live (A holds it)
+    setHomePromoEntitlements(homePromoEntitlements({ qmis: [homeA, homeB], promotions: [] }));
+    assert(harvestBadge(homeA) && harvestBadge(homeA).text === b.text, 'entitled home keeps the partially-retired badge');
+    assert(harvestBadge(homeB) === null, 'UNENTITLED home drops the badge even though the copy is live elsewhere');
+    assert(qmiCardHtml(homeA).includes('overlay-promo'), 'entitled home still renders its promo banner');
+    assert(!qmiCardHtml(homeB).includes('overlay-promo'), 'unentitled home renders NO promo banner');
+    // Fail open: no entitlement map, or a home the map has never heard of.
+    setHomePromoEntitlements(null);
+    assert(harvestBadge(homeB) !== null, 'no entitlement map -> fail open (never blanks the site)');
+    setHomePromoEntitlements(homePromoEntitlements({ qmis: [homeA], promotions: [] }));
+    assert(harvestBadge({ ...home, slug: 'home-the-api-never-returned', address: 'zzz nowhere st' }) === null,
+      'a home with no harvested badge at all is still null');
   }
   setLivePromoTexts(savedCorpus);
+  setHomePromoEntitlements(savedEnt);
   assert(harvestBadge({ address: 'no-such-home-anywhere-at-all' }) === null, 'no harvested badge -> null');
   const g = galleryHtml([{ url: '/a.jpg', alt: 'A' }, { url: '/b.jpg', alt: 'B' }], null, 'Home');
   assert(g.includes('id="detail-gallery"') && g.includes('data-fancybox="photos"') && g.includes('View 2 Photos'), 'gallery');
