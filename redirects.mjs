@@ -23,13 +23,19 @@ export const REDIRECTS = {
  // live URL instead of turning it into a 301-to-404. Both the canonical 3-part path and
  // the scrape-only 5-part id path are covered.
  //
- // NOT covered: the /es/ twins. worker.js:340 looks up the RAW pathname, so no entry in
- // this table matches an /es/-prefixed URL — verified against production, where the
- // retired blog slug 301s at /blog/... and still returns 200 at /es/blog/... That is a
- // pre-existing gap affecting every hand-curated entry here, not something this change
- // introduces, so it is recorded rather than silently half-fixed. /es/floorplans/antinori/
- // therefore still serves the retired name until the worker strips the locale prefix
- // before this lookup.
+ // NOT solved here: the GENERIC /es/ redirect gap. worker.js:340 looks up the RAW
+ // pathname, so no entry in this table matches an /es/-prefixed URL — verified against
+ // production, where the retired blog slug 301s at /blog/... and still returns 200 at
+ // /es/blog/... Closing that properly means stripping the locale prefix before the
+ // lookup, which changes behaviour for every entry here and is not this PR's scope.
+ //
+ // But "documented" is not the same as "fixed", and Matt's 301 decision should not
+ // change by locale. The two ES twins of THIS rename have a target that exists
+ // (public/es/floorplans/santa-cruz/), so they are mapped explicitly rather than left
+ // serving the retired name indefinitely. Explicit /es/ keys work because the lookup is
+ // a plain object read on the raw path — it just cannot DERIVE them.
+ "/es/floorplans/antinori/": "/es/floorplans/santa-cruz/",
+ "/es/floorplans/antinori/1538/": "/es/floorplans/santa-cruz/",
  "/floorplans/antinori/": "/floorplans/santa-cruz/",
  "/floorplans/antinori/1538/": "/floorplans/santa-cruz/",
    // ── community CLEAN path → rich id-path (parity fix 2026-07-22): the clean community
