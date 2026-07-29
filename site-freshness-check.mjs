@@ -164,21 +164,57 @@ export function compareFreshness(apiHomes, gridHtml) {
 // Returns null for a valid entry, or a human-readable reason.
 export function blogHrefDefect(entry) {
   const raw = typeof entry === 'string' ? entry : entry?.href;
-  if (raw == null || String(raw).trim() === '') return 'missing or blank href';
-  const href = String(raw).trim();
+  if (raw == null || raw === '') return 'missing or blank href';
+  if (typeof raw !== 'string') return `href is not a string: ${typeof raw}`;
+  // NO NORMALIZATION BEFORE VALIDATION. An earlier version trimmed whitespace and
+  // stripped trailing slashes first, which meant `/blog/live`, `/blog/live//` and
+  // ` /blog/live/ ` were silently REPAIRED into a healthy slug and reported valid — the
+  // validator was itself the fail-open it was written to close. The reader-facing record
+  // is the raw string, so it is judged raw: anything a browser would resolve differently,
+  // or that a sloppy generator produced, has to be named.
+  if (raw !== raw.trim()) return `href has surrounding whitespace: ${JSON.stringify(raw)}`;
+  const href = raw;
   if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) return `absolute/external href: ${href}`;
   if (href.includes('?') || href.includes('#')) return `href carries a query or fragment: ${href}`;
   if (!href.startsWith('/blog/')) return `href is not under /blog/: ${href}`;
   const rest = href.slice('/blog/'.length);
   if (rest === '') return 'href is the blog root, not a post';
-  const segments = rest.replace(/\/+$/, '').split('/');
-  if (segments.length !== 1) return `href is not a single post segment: ${href}`;
-  const slug = segments[0].trim();
-  if (!slug) return `href has an empty slug: ${href}`;
+  if (!rest.endsWith('/')) return `href is missing its trailing slash: ${href}`;
+  const slug = rest.slice(0, -1);
+  if (slug === '') return 'href is the blog root, not a post';
+  if (slug.includes('/')) return `href is not a single post segment: ${href}`;
+  // SLUG CHARSET. Without this the validator still accepted `/blog/live\/` (a browser
+  // resolves `\` as a path separator, so the URL a reader follows is NOT the one this
+  // string appears to name) and `/blog/a%2Fb/` (a percent-encoded separator, same
+  // problem). Both reconstructed cleanly through every rule above, so "only the
+  // canonical form is valid" was still a false claim — I found these two myself after
+  // fixing the three Sol named, because they are the same class.
+  //
+  // The rule is `[a-z0-9-]+`, derived from the real slug population rather than guessed,
+  // and deliberately NOT stricter than that. It permits consecutive hyphens: a stricter
+  // `[a-z0-9]+(-[a-z0-9]+)*` rejects the LIVE post
+  // `vista-verde-is-off-to-a-strong-start--now-selling-in-laredo`, which would have
+  // landed this watchdog red on its first run. Verified 2026-07-29 against all three
+  // populations that feed this comparison: 126/126 live blog-index hrefs, 127/127 API
+  // published slugs, and 157/157 baked public/blog/ dirs (index.html aside) pass.
+  if (!/^[a-z0-9-]+$/.test(slug)) return `href slug has characters outside [a-z0-9-]: ${href}`;
   // Pagination/category/year dirs are list pages, not posts; gen-blog-index.mjs excludes
   // them, so their presence in the index is a generator regression.
   if (/^(category|page-\d+|\d{4})$/.test(slug)) return `href is a list page, not a post: ${href}`;
+  // Backstop, and it is UNREACHABLE BY CONSTRUCTION today — stated plainly because no
+  // test can kill it and I would rather say so than let it look guarded. Given the rules
+  // above (no surrounding whitespace, `/blog/` prefix, `rest` ends in `/`, slug contains
+  // no `/`), href is necessarily `/blog/${slug}/`. It exists so that if a future edit
+  // loosens any rule above, the contract this function advertises fails loudly here
+  // instead of silently widening what counts as canonical.
+  if (href !== `/blog/${slug}/`) return `href is not canonical /blog/<slug>/: ${href}`;
   return null;
+}
+
+// The one canonical slug for a valid entry. Callers must check blogHrefDefect() first.
+function blogSlugOf(entry) {
+  const href = typeof entry === 'string' ? entry : entry.href;
+  return href.slice('/blog/'.length, -1);
 }
 
 // Every malformed raw entry, as named defects. Reported alongside the set comparisons so a
@@ -200,8 +236,7 @@ export function indexedBlogSlugs(index) {
   const out = new Set();
   for (const p of Array.isArray(index) ? index : []) {
     if (blogHrefDefect(p)) continue;
-    const href = typeof p === 'string' ? p : p.href;
-    out.add(String(href).trim().slice('/blog/'.length).replace(/\/+$/, ''));
+    out.add(blogSlugOf(p));
   }
   return out;
 }
@@ -214,8 +249,7 @@ export function duplicateBlogSlugs(index) {
   const counts = new Map();
   for (const p of Array.isArray(index) ? index : []) {
     if (blogHrefDefect(p)) continue;
-    const href = typeof p === 'string' ? p : p.href;
-    const slug = String(href).trim().slice('/blog/'.length).replace(/\/+$/, '');
+    const slug = blogSlugOf(p);
     counts.set(slug, (counts.get(slug) ?? 0) + 1);
   }
   return [...counts.entries()].filter(([, n]) => n > 1).map(([s, n]) => `${s} x${n}`).sort();
@@ -652,6 +686,54 @@ if (process.argv.includes('--check') && IS_ENTRY) {
   assert.match(blogHrefDefect({ href: '/blog/x/?utm=1' }), /query or fragment/, 'query suffix rejected');
   assert.match(blogHrefDefect({ href: '/blog/x/#top' }), /query or fragment/, 'hash suffix rejected');
   assert.match(blogHrefDefect({ href: '/blog/page-2/' }), /list page/, 'pagination dir rejected');
+  // EXACT RAW EQUALITY TO `/blog/<slug>/`. These three were ACCEPTED by the first version
+  // of this validator because it trimmed and stripped trailing slashes BEFORE judging —
+  // i.e. it silently repaired malformed reader-facing records and called them healthy,
+  // which is the same fail-open it exists to close. Judged raw now.
+  assert.match(blogHrefDefect({ href: '/blog/live' }), /missing its trailing slash/, 'bare path (no trailing slash) rejected');
+  assert.match(blogHrefDefect({ href: '/blog/live//' }), /single post segment/, 'doubled trailing slash rejected');
+  assert.match(blogHrefDefect({ href: '/blog/live///' }), /single post segment/, 'tripled trailing slash rejected');
+  assert.match(blogHrefDefect({ href: ' /blog/live/ ' }), /surrounding whitespace/, 'surrounding whitespace rejected');
+  assert.match(blogHrefDefect({ href: '/blog/live/ ' }), /surrounding whitespace/, 'trailing space rejected');
+  assert.match(blogHrefDefect({ href: ' /blog/live/' }), /surrounding whitespace/, 'leading space rejected');
+  assert.match(blogHrefDefect({ href: '/blog//' }), /blog root/, 'empty slug with doubled slash rejected');
+  assert.match(blogHrefDefect({ href: 42 }), /not a string/, 'non-string href rejected');
+  // Exactly ONE spelling is valid, so a generator cannot drift into a tolerated variant.
+  assert.equal(blogHrefDefect({ href: '/blog/live/' }), null, 'only the canonical form is valid');
+  // Characters that make the followed URL differ from the string as written. Found while
+  // re-checking my own fix for the three above, not reported — same fail-open class.
+  assert.match(blogHrefDefect({ href: '/blog/live\\/' }), /outside \[a-z0-9-\]/, 'backslash in slug rejected');
+  assert.match(blogHrefDefect({ href: '/blog/a%2Fb/' }), /outside \[a-z0-9-\]/, 'percent-encoded separator rejected');
+  assert.match(blogHrefDefect({ href: '/blog/Live/' }), /outside \[a-z0-9-\]/, 'uppercase slug rejected');
+  assert.match(blogHrefDefect({ href: '/blog/a b/' }), /outside \[a-z0-9-\]/, 'internal space rejected');
+  // ...but the charset rule must not be stricter than the live corpus. This is a REAL
+  // published post; a single-hyphen-only rule would fail it and land the watchdog red.
+  assert.equal(
+    blogHrefDefect({ href: '/blog/vista-verde-is-off-to-a-strong-start--now-selling-in-laredo/' }),
+    null,
+    'consecutive hyphens are valid — a real live post relies on this',
+  );
+  // Sol's three cases must now produce drift end to end, not just fail the unit rule.
+  for (const bad of ['/blog/live', '/blog/live//', ' /blog/live/ ']) {
+    const r = compareBlogIndex([{ slug: 'other' }], [{ href: '/blog/other/' }, { href: bad }]);
+    assert.equal(r.drift, 1, `noncanonical href ${JSON.stringify(bad)} is drift`);
+    assert.equal(r.invalid.length, 1, `noncanonical href ${JSON.stringify(bad)} is named`);
+    assert.equal(r.indexed, 1, 'the canonical sibling is still counted');
+  }
+  // A MALFORMED ENTRY FOR A PUBLISHED POST COUNTS TWICE, AND THAT IS DELIBERATE.
+  // Elsewhere I de-duplicate (a retired post is orphaned AND dead, reported once). Here I
+  // do not, and the reason is the whole point of this fix: de-duplicating would require
+  // deciding that `/blog/live` "means" slug `live` in order to cancel it against the
+  // missing entry — i.e. re-introducing exactly the normalization that made the validator
+  // fail open. Refusing to guess costs one extra drift unit and reports two independently
+  // true, independently actionable facts: one record is unreadable, and one published post
+  // is unfindable by search. Pinned so it reads as a decision, not an oversight.
+  {
+    const r = compareBlogIndex([{ slug: 'live' }], [{ href: '/blog/live' }]);
+    assert.deepEqual(r.missing, ['live'], 'the published post is still reported unfindable');
+    assert.equal(r.invalid.length, 1, 'the malformed record is still named');
+    assert.equal(r.drift, 2, 'two distinct facts, deliberately not collapsed by guessing intent');
+  }
   assert.deepEqual(invalidBlogEntries([{ href: '/blog/ok/' }]), [], 'clean index has no invalid entries');
   assert.deepEqual(invalidBlogEntries('not an array'), ['index is not an array'], 'non-array index is itself a defect');
   // Index position is included so the defect can be located in the artifact.
