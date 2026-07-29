@@ -84,8 +84,18 @@ jobs:
       # See rebuild-details.yml for the reasoning. This leg matters just as much: the same
       # generate-details.mjs runs here, so a prune-backstop trip blocks the 09:00 deploy
       # too — the repo mirror and the deploy both stall on one root cause.
+      #
+      # Gated to main because this workflow also deploys `staging` on push, and the incident
+      # this issue describes ("production is frozen", prune-backstop runbook) is only true of
+      # the production leg. A failed staging deploy freezes nothing buyer-facing, so alerting
+      # on it would put a false production incident in front of responders — and, because the
+      # issue is keyed on a single title, would comment on and reopen the *production* thread.
+      # The nightly cron and workflow_dispatch on main both run as refs/heads/main, so the
+      # unattended path this PR exists to cover is fully covered. Staging failures stay
+      # visible the normal way: a red check on the push that caused them, with a human already
+      # watching. If staging ever needs its own alert it wants its own title/body, not this one.
       - name: Alert on failure
-        if: failure()
+        if: failure() && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
           TITLE: "CI failure: nightly rebuild/deploy is not reaching production"
