@@ -84,6 +84,9 @@ export function pruneStaleQmiPages(qmis, { outDir = OUT, allowBulkPrune = proces
     if (!city || !community) continue;
     redirects[rel] = `/new-homes/tx/${city}/${community}/`;
     rmSync(dir, { recursive: true, force: true });
+    // Spanish is a generated mirror and its bake is write-only. Remove the corresponding
+    // twin here or it outlives the English QMI page and remains directly reachable.
+    rmSync(join(outDir, 'es', rel), { recursive: true, force: true });
   }
   const manifest = { redirects, pruneCount: totalStaleCount };
   writeFileSync(manifestPath, JSON.stringify(manifest));
@@ -310,7 +313,6 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
     writePage(qmiPath(h), renderQmi(h, shell));
     nqmi++;
   }
-  const prunedQmi = pruneStaleQmiPages(d.qmis);
   let nc = 0, nf = 0;
   // `|| clobbered.has(...)`: repair a community page a previous run overwrote with a QMI
   // detail page. Without it the scraped-page skip set would preserve the damage forever.
@@ -331,9 +333,11 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // detail pages use, then sweep dead promo ribbons off everything else in public/.
   const lists = regenerateListPages(d, { live: promoCorpus });
   const islands = refreshIslands();
-  // Spanish LAST: mirror the fully refreshed English tree, including list pages and islands.
-  // A bake error is logged but does not block the live inventory deploy.
+  // Spanish must be baked before stale-QMI pruning: its bake only writes, so removing
+  // English pages first leaves their old /es/ twins with no source to overwrite. Prune
+  // deletes both trees atomically immediately afterwards.
   const es = await bakeSpanish().catch(e => { console.error('es-bake:', e.message); return { pages: 0 }; });
+  const prunedQmi = pruneStaleQmiPages(d.qmis);
   console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; ${es.pages} Spanish pages`);
   return { qmi: nqmi, prunedQmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, lists, islands, es: es.pages };
 }
@@ -350,10 +354,11 @@ function pruneCheck() {
     const homes = Array.from({ length: 20 }, (_, i) => ({ slug: `live-${i}`, city: 'Laredo', community: 'El Eden' }));
     const live = homes.map((h) => makePage(outDir, 'laredo', 'el-eden', h.slug));
     const stale = makePage(outDir, 'brownsville', 'palo-alto-groves', '2309-grove-lane');
+    const spanishStale = makePage(join(outDir, 'es'), 'brownsville', 'palo-alto-groves', '2309-grove-lane');
     const community = makePage(outDir, 'brownsville', 'palo-alto-groves', '7522', 'community');
     const expected = { '/new-homes/tx/brownsville/palo-alto-groves/2309-grove-lane/': '/new-homes/tx/brownsville/palo-alto-groves/' };
     assert.deepEqual(pruneStaleQmiPages(homes, { outDir }), expected);
-    assert(live.every(existsSync)); assert(!existsSync(stale)); assert(existsSync(community));
+    assert(live.every(existsSync)); assert(!existsSync(stale)); assert(!existsSync(spanishStale), 'stale Spanish QMI twin removed'); assert(existsSync(community));
     assert.deepEqual(pruneStaleQmiPages(homes, { outDir }), expected, 'manifest persists');
     assert.deepEqual(pruneStaleQmiPages([...homes, { slug: '2309-grove-lane', city: 'Brownsville', community: 'Palo Alto Groves' }], { outDir }), {}, 'republish clears redirect');
   } finally { rmSync(outDir, { recursive: true, force: true }); }
