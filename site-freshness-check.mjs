@@ -128,13 +128,19 @@ export function compareFreshness(apiHomes, gridHtml) {
 // missing from search.
 //
 // TWO-SIDED ON PURPOSE, and the second side is not symmetric with the QMI grid:
-//   missing = published post absent from the index -> unfindable by search (the #125 bug)
-//   extra   = indexed post that does NOT serve 200 -> a DEAD SEARCH HIT
+//   missing   = published post absent from the index -> unfindable by search (the #125 bug)
+//   orphaned  = indexed post NOT in the published payload -> a search result for content
+//               the CMS says is unpublished. It may still serve 200, because nothing prunes
+//               blog directories, so a status probe cannot see it — only the API comparison.
+//   duplicate = the same post indexed twice -> repeated search results. Set arithmetic
+//               collapses these, so they are counted before deduping.
+//   extra     = indexed post that does NOT serve 200 -> a DEAD SEARCH HIT
 // A retired post keeps its baked directory (nothing prunes blog dirs) but gains a
 // redirects.mjs entry, so naively indexing every baked dir puts a result in front of a
 // reader that immediately bounces them to /blog/. gen-blog-index.mjs excludes redirected
 // posts for exactly this reason; `extra` is what proves that exclusion is still working.
-// Verified 2026-07-29 after #125 deployed: 126/126 indexed posts serve 200, 0 dead hits.
+// Verified 2026-07-29 after #125 deployed: 126/126 indexed posts serve 200, 0 dead hits,
+// 0 orphans, 0 duplicates — so all four directions assert a state the site already meets.
 //
 // Deliberately NOT asserted here: floor-plan parity. A renamed plan (Antinori ->
 // Santa Cruz) still serves and is still linked under its old slug because
@@ -153,6 +159,21 @@ export function indexedBlogSlugs(index) {
     if (slug && !slug.includes('/')) out.add(slug);
   }
   return out;
+}
+
+// Slugs appearing MORE THAN ONCE in the index. A Set-based comparison silently collapses
+// duplicates, so a post indexed twice would look identical to a post indexed once and the
+// reader would just see the same result twice in search. Reported separately because it
+// is a real, closable defect (regenerate) that set arithmetic cannot express.
+export function duplicateBlogSlugs(index) {
+  const counts = new Map();
+  for (const p of Array.isArray(index) ? index : []) {
+    const href = typeof p === 'string' ? p : p?.href;
+    const slug = String(href ?? '').replace(/^\/blog\//, '').replace(/\/+$/, '').trim();
+    if (!slug || slug.includes('/')) continue;
+    counts.set(slug, (counts.get(slug) ?? 0) + 1);
+  }
+  return [...counts.entries()].filter(([, n]) => n > 1).map(([s, n]) => `${s} x${n}`).sort();
 }
 
 // Mirrors gen-blog-index.mjs: pagination/category/year dirs are not posts, and a post
@@ -174,13 +195,43 @@ export function publishedBlogSlugs(posts) {
  * be absent from the index, so they are excluded from `missing` rather than counted as
  * drift. `deadHits` are index entries that do not serve 200 — passed in by the probe,
  * since liveness needs the network.
+ *
+ * THREE failure directions, because the index is a search corpus and set arithmetic alone
+ * hides two of them:
+ *   missing   — published post absent from the index -> unfindable by search
+ *   orphaned  — indexed post NOT in the published payload -> a search result for content
+ *               that is no longer published. It may still serve 200 (nothing prunes blog
+ *               dirs), so the dead-hit probe cannot see it; only the API comparison can.
+ *   duplicate — same post indexed twice -> duplicated search results. A Set collapses
+ *               these, so they must be counted before deduping.
+ * `deadHits` covers the fourth: an indexed entry that does not serve 200 at all.
  */
 export function compareBlogIndex(apiPosts, index, { redirectedSlugs = new Set(), deadHits = [] } = {}) {
   const expected = publishedBlogSlugs(apiPosts);
   const indexed = indexedBlogSlugs(index);
   const missing = [...expected].filter((s) => !indexed.has(s) && !redirectedSlugs.has(s)).sort();
+  // An indexed post absent from the published payload is drift regardless of its HTTP
+  // status: a reader can still find and open it, and it is content the CMS says is no
+  // longer published. But ONE BAD ENTRY MUST COUNT ONCE. An entry already reported as a
+  // dead hit (non-200, which includes every redirect) is the same defect seen from a
+  // different angle, so it is excluded here — otherwise a single retired post inflates
+  // drift to 2 and the incident overstates the damage. `deadHits` are formatted
+  // "slug (status)", so compare on the slug prefix.
+  const deadSlugs = new Set(deadHits.map((h) => String(h).split(' ')[0]));
+  const orphaned = [...indexed]
+    .filter((s) => !expected.has(s) && !redirectedSlugs.has(s) && !deadSlugs.has(s))
+    .sort();
+  const duplicated = duplicateBlogSlugs(index);
   const extra = [...deadHits].sort();
-  return { expected: expected.size, indexed: indexed.size, missing, extra, drift: missing.length + extra.length };
+  return {
+    expected: expected.size,
+    indexed: indexed.size,
+    missing,
+    orphaned,
+    duplicated,
+    extra,
+    drift: missing.length + orphaned.length + duplicated.length + extra.length,
+  };
 }
 
 // THE SETTLE WINDOW MUST OUTLAST THE EDGE CACHE, OR THIS CHECK CRIES WOLF.
@@ -299,7 +350,8 @@ async function main() {
       `site-freshness attempt ${i}: api_published=${last.expected} grid_baked=${last.baked}`
       + ` missing=${last.missing.length} extra=${last.extra.length}`
       + ` | blog api=${last.blog.expected} indexed=${last.blog.indexed}`
-      + ` missing=${last.blog.missing.length} dead=${last.blog.extra.length}`
+      + ` missing=${last.blog.missing.length} orphaned=${last.blog.orphaned.length}`
+      + ` dup=${last.blog.duplicated.length} dead=${last.blog.extra.length}`
       + ` [cf-cache-status=${last.cacheStatus ?? 'n/a'} age=${last.age ?? 'n/a'} max-age=${Number.isFinite(last.maxAge) ? last.maxAge : 'n/a'}]`
     );
     // Both surfaces ride the same deploy, so they settle together and share one budget.
@@ -319,6 +371,8 @@ async function main() {
   if (last.missing.length) console.log(`  published but NOT on grid: ${last.missing.slice(0, 20).join(', ')}`);
   if (last.extra.length) console.log(`  on grid but NOT published: ${last.extra.slice(0, 20).join(', ')}`);
   if (last.blog.missing.length) console.log(`  published but NOT in the blog search index (unfindable by search): ${last.blog.missing.slice(0, 20).join(', ')}`);
+  if (last.blog.orphaned.length) console.log(`  in the blog search index but NOT published (search hits for unpublished content): ${last.blog.orphaned.slice(0, 20).join(', ')}`);
+  if (last.blog.duplicated.length) console.log(`  duplicated in the blog search index (repeated search results): ${last.blog.duplicated.slice(0, 20).join(', ')}`);
   if (last.blog.extra.length) console.log(`  in the blog search index but NOT serving 200 (dead search hits): ${last.blog.extra.slice(0, 20).join(', ')}`);
   const totalDrift = last.drift + last.blog.drift;
   const what = [
@@ -494,8 +548,39 @@ if (process.argv.includes('--check') && IS_ENTRY) {
   {
     const r = compareBlogIndex([{ slug: 'a' }, { slug: 'missing-one' }], [{ href: '/blog/a/' }, { href: '/blog/dead/' }],
       { deadHits: ['dead (404)'] });
-    assert.equal(r.drift, 2, 'missing and dead-hit drift are additive');
+    // "dead" is both unpublished and non-200; it must count ONCE (as a dead hit), so
+    // drift is 2 (missing-one + dead), not 3. One bad entry, one drift unit.
+    assert.equal(r.drift, 2, 'missing and dead-hit drift are additive without double-counting');
+    assert.deepEqual(r.orphaned, [], 'a dead hit is not also counted as an orphan');
   }
+
+  // SOL'S TWO COUNTEREXAMPLES (PR #126 review, reproduced against this implementation and
+  // found to apply here too). Set arithmetic alone reported clean for both.
+  // 1. An ORPHAN that still serves 200: indexed, but the CMS no longer publishes it. The
+  //    dead-hit probe cannot catch this because the page is reachable — only the API
+  //    comparison can. A reader searches, finds it, and opens unpublished content.
+  {
+    const r = compareBlogIndex([{ slug: 'live' }], [{ href: '/blog/live/' }, { href: '/blog/stale/' }]);
+    assert.deepEqual(r.orphaned, ['stale'], 'indexed-but-unpublished post is drift even when it serves 200');
+    assert.equal(r.drift, 1, 'orphan counts toward drift');
+  }
+  // 2. A DUPLICATE href: a Set collapses it, so indexed=1 looks identical to a healthy
+  //    single entry while search shows the same result twice.
+  {
+    const r = compareBlogIndex([{ slug: 'live' }], [{ href: '/blog/live/' }, { href: '/blog/live/' }]);
+    assert.deepEqual(r.duplicated, ['live x2'], 'duplicated index entry is reported');
+    assert.equal(r.drift, 1, 'duplicate counts toward drift');
+    assert.equal(r.indexed, 1, 'set-based count still dedupes, which is why duplicates need their own signal');
+  }
+  // A redirected slug is reported ONCE (as a dead hit), not also as an orphan.
+  {
+    const r = compareBlogIndex([{ slug: 'live' }], [{ href: '/blog/live/' }, { href: '/blog/retired/' }],
+      { redirectedSlugs: new Set(['retired']), deadHits: ['retired (301)'] });
+    assert.deepEqual(r.orphaned, [], 'a redirected entry is not double-reported as an orphan');
+    assert.equal(r.drift, 1, 'one defect, one drift unit');
+  }
+  assert.deepEqual(duplicateBlogSlugs([{ href: '/blog/a/' }, { href: '/blog/a/' }, { href: '/blog/a/' }]), ['a x3'], 'counts repeats');
+  assert.deepEqual(duplicateBlogSlugs([{ href: '/blog/a/' }, { href: '/blog/b/' }]), [], 'no duplicates on a clean index');
   // Parser guard: a non-empty payload yielding zero expected slugs is a shape change,
   // not "every post vanished" — the 206-home false positive this file already learned.
   assert.equal(compareBlogIndex([{ notASlug: 'x' }], []).expected, 0, 'shape change yields expected=0 for the caller to catch');
