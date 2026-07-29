@@ -19,6 +19,16 @@ name: Site freshness watchdog
 # window that caused the 3926 Peggy Dr incident (~8 minutes unnoticed) at a cost of 96
 # short runs a day.
 #
+# REPORTING. Two durable, separately titled incidents, because they demand different
+# actions and neither should be able to close or impersonate the other:
+#   "the public grid does not match the live API"        <- exit 1 (drift) or 2 (parser)
+#   "the watchdog cannot observe the site or the API"    <- exit 3, or any code this
+#                                                          workflow does not recognise
+# Each opens/updates on failure and closes automatically on convergence. The reason the
+# second one exists: `continue-on-error` on the probe means a run that observed nothing
+# would otherwise finish GREEN, which is the same silent-success failure mode this
+# workflow was built to remove — just relocated into the monitor.
+#
 # SCOPE, stated plainly so it is not mistaken for more than it is: this checks the
 # renderable QMI grid on /new-homes/available/ ONLY. It says nothing about promotion,
 # city, community, floor-plan or blog freshness. Those ride the same dispatch path, so a
@@ -57,9 +67,11 @@ jobs:
       #   0  grid matches the live API
       #   1  drift, sustained past the edge TTL -> a real data incident
       #   2  parser error (non-empty payload, zero slugs parsed) -> the CHECK is broken
-      #   3  could not observe the site/API at all -> a network blip, NOT a verdict
-      # Only exit 1 and 2 should reach a human; 3 must not open a data incident, which is
-      # why the drift branch tests the code rather than merely `outcome == 'failure'`.
+      #   3  could not observe the site/API at all -> NOT a freshness verdict
+      # Each code reaches a human, but 1 and 2 must not share an incident with 3: "the grid
+      # disagrees with D1" and "this check is blind" are different pages with different
+      # actions. That is why the branches below test the CODE rather than merely
+      # `outcome == 'failure'`, and why there are two title-keyed issues, not one.
       - name: Probe grid/API parity
         id: probe
         continue-on-error: true
@@ -140,4 +152,97 @@ jobs:
             echo "Closed incident #$NUM after convergence"
           else
             echo "No open freshness incident; nothing to close."
+          fi
+
+      # A BLIND WATCHDOG IS ITS OWN INCIDENT.
+      #
+      # Exit 3 is not a freshness verdict, so it must never open the drift incident. But
+      # `continue-on-error` above means a run that could never observe anything finishes
+      # GREEN, and a monitor that reports nothing while it is blind is exactly the silent
+      # class of failure this workflow exists to close. So exit 3 gets its own, separately
+      # titled incident: same durability, different page, different action. Merging the two
+      # would let "cannot see the site" close — or masquerade as — "the grid disagrees
+      # with D1".
+      #
+      # Retry exhaustion is already the precondition, not something this step adds:
+      # site-freshness-check.mjs exits 3 only after every attempt inside the settle budget
+      # failed to reach the site or the API (`elapsed + delayMs > budgetMs` in its catch),
+      # so a single transient blip is retried in-process and never reaches here.
+      #
+      # The condition is "not 1 and not 2" rather than "== 3" deliberately: an exit code
+      # this workflow does not recognise — a future code, or a crash before the exit_code
+      # echo leaving the output empty — then lands here instead of passing as green.
+      # Together with the drift branch, EVERY non-zero probe outcome now surfaces
+      # somewhere. `outcome == 'cancelled'` is excluded on purpose: a cancelled run makes
+      # no assertion at all.
+      - name: Open or update the watchdog-unavailable incident
+        if: steps.probe.outcome == 'failure' && steps.probe.outputs.exit_code != '1' && steps.probe.outputs.exit_code != '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: "Site freshness: the watchdog cannot observe the site or the API"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE: ${{ steps.probe.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          BODY="$RUNNER_TEMP/unavailable-body.md"
+          {
+            echo "The freshness watchdog could not observe the site or the API for its"
+            echo "entire retry budget: $RUN_URL (probe exit code \`${CODE:-unknown}\`)."
+            echo
+            echo "**This is NOT a statement about whether the site is stale.** The grid may"
+            echo "be perfectly fresh. What is broken is the ability to check — so treat any"
+            echo "open freshness question as UNVERIFIED while this is open, rather than as"
+            echo "answered by a green run."
+            echo
+            echo "Read the run log's \`probe could not complete\` lines for the underlying"
+            echo "error, then work outward:"
+            echo
+            echo "- \`ETIMEDOUT\`/\`ENETUNREACH\` from the runner — the same transient egress"
+            echo "  failure that broke the 16:18:11Z deploy on 2026-07-29 (issue #120)."
+            echo "  If it cleared on its own, this issue closes itself on the next probe."
+            echo "- A non-2xx from the API worker — check \`GET /health/sync\` and whether"
+            echo "  \`esperanza-api\` deployed successfully."
+            echo "- A non-2xx from \`esperanzahomes.hazardhouse.ai\` — the site itself, or"
+            echo "  Cloudflare in front of it. Note this is OUR worker; the legacy O'Neill"
+            echo "  site on \`www.esperanzahomes.com\` is a different host and 404s these"
+            echo "  paths by design."
+            echo "- An exit code other than 1, 2 or 3 — the check crashed before reporting."
+            echo "  That is a bug in the watchdog, not in the site."
+            echo
+            echo "This issue is updated on each blind probe and closed automatically once a"
+            echo "probe observes both surfaces again. It is separate from the drift incident"
+            echo "on purpose: neither one closes the other."
+          } > "$BODY"
+          NUM="$(gh issue list --state open --limit 100 --json number,title \
+                   --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')"
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --body-file "$BODY"
+            echo "Appended to existing unavailability incident #$NUM"
+          else
+            gh issue create --title "$TITLE" --body-file "$BODY"
+          fi
+
+      # Convergence for the OTHER incident. Availability is restored by any probe that
+      # reached both surfaces — which includes exit 1 and exit 2, since drift and a parser
+      # error both require having read a response. Hence the codes rather than
+      # `outcome == 'success'`: waiting for exit 0 would hold this open through a genuine
+      # drift incident, implying we still cannot see the site when we can.
+      #
+      # It closes ONLY its own title. The drift incident is closed by the step above, on
+      # exit 0 alone.
+      - name: Close the watchdog-unavailable incident after a successful observation
+        if: steps.probe.outputs.exit_code == '0' || steps.probe.outputs.exit_code == '1' || steps.probe.outputs.exit_code == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: "Site freshness: the watchdog cannot observe the site or the API"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          NUM="$(gh issue list --state open --limit 100 --json number,title \
+                   --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')"
+          if [ -n "$NUM" ]; then
+            gh issue close "$NUM" --comment "The watchdog reached both the site and the live API again — verified by $RUN_URL. Closing automatically. This says nothing about drift; that is tracked separately."
+            echo "Closed unavailability incident #$NUM"
+          else
+            echo "No open unavailability incident; nothing to close."
           fi
