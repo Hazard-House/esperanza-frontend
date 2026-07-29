@@ -14,6 +14,24 @@ export const REDIRECTS = {
  // retired blog slugs — live 301s both to the blog index
  "/blog/vista-verde-groundbreaking-new-homes-coming-to-laredo-tx/": "/blog/",
  "/blog/vista-verde-groundbreaking-ceremony-celebrates-new-community-coming-to-laredo/": "/blog/",
+ // Floor plan renamed in D1: "Antinori" → "Santa Cruz" (same plan id reculREsNefdKhxw1).
+ // CI baked the new canonical page /floorplans/santa-cruz/ on 2026-07-24, but nothing
+ // prunes floor-plan directories, so the June-8 scraped Antinori pages kept serving 200
+ // under the retired name — a rename FORKS instead of moving. Matt's call (2026-07-29):
+ // 301 rather than 404, which also keeps the generated entry at the bottom of this file
+ // (".../villas-las-lagunas/antinori/257584/": "/floorplans/antinori/") pointing at a
+ // live URL instead of turning it into a 301-to-404. Both the canonical 3-part path and
+ // the scrape-only 5-part id path are covered.
+ //
+ // NOT covered: the /es/ twins. worker.js:340 looks up the RAW pathname, so no entry in
+ // this table matches an /es/-prefixed URL — verified against production, where the
+ // retired blog slug 301s at /blog/... and still returns 200 at /es/blog/... That is a
+ // pre-existing gap affecting every hand-curated entry here, not something this change
+ // introduces, so it is recorded rather than silently half-fixed. /es/floorplans/antinori/
+ // therefore still serves the retired name until the worker strips the locale prefix
+ // before this lookup.
+ "/floorplans/antinori/": "/floorplans/santa-cruz/",
+ "/floorplans/antinori/1538/": "/floorplans/santa-cruz/",
    // ── community CLEAN path → rich id-path (parity fix 2026-07-22): the clean community
   //    URL served a stale STRIPPED renderCommunity page (2 photos, dev-min prices); the
   //    rich rehydrated O'Neill page lives at the id-path. 301 so users get the accurate
