@@ -72,11 +72,11 @@ export function pruneStaleQmiPages(qmis, { outDir = OUT, allowBulkPrune = proces
   const carriedStaleCount = Object.keys(redirects).filter((path) => !livePaths.has(path)).length;
   const totalStaleCount = carriedStaleCount + staleDirs.length;
   const jumped = prior.pruneCount > 0 && totalStaleCount > prior.pruneCount * MAX_PRUNE_MULTIPLIER;
-  if (!allowBulkPrune && staleDirs.length && (totalStaleCount > MAX_PRUNE_COUNT || jumped)) {
-    const reason = totalStaleCount > MAX_PRUNE_COUNT
-      ? `${totalStaleCount} total stale pages exceeds safety backstop of ${MAX_PRUNE_COUNT}`
+  if (!allowBulkPrune && staleDirs.length && (staleDirs.length > MAX_PRUNE_COUNT || jumped)) {
+    const reason = staleDirs.length > MAX_PRUNE_COUNT
+      ? `${staleDirs.length} new stale pages exceeds this-run safety backstop of ${MAX_PRUNE_COUNT}`
       : `total stale count jumped from ${prior.pruneCount} to ${totalStaleCount} (max ${MAX_PRUNE_MULTIPLIER}x)`;
-    throw new Error(`stale QMI prune: ${staleDirs.length} ${reason}; refusing to build (set ESP_ALLOW_BULK_PRUNE=1 for a reviewed bulk unpublish)`);
+    throw new Error(`stale QMI prune: ${reason}; refusing to build (set ESP_ALLOW_BULK_PRUNE=1 for a reviewed bulk unpublish)`);
   }
   for (const dir of staleDirs) {
     const rel = dir.slice(outDir.length).replace(/\\/g, '/') + '/';
@@ -379,6 +379,15 @@ function pruneCheck() {
     assert.throws(() => pruneStaleQmiPages([], { outDir: jump }), /jumped from 5 to 25/, 'prior-run jump refuses cumulative erosion');
     assert(existsSync(join(jump, 'new-homes', 'tx', 'x', 'y', 'new-19')));
   } finally { rmSync(jump, { recursive: true, force: true }); }
+  const normalSale = mkdtempSync(join(tmpdir(), 'esperanza-prune-normal-sale-'));
+  try {
+    // Historic sold homes must not turn one ordinary new sale into a permanent outage.
+    const priorRedirects = Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`/new-homes/tx/x/y/sold-${i}/`, '/new-homes/tx/x/y/']));
+    writeFileSync(join(normalSale, 'stale-qmi-redirects.json'), JSON.stringify({ redirects: priorRedirects, pruneCount: 51 }));
+    const newSale = makePage(normalSale, 'x', 'y', 'sold-today');
+    assert.equal(Object.keys(pruneStaleQmiPages([], { outDir: normalSale })).length, 52, '51 historic prunes plus one normal sale proceeds');
+    assert(!existsSync(newSale));
+  } finally { rmSync(normalSale, { recursive: true, force: true }); }
   console.log('generate-details.mjs pruneCheck() passed');
 }
 
