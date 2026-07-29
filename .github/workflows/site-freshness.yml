@@ -1,7 +1,9 @@
 name: Site freshness watchdog
 
-# Asserts the OUTCOME of the admin -> public-site pipeline: the baked QMI grid must
-# list exactly the homes the live API reports as published.
+# Asserts the OUTCOME of the admin -> public-site pipeline: the baked QMI grid must list
+# exactly the homes the live API reports as published; every published blog post and floor
+# plan must have a live detail page; and every published post must be findable in the blog
+# search index.
 #
 # WHY THIS IS ITS OWN WORKFLOW AND NOT A STEP IN deploy.yml.
 # The failure this exists to catch is a dispatch that never fires. packages/admin
@@ -17,13 +19,32 @@ name: Site freshness watchdog
 # declaring drift, so a stale public grid is detected within roughly 20 minutes of the
 # save that should have refreshed it. That bounds the "site silently disagrees with D1"
 # window that caused the 3926 Peggy Dr incident (~8 minutes unnoticed) at a cost of 96
-# short runs a day.
+# short runs a day. The detail-parity pass adds 186 HEAD requests (bodies not transferred)
+# plus one /blog-index.json GET, measured at 4.5s against production — it does not move the
+# SLA.
 #
-# SCOPE, stated plainly so it is not mistaken for more than it is: this checks the
-# renderable QMI grid on /new-homes/available/ ONLY. It says nothing about promotion,
-# city, community, floor-plan or blog freshness. Those ride the same dispatch path, so a
-# dead dispatch shows up here first, but a renderer bug confined to one of those page
-# types would NOT trip this check.
+# SCOPE, stated plainly so it is not mistaken for more than it is. FOUR surfaces:
+#   * the renderable QMI grid on /new-homes/available/ — bidirectional parity with /qmi;
+#   * /blog/<slug>/       — every published post must have a page (one-directional);
+#   * /floorplans/<slug>/ — every published plan must have a page (one-directional);
+#   * /blog-index.json    — every published post must have exactly one entry, so site
+#     search can find it. Regenerated in deploy.yml only as of PR #125; before that it ran
+#     from build.mjs alone, which CI never invokes, and a live 200-serving post sat
+#     unfindable by search. Page parity was green for that entire window, which is why
+#     this is a separate assertion and not an inference from the page check.
+#
+# Deliberately-retired posts (a published D1 row whose URL is 301-ed in redirects.mjs) are
+# EXCLUDED from the two blog surfaces, using that same shipped table — the one #125's
+# generator keys its own exclusion on. Demanding a 200 from a URL a human retired would
+# open an incident only a data change could close.
+#
+# It still says NOTHING about promotion, city or community freshness, nor about any LIST
+# page other than the QMI grid. Those surfaces do not consume the D1 fields marketing
+# edits, so asserting parity over them would open an incident that can never close. The
+# live instance is the floor-plan list: a plan renamed in D1 (Antinori -> Santa Cruz) has
+# the list still linking the old slug while BOTH pages serve 200, so the detail-page
+# assertion above is genuinely green and does not cover that bug. See the SCOPE block at
+# the top of site-freshness-check.mjs for the full reasoning and the measurements.
 
 on:
   schedule:
@@ -54,12 +75,18 @@ jobs:
       # a second, less informative signal for the same condition.
       #
       # Exit codes are load-bearing and NOT interchangeable:
-      #   0  grid matches the live API                        -> observed, healthy
+      #   0  grid AND every detail page match the live API    -> observed, healthy
       #   1  drift, sustained past the edge TTL               -> observed, real data incident
-      #   2  parser error (non-empty payload, 0 slugs parsed) -> observed, the CHECK is broken
+      #   2  parser error (non-empty payload, 0 URLs derived) -> observed, the CHECK is broken
       #   3  could not observe the site/API for the whole retry budget -> NOT a verdict
       # Only 1 and 2 are freshness verdicts, which is why the drift branch tests the CODE
       # rather than merely `outcome == 'failure'`.
+      #
+      # Exit 3 also covers the case where the grid was fine but some detail-page HEADs kept
+      # THROWING (a socket error, not a 404) for the whole budget: parity was then never
+      # established, and reporting that as exit 0 would close a drift incident on the
+      # strength of pages nobody managed to read. A confirmed 404 still wins over an
+      # unreadable page — that is real, observed drift, so it exits 1.
       #
       # THE BRANCHES BELOW ARE EXHAUSTIVE BY CONSTRUCTION, and that is the point.
       # An earlier version of this file tested `exit_code == '1' || == '2'` for the incident
@@ -103,22 +130,45 @@ jobs:
         if: steps.probe.outputs.exit_code == '1' || steps.probe.outputs.exit_code == '2'
         env:
           GH_TOKEN: ${{ github.token }}
-          TITLE: "Site freshness: the public grid does not match the live API"
+          TITLE: "Site freshness: the public site does not match the live API"
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           BODY="$RUNNER_TEMP/freshness-body.md"
           {
-            echo "The public QMI grid does not match the live API: $RUN_URL"
+            echo "The public site does not match the live API: $RUN_URL"
             echo
-            echo "Read the run log's \`site-freshness attempt\` lines:"
+            echo "Read the run log's \`site-freshness attempt\` lines. The verdict line"
+            echo "names which surface drifted, so start there rather than assuming the grid:"
             echo
             echo "- \`published but NOT on grid\` -> a published home never got baked."
             echo "- \`on grid but NOT published\` -> an unpublished/Draft home is still"
             echo "  advertised. This is the 3926 Peggy Dr incident (2026-07-29)."
+            echo "- \`published but NO page: blog /blog/<slug>/ -> HTTP 404\` -> a post"
+            echo "  exists in D1 but has no page. Note \`generate-blogs\` is called"
+            echo "  **non-fatally** from generate-details.mjs (\`.catch(... return 0)\`), so a"
+            echo "  hiccup on \`/api/public/blogs\` mid-bake skips every blog page and still"
+            echo "  ships a GREEN deploy. Check the bake log for a \`generate-blogs:\` error"
+            echo "  and a \`N blog pages from D1\` count before suspecting the dispatch."
+            echo "- \`published but NO page: floorplan /floorplans/<slug>/\` -> a plan in D1"
+            echo "  with no page. Floor plans are rendered in the main (fatal) loop, so this"
+            echo "  more likely means the deploy never ran at all than that the bake failed."
+            echo "- \`published but NOT in the search index\` -> the post's page serves"
+            echo "  200 but /blog-index.json has no entry, so site search cannot find it."
+            echo "  That is PR #125's bug: the index is written by"
+            echo "  \`scripts/gen-blog-index.mjs\`, which ran only from \`build.mjs\` until"
+            echo "  #125 added it to deploy.yml. Check that step still exists in both"
+            echo "  deploy.yml and rebuild-details.yml before suspecting the data."
             echo "- \`PARSER ERROR\` (exit 2) -> the API payload shape changed and this"
-            echo "  check can no longer read slugs. The site is probably fine; the check"
-            echo "  is not. Fix the parser, do not chase the site."
+            echo "  check can no longer read slugs or derive URLs. The site is probably"
+            echo "  fine; the check is not. Fix the parser, do not chase the site."
+            echo
+            echo "Blog and floor-plan parity is ONE-DIRECTIONAL by design: a page (or an"
+            echo "index entry) with no API row is logged but NOT reported as drift, because"
+            echo "nothing prunes blog/floor-plan directories and public/blog also carries the"
+            echo "frozen scrape's \`page-N\`/\`category\` dirs, so there is no code path that"
+            echo "could close such an incident. Do not read a green probe as \"no orphaned"
+            echo "pages\". Only the QMI grid is asserted in both directions."
             echo
             echo "Most likely cause, and the reason this watchdog is not part of"
             echo "\`deploy.yml\`: **the admin's rebuild dispatch never fired.**"
@@ -158,14 +208,14 @@ jobs:
         if: steps.probe.outputs.exit_code == '0'
         env:
           GH_TOKEN: ${{ github.token }}
-          TITLE: "Site freshness: the public grid does not match the live API"
+          TITLE: "Site freshness: the public site does not match the live API"
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           NUM="$(gh issue list --state open --limit 100 --json number,title \
                    --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')"
           if [ -n "$NUM" ]; then
-            gh issue close "$NUM" --comment "Grid matches the live API again — verified by $RUN_URL. Closing automatically."
+            gh issue close "$NUM" --comment "The public site matches the live API again — QMI grid parity plus every published blog and floor-plan detail page — verified by $RUN_URL. Closing automatically."
             echo "Closed incident #$NUM after convergence"
           else
             echo "No open freshness incident; nothing to close."
