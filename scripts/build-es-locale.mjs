@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// DORMANT — Spanish i18n is disabled on the site until rebuilt (locale-live.js off).
+// Run this to EXTEND the dictionary, not on every build: es-bake.mjs consumes the
+// committed assets/locales/es.json. Needs the one npm dev dependency in this repo.
 // Harvest visible English strings from public/ + islands + sections, merge with
 // assets/locales/es.json, and machine-translate missing entries to Spanish.
 // Usage: node scripts/build-es-locale.mjs [--dry-run] [--limit=N]

@@ -7,6 +7,15 @@
  * oilib's own handler doesn't also fire. Values carry the oilib prefix grammar
  * (=exact %min-max @>=N ~type); we strip it and the island re-applies by bare value. */
 (function () {
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
   function init() {
     var form = document.getElementById('oi-filter-form');
     if (!form || form.getAttribute('data-filter-type') !== 'homepage') return;
@@ -23,7 +32,7 @@
         if (v) p.append(el.name, String(v).replace(/^[=%@~]/, ''));
       });
       var qs = p.toString();
-      window.location.href = '/new-homes/' + (qs ? '?' + qs : '');
+      window.location.href = u('/new-homes/') + (qs ? '?' + qs : '');
     }, true);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

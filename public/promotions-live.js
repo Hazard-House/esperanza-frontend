@@ -2,6 +2,25 @@
  * /api/public/promotions so admin edits reach the site without a full rebuild. */
 (function () {
   'use strict';
+  // ponytail: bake pass injects window.__ES_I18N on /es/ pages; English pages get {}.
+  var T = window.__ES_I18N || {};
+  function t(s) { return T[s] || s; }
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
+  // ponytail: /es/ is a URL namespace, not a different site — routing logic must see the bare
+  // English path, or every path-gated island silently no-ops on the Spanish twin.
+  function barePath() {
+    var p = location.pathname;
+    if (p === '/es') return '/';
+    return p.indexOf('/es/') === 0 ? (p.slice(3) || '/') : p;
+  }
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
   var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
@@ -72,22 +91,23 @@
   function communityBlurb(p) {
     var names = p.communityNames || [];
     if (!names.length) return '';
-    return 'Available in ' + names.length + ' communit' + (names.length === 1 ? 'y' : 'ies') + '.';
+    return t('Available in') + ' ' + names.length + (names.length === 1 ? t(' community.') : t(' communities.'));
   }
 
   function incentiveCard(p) {
     var href = promoHref(p);
     var img = fixHost(p.image);
     var title = p.title || '';
-    var cta = p.ctaLabel || 'View Details';
+    var cta = p.ctaLabel || t('View Details');
     var blurb = communityBlurb(p);
     var imgHtml = img
       ? '<div class="oi-aspect four-three"><img src="' + esc(img) + '" loading="lazy" class="oi-aspect-img rounded-4"></div>'
       : '';
     var blurbHtml = blurb ? '<p class="small">' + esc(blurb) + '</p>' : '';
-    var availHref = href.indexOf('/incentives/') === 0 ? href.replace(/#.*$/, '') + '#available' : '';
+    var availHref = u(href.indexOf('/incentives/') === 0 ? href.replace(/#.*$/, '') + '#available' : '');
+    href = u(href);
     var availBtn = availHref
-      ? '<div class="col-lg-6"><a class="btn btn-outline-primary" href="' + esc(availHref) + '" role="button">View Available Homes</a></div>'
+      ? '<div class="col-lg-6"><a class="btn btn-outline-primary" href="' + esc(availHref) + '" role="button">' + t('View Available Homes') + '</a></div>'
       : '';
     return '<div class="col-md-6 col-xl-4 mb-4" data-promo-id="' + esc(p.id) + '">' +
       '<div class="incentive-card d-flex flex-column rounded-4 h-100">' +
@@ -117,9 +137,9 @@
     if (!wrap) return;
     wrap.innerHTML = slides.map(function (p) {
       var text = p.bannerText || p.title || '';
-      var href = normalizeLink(p.ctaLink);
+      var href = u(normalizeLink(p.ctaLink));
       var btn = (p.showBannerButton !== false && href)
-        ? '<a href="' + esc(href) + '" class="btn btn-primary">' + esc(p.ctaLabel || 'Learn More!') + '</a>'
+        ? '<a href="' + esc(href) + '" class="btn btn-primary">' + esc(p.ctaLabel || t('Learn More!')) + '</a>'
         : '';
       return '<div class="swiper-slide"><p>' + esc(text) + '</p>' + btn + '</div>';
     }).join('');
@@ -131,7 +151,7 @@
   }
 
   function detailSlug() {
-    var m = location.pathname.match(/^\/incentives\/([^/]+)\/?$/);
+    var m = barePath().match(/^\/incentives\/([^/]+)\/?$/);
     return m ? m[1] : '';
   }
 
@@ -192,7 +212,7 @@
     }
   }
 
-  var path = location.pathname.replace(/\/index\.html$/, '/');
+  var path = barePath().replace(/\/index\.html$/, '/');
   fetchT(API + '/promotions').then(function (r) { return r.json(); }).then(function (res) {
     var promos = res.promotions || [];
     if (path === '/incentives/') refreshIncentivesIndex(promos);

@@ -6,6 +6,18 @@
  * if someone misses it). */
 (function () {
   'use strict';
+  // ponytail: bake pass injects window.__ES_I18N on /es/ pages; English pages get {}.
+  var T = window.__ES_I18N || {};
+  function t(s) { return T[s] || s; }
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
   var DATA = null, FETCHING = null;
   var FIELDS = [['community', 'community'], ['plan', 'plan'], ['quick move-in', 'spec'], ['lot number', 'lot'], ['blog', 'blog']];
 
@@ -40,16 +52,16 @@
 
   function render(ul, q, res) {
     if (!res.length) {
-      ul.innerHTML = '<p class="results-summary">Found <strong>0</strong> matching results for <strong>"' + esc(q) + '"</strong></p>';
+      ul.innerHTML = '<p class="results-summary">' + t('Found') + ' <strong>0</strong> ' + t('matching results for') + ' <strong>"' + esc(q) + '"</strong></p>';
     } else {
       var items = res.slice(0, 5).map(function (r, i) {
         var t = esc(r.text), lq = q.toLowerCase(), pos = r.text.toLowerCase().indexOf(lq);
         var marked = pos === -1 ? t : esc(r.text.slice(0, pos)) + '<mark class="highlight">' + esc(r.text.slice(pos, pos + q.length)) + '</mark>' + esc(r.text.slice(pos + q.length));
-        return '<li id="autoComplete_result_' + i + '" role="option" class="result-item" data-href="' + esc(r.href) + '">' +
+        return '<li id="autoComplete_result_' + i + '" role="option" class="result-item" data-href="' + esc(u(r.href)) + '">' +
           '<span class="result-item-match">' + marked + '</span>' +
-          '<span class="result-item-label"><i class="fa-oi-' + r.icon + '"></i> ' + esc(r.type) + '</span></li>';
+          '<span class="result-item-label"><i class="fa-oi-' + r.icon + '"></i> ' + esc(t(r.type)) + '</span></li>';
       }).join('');
-      ul.innerHTML = '<p class="results-summary">Displaying <strong>' + Math.min(5, res.length) + '</strong> out of <strong>' + res.length + '</strong> results</p>' + items;
+      ul.innerHTML = '<p class="results-summary">' + t('Displaying') + ' <strong>' + Math.min(5, res.length) + '</strong> ' + t('out of') + ' <strong>' + res.length + '</strong> ' + t('results') + '</p>' + items;
     }
     ul.hidden = false;
     var w = ul.closest('.autocomplete_wrapper'); if (w) w.setAttribute('aria-expanded', 'true');

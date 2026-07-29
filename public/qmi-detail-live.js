@@ -5,6 +5,25 @@
  * the scrape's own detail markup so it looks native. Config is window.__ESPERANZA. */
 (function () {
   'use strict';
+  // ponytail: bake pass injects window.__ES_I18N on /es/ pages; English pages get {}.
+  var T = window.__ES_I18N || {};
+  function t(s) { return T[s] || s; }
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
+  // ponytail: /es/ is a URL namespace, not a different site — routing logic must see the bare
+  // English path, or every path-gated island silently no-ops on the Spanish twin.
+  function barePath() {
+    var p = location.pathname;
+    if (p === '/es') return '/';
+    return p.indexOf('/es/') === 0 ? (p.slice(3) || '/') : p;
+  }
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE || '/api/public';
   // API fetch with a timeout so a hung API rejects (into the .catch -> notFound)
@@ -87,11 +106,11 @@
 
   function detailHTML(h) {
     var stats = '';
-    if (h.beds != null) stats += statRow(ICON.bed, esc(h.beds) + ' Bed');
-    if (h.baths != null) stats += statRow(ICON.bath, Number(h.baths).toFixed(1) + ' Bath');
-    if (h.stories != null) stats += statRow(ICON.story, esc(h.stories) + (h.stories == 1 ? ' Story' : ' Stories'));
-    if (h.livingSqft != null) stats += statRow(ICON.living, Number(h.livingSqft).toLocaleString() + ' Living Sq. Ft.');
-    if (h.totalSqft != null) stats += statRow(ICON.total, Number(h.totalSqft).toLocaleString() + ' Total Sq. Ft.');
+    if (h.beds != null) stats += statRow(ICON.bed, esc(h.beds) + t(' Bed'));
+    if (h.baths != null) stats += statRow(ICON.bath, Number(h.baths).toFixed(1) + t(' Bath'));
+    if (h.stories != null) stats += statRow(ICON.story, esc(h.stories) + (h.stories == 1 ? t(' Story') : t(' Stories')));
+    if (h.livingSqft != null) stats += statRow(ICON.living, Number(h.livingSqft).toLocaleString() + t(' Living Sq. Ft.'));
+    if (h.totalSqft != null) stats += statRow(ICON.total, Number(h.totalSqft).toLocaleString() + t(' Total Sq. Ft.'));
 
     var banners = '';
     if (h.availability) banners += '<div class="status-banner gray mt-2 align-top">' + esc(h.availability) + '</div>';
@@ -103,8 +122,8 @@
     var heroCol = h.fpImage ? 'col-12 col-lg-8' : 'col-12';
 
     var ctas = '';
-    if (h.pdfUrl) ctas += '<a href="' + esc(h.pdfUrl) + '" target="_blank" rel="noopener" class="btn btn-green me-2 mb-2">Download Brochure</a>';
-    ctas += '<a href="#offcanvas-contact" data-bs-toggle="offcanvas" role="button" aria-controls="offcanvas-contact" class="btn btn-auto btn-learn mb-2">Request Information</a>';
+    if (h.pdfUrl) ctas += '<a href="' + esc(u(h.pdfUrl)) + '" target="_blank" rel="noopener" class="btn btn-green me-2 mb-2">' + t('Download Brochure') + '</a>';
+    ctas += '<a href="#offcanvas-contact" data-bs-toggle="offcanvas" role="button" aria-controls="offcanvas-contact" class="btn btn-auto btn-learn mb-2">' + t('Request Information') + '</a>';
 
     var desc = h.description ? '<div class="wysiwyg pt-2 pt-lg-4">' + esc(h.description).replace(/\n/g, '<br>') + '</div>' : '';
 
@@ -113,11 +132,11 @@
       '<div class="col-12 col-md-9">' +
       '<div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div>' +
       '<h1 class="bodoni text-gray fs-1 ls-sm">' + esc(h.address) + '</h1>' +
-      (h.floorPlan ? '<div class="d-block text-brown">' + esc(h.floorPlan) + ' Floor Plan</div>' : '') +
-      '<div class="d-block text-brown">' + esc(h.community) + (h.city ? ' in ' + esc(h.city) + ', TX' : '') + '</div>' +
+      (h.floorPlan ? '<div class="d-block text-brown">' + esc(h.floorPlan) + t(' Floor Plan') + '</div>' : '') +
+      '<div class="d-block text-brown">' + esc(h.community) + (h.city ? t(' in ') + esc(h.city) + ', TX' : '') + '</div>' +
       banners +
       '</div>' +
-      '<div class="col-12 col-md-3"><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4">' + money(h.price) + '</div></div>' +
+      '<div class="col-12 col-md-3"><div class="overpass fs-7">' + t('PRICED AT') + '</div><div class="overpass bold text-dark-green fs-4">' + money(h.price) + '</div></div>' +
       '</div></div></section>' +
 
       '<div id="detail-gallery" class="container-fluid p-0"><div class="row m-0">' +
@@ -134,8 +153,8 @@
 
   function notFound() {
     return '<section class="header text-center bg-tan-white py-5"><div class="container">' +
-      '<h1 class="bodoni text-gray fs-2 ls-sm">This home is no longer available</h1>' +
-      '<p class="mt-3"><a href="/new-homes/available/" class="btn btn-green">View all Quick Move-Ins</a></p>' +
+      '<h1 class="bodoni text-gray fs-2 ls-sm">' + t('This home is no longer available') + '</h1>' +
+      '<p class="mt-3"><a href="' + u('/new-homes/available/') + '" class="btn btn-green">' + t('View all Quick Move-Ins') + '</a></p>' +
       '</div></section>';
   }
 
@@ -147,7 +166,7 @@
     // When the worker serves this shell at a canonical home URL (…/<community>/<slug>/)
     // there's no ?slug= — derive it from the last path segment so un-built home pages
     // (drafts / newly-published, no static page) still render live without a rebuild.
-    if (!slug && !id) slug = location.pathname.replace(/\/+$/, '').split('/').pop() || '';
+    if (!slug && !id) slug = barePath().replace(/\/+$/, '').split('/').pop() || '';
     // Explicit per-home draft preview: only ?preview=1 (the admin "Preview on staging"
     // link) hits the ungated /api/preview endpoint; the staging worker adds the secret.
     // Everything else uses the published list, so drafts never show unless asked for.

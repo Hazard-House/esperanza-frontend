@@ -10,6 +10,22 @@
  * Config injected by build.mjs as window.__ESPERANZA. */
 (function () {
   'use strict';
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
+  // ponytail: /es/ is a URL namespace, not a different site — routing logic must see the bare
+  // English path, or every path-gated island silently no-ops on the Spanish twin.
+  function barePath() {
+    var p = location.pathname;
+    if (p === '/es') return '/';
+    return p.indexOf('/es/') === 0 ? (p.slice(3) || '/') : p;
+  }
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE, TOKEN = CFG.MAPBOX_TOKEN;
   // API fetch with a timeout so a hung API rejects (into the .catch) instead of pending forever.
@@ -30,7 +46,7 @@
   var money = function (n) { return n ? '$' + Number(n).toLocaleString('en-US') : ''; };
   var slugify = function (s) { return String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
   var LINKS = { qmi: {}, community: {} }; // qmi-links.json community map: slug -> community page URL
-  function communityUrl(c) { return LINKS.community[c.slug] || LINKS.community[slugify(c.name)] || ''; }
+  function communityUrl(c) { return u(LINKS.community[c.slug] || LINKS.community[slugify(c.name)] || ''); }
 
   // Prefer the O'Neill coord (by name); fall back to the API's own coordinate.
   function coordOf(c) {
@@ -119,7 +135,7 @@
   function buildDetail(el, comms) {
     // Prefer the slug the generator baked into the page; fall back to URL parsing.
     var PAGE = window.__ESPERANZA_PAGE || {};
-    var segs = location.pathname.replace(/\/+$/, '').split('/');
+    var segs = barePath().replace(/\/+$/, '').split('/');
     var slug = PAGE.communitySlug || segs[segs.length - 2] || '';
     var c = comms.filter(function (x) { return x.slug === slug; })[0]
          || comms.filter(function (x) { return (x.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') === slug; })[0];

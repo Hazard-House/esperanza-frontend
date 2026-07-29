@@ -1,5 +1,9 @@
 # HANDOFF: Spanish locale (`/es/`) — bake-time build
 
+> **BUILT.** This document is the original plan, kept for the prior-art table and the
+> reasoning behind the architecture. For how the shipped system actually works, read
+> [`SPANISH_LOCALE.md`](SPANISH_LOCALE.md).
+
 **Goal:** a full Spanish version of the public site under the `/es/` URL namespace,
 generated **at bake time** by the same pipeline that builds the English pages. This
 revives the *goal* of PR #102 — but explicitly **not** its runtime-translation

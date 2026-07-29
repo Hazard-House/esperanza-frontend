@@ -8,6 +8,25 @@
  * Config: window.__ESPERANZA, page context: window.__ESPERANZA_PAGE (optional). */
 (function () {
   'use strict';
+  // ponytail: bake pass injects window.__ES_I18N on /es/ pages; English pages get {}.
+  var T = window.__ES_I18N || {};
+  function t(s) { return T[s] || s; }
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
+  // ponytail: /es/ is a URL namespace, not a different site — routing logic must see the bare
+  // English path, or every path-gated island silently no-ops on the Spanish twin.
+  function barePath() {
+    var p = location.pathname;
+    if (p === '/es') return '/';
+    return p.indexOf('/es/') === 0 ? (p.slice(3) || '/') : p;
+  }
   var CFG = window.__ESPERANZA || {};
   var PAGE = window.__ESPERANZA_PAGE || {};
   var API = CFG.API_BASE || '/api/public';
@@ -43,13 +62,13 @@
   }
 
   function communitySlugFromPath() {
-    var parts = location.pathname.replace(/^\/+|\/+$/g, '').split('/');
+    var parts = barePath().replace(/^\/+|\/+$/g, '').split('/');
     if (parts[0] === 'new-homes' && parts[1] === 'tx' && parts.length >= 4) return parts[3];
     return PAGE.communitySlug || '';
   }
   function isCommunityListingPage() {
     if (PAGE.type === 'community') return true;
-    var parts = location.pathname.replace(/^\/+|\/+$/g, '').split('/');
+    var parts = barePath().replace(/^\/+|\/+$/g, '').split('/');
     if (parts[0] !== 'new-homes' || parts[1] !== 'tx') return false;
     return parts.length === 4 || (parts.length === 5 && /^\d+$/.test(parts[4]));
   }
@@ -126,8 +145,8 @@
   }
 
   function homeUrl(h, commSlug) {
-    return LINKS.qmi[commSlug + '/' + (h.slug || '')] ||
-      (h.slug ? '/new-homes/tx/' + slugify(h.city) + '/' + commSlug + '/' + h.slug + '/' : '#');
+    return u(LINKS.qmi[commSlug + '/' + (h.slug || '')] ||
+      (h.slug ? '/new-homes/tx/' + slugify(h.city) + '/' + commSlug + '/' + h.slug + '/' : '#'));
   }
 
   function cardHTML(h, commSlug) {
@@ -141,25 +160,25 @@
     var availText = (fact.avail && fact.avail.text) || h.availability;
     var availColor = fact.avail ? fact.avail.color : (/available now/i.test(availText || '') ? 'green' : 'gray');
     if (availText) banners += '<div class="banner ' + availColor + '"' + (promoText ? ' style="top:2.5rem"' : '') + '>' + esc(availText) + '</div>';
-    if (fact.selfTour) banners += '<div class="banner-self-tour banner"><p>Self-Touring Available</p></div>';
+    if (fact.selfTour) banners += '<div class="banner-self-tour banner"><p>' + t('Self-Touring Available') + '</p></div>';
     var lotTxt = fact.lot || fmtLot(h.lot, h.community);
-    if (lotTxt) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">Lot #' + esc(lotTxt) + '</div>';
+    if (lotTxt) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">' + t('Lot #') + esc(lotTxt) + '</div>';
     function stat(icon, txt) {
       return '<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="' + icon + '" aria-hidden="true" loading="lazy" width="18">' + txt + '</div>';
     }
     if (fact.stories != null) h.stories = fact.stories;
     var stats = '';
-    if (h.beds != null) stats += stat(ICON.bed, esc(h.beds) + ' Bedrooms');
-    if (h.garage != null && String(h.garage) !== '0') stats += stat(ICON.garage, esc(h.garage) + ' Car Garage');
-    if (h.baths != null) stats += stat(ICON.bath, esc(h.baths) + ' Bathrooms');
-    if (h.stories != null) stats += stat(ICON.story, esc(h.stories) + (h.stories == 1 ? ' Story' : ' Stories'));
-    if (h.livingSqft != null) stats += stat(ICON.living, Number(h.livingSqft).toLocaleString() + ' <span class="overpass bold ms-1">Living</span>&nbsp;Sq. Ft.');
-    if (h.totalSqft != null) stats += stat(ICON.total, Number(h.totalSqft).toLocaleString() + ' <span class="overpass bold ms-1">Total</span>&nbsp;Sq. Ft.');
-    var collLine = h.collection ? '<div class="text-brown fs-9">' + esc(h.collection) + (/collection/i.test(h.collection) ? '' : ' Collection') + '</div>' : '';
+    if (h.beds != null) stats += stat(ICON.bed, esc(h.beds) + t(' Bedrooms'));
+    if (h.garage != null && String(h.garage) !== '0') stats += stat(ICON.garage, esc(h.garage) + t(' Car Garage'));
+    if (h.baths != null) stats += stat(ICON.bath, esc(h.baths) + t(' Bathrooms'));
+    if (h.stories != null) stats += stat(ICON.story, esc(h.stories) + (h.stories == 1 ? t(' Story') : t(' Stories')));
+    if (h.livingSqft != null) stats += stat(ICON.living, Number(h.livingSqft).toLocaleString() + t(' <span class="overpass bold ms-1">Living</span>&nbsp;Sq. Ft.'));
+    if (h.totalSqft != null) stats += stat(ICON.total, Number(h.totalSqft).toLocaleString() + t(' <span class="overpass bold ms-1">Total</span>&nbsp;Sq. Ft.'));
+    var collLine = h.collection ? '<div class="text-brown fs-9">' + esc(h.collection) + (/collection/i.test(h.collection) ? '' : t(' Collection')) + '</div>' : '';
     function commRow(vis) {
       return '<div class="row community-row m-0 p-2 w-100 ' + vis + '">' +
-        '<div class="col text-center text-lg-start py-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">COMMUNITY</div><div class="text-gray fs-9">' + esc(h.community) + '</div></div>' +
-        '<div class="col text-center text-lg-start py-1 border-start"><div class="row"><div class="col-auto mx-auto"><div class="text-brown overpass bold fs-9 text-decoration-underline">FLOOR PLAN</div><div class="text-gray fs-9">' + esc(h.floorPlan) + '</div>' + collLine + '</div></div></div>' +
+        '<div class="col text-center text-lg-start py-1"><div class="text-brown overpass bold fs-9 text-decoration-underline">' + t('COMMUNITY') + '</div><div class="text-gray fs-9">' + esc(h.community) + '</div></div>' +
+        '<div class="col text-center text-lg-start py-1 border-start"><div class="row"><div class="col-auto mx-auto"><div class="text-brown overpass bold fs-9 text-decoration-underline">' + t('FLOOR PLAN') + '</div><div class="text-gray fs-9">' + esc(h.floorPlan) + '</div>' + collLine + '</div></div></div>' +
         '</div>';
     }
     var est = '';
@@ -171,15 +190,15 @@
       if (promoRate && Number(promoRate) < RATE) {
         var pm = monthlyPayment(h.price, Number(promoRate), tax);
         var savings = (m - pm) * 360;
-        inner = '<span class="fs-9 overpass bold text-green">$' + pm.toFixed(2) + '/mo*</span>' +
-          '<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="' + m.toFixed(2) + '">$' + m.toFixed(2) + '/mo*</span>' +
-          '<p class="fs-9 overpass bold text-green mb-1">$' + savings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Savings Over 30 Years</p>';
+        inner = '<span class="fs-9 overpass bold text-green">$' + pm.toFixed(2) + t('/mo*') + '</span>' +
+          '<span class="text-strikethrough estimated-price fs-9 overpass bold text-green" data-price="' + m.toFixed(2) + '">$' + m.toFixed(2) + t('/mo*') + '</span>' +
+          '<p class="fs-9 overpass bold text-green mb-1">$' + savings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + t('Savings Over 30 Years') + '</p>';
       } else {
-        inner = '<span class="estimated-price fs-9 overpass bold text-green" data-price="' + m + '">$' + m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/mo*</span>';
+        inner = '<span class="estimated-price fs-9 overpass bold text-green" data-price="' + m + '">$' + m.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + t('/mo*') + '</span>';
       }
       est = '<a href="' + esc(url) + '#mortgage-calculator" class="lh-1">' +
-        '<span class="fs-9 overpass text-gray">ESTIMATED MONTHLY</span><br>' +
-        '<span class="fs-9 overpass text-gray">PRICE: </span>' + inner + '</a>';
+        '<span class="fs-9 overpass text-gray">' + t('ESTIMATED MONTHLY') + '</span><br>' +
+        '<span class="fs-9 overpass text-gray">' + t('PRICE:') + ' </span>' + inner + '</a>';
     }
     return '<div class="col-12 col-md-6 mb-2" data-qmi-slug="' + esc(h.slug || '') + '">' +
       '<div class="card spec-card spec-card-detail mb-0 border border-gray p-2 h-100"><div class="row m-0 h-100">' +
@@ -187,8 +206,8 @@
       '<div class="oi-aspect sixteen-nine four-three-xl three-two-xxl">' + banners +
       '<a href="' + esc(url) + '">' + (h.image ? '<img src="' + esc(h.image) + '" loading="lazy" class="oi-aspect-img" alt="' + esc(h.address) + '">' : '') + '</a>' +
       '<div class="hover-button d-none d-lg-flex"><div class="m-auto">' +
-      '<a href="' + esc(url) + '"><div class="btn card-button d-block my-3">VIEW HOME</div></a>' +
-      '<a href="' + esc(url) + '#request-a-tour"><div class="btn card-button green d-block my-3">REQUEST A TOUR</div></a>' +
+      '<a href="' + esc(url) + '"><div class="btn card-button d-block my-3">' + t('VIEW HOME') + '</div></a>' +
+      '<a href="' + esc(url) + '#request-a-tour"><div class="btn card-button green d-block my-3">' + t('REQUEST A TOUR') + '</div></a>' +
       '</div></div></div>' + commRow('d-none d-xl-flex') + '</div>' +
       '<div class="col-12 col-xl px-0 px-xl-1"><div class="card-body d-flex flex-column lh-2 h-100 px-xl-0 py-xl-1">' +
       '<div class="row"><a href="' + esc(url) + '"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">' + esc(h.address) + '</div></a>' +
@@ -199,7 +218,7 @@
   }
 
   function specsSectionHtml(cardsHtml, title) {
-    title = title || 'Quick Move-Ins';
+    title = title || t('Quick Move-Ins');
     return '<section id="specs" class="pagejump py-4 py-lg-5"><div class="container">' +
       '<div class="text-gray bodoni ls-sm fs-2 ps-0">' + esc(title) + '</div>' +
       '<div class="green-bar-light my-2 my-lg-3"></div>' +
@@ -259,7 +278,7 @@
     if (h2) return h2.textContent.trim();
     var t = sec.querySelector('.text-gray.bodoni.ls-sm.fs-2');
     if (t) return t.textContent.trim();
-    return 'Quick Move-Ins';
+    return t('Quick Move-Ins');
   }
 
   // Stale static builds used <h2> without green-bar-light. Re-wrap cards in the

@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { patchHtmlLocale, localeCookieHeader, stripEsPrefix, isEsPath, parseCookie, LOCALE_COOKIE } from '../locale.mjs';
+import { patchHtmlLocale, stripEsPrefix, isEsPath } from '../locale.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const PORT = Number(process.env.PORT || 8787);
@@ -63,14 +63,16 @@ function resolveFile(urlPath) {
   return null;
 }
 
-function patchDevHtml(html, req) {
+function patchDevHtml(html, req, reqPath) {
   // Strip ?v= from same-origin asset refs — Cursor preview drops query strings.
   let out = html.replace(/((?:href|src)="\/[^"?#]+)\?v=[A-Za-z0-9]+(")/g, '$1$2');
   if (!out.includes('name="dev-preview"')) {
     out = out.replace('</head>', '<meta name="dev-preview" content="bare-asset-paths"></head>');
   }
-  out = patchHtmlLocale(out);
-  const path = new URL(req.url || '/', `http://localhost:${PORT}`).pathname.replace(/\/index\.html$/, '/');
+  // reqPath is the RESOLVED path (an /es/ URL with no baked twin has already fallen back
+  // to English), so the document language always matches the page we actually serve.
+  const path = (reqPath || new URL(req.url || '/', `http://localhost:${PORT}`).pathname).replace(/\/index\.html$/, '/');
+  out = patchHtmlLocale(out, path);
   const incentiveDetail = /^\/incentives\/[^/]+\/?$/.test(path) && out.includes('id="available"');
   if (incentiveDetail && !out.includes('incentive-live.js')) {
     if (!out.includes('__ESPERANZA')) {
@@ -113,16 +115,10 @@ createServer(async (req, res) => {
     const url = new URL(req.url || '/', `http://localhost:${PORT}`);
     let path = decodeURIComponent(url.pathname);
 
-    if (isEsPath(path)) {
-      const bare = stripEsPrefix(path);
-      const dest = bare.endsWith('/') ? bare : `${bare}/`;
-      const u = new URL(req.url || '/', `http://localhost:${PORT}`);
-      u.pathname = dest;
-      u.searchParams.delete('lang');
-      res.writeHead(301, { Location: u.pathname + (u.search || '') });
-      res.end();
-      log(req, 301, 'es -> en');
-      return;
+    // /es/ is served from the baked twins in public/es (es-bake.mjs). No redirect: fall
+    // back to the English page only when no twin exists, mirroring worker.js.
+    if (isEsPath(path) && !resolveFile(path)) {
+      path = stripEsPrefix(path);
     }
 
     if (path.startsWith('/api/')) {
@@ -172,10 +168,7 @@ createServer(async (req, res) => {
       'X-Dev-Server': 'esperanza-dev-server',
     };
     if (ext === '.html') {
-      body = Buffer.from(patchDevHtml(body.toString('utf8'), req), 'utf8');
-      const langQ = url.searchParams.get('lang');
-      const hadEs = langQ === 'es' || parseCookie(req.headers.cookie)[LOCALE_COOKIE] === 'es';
-      if (langQ === 'es' || langQ === 'en' || hadEs) headers['Set-Cookie'] = localeCookieHeader('en');
+      body = Buffer.from(patchDevHtml(body.toString('utf8'), req, path), 'utf8');
     }
 
     res.writeHead(200, headers);
