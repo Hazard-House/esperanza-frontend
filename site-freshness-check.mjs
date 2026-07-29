@@ -1,12 +1,21 @@
 // =============================================================================
 // site-freshness-check.mjs — outcome-based staleness watchdog.
 //
-// SCOPE: the renderable QMI grid on /new-homes/available/ ONLY. It asserts that the
-// baked grid lists exactly the homes the live API reports as published. It says
-// NOTHING about promotion, city, community, floor-plan or blog freshness. Those ride
+// SCOPE: the renderable QMI grid on /new-homes/available/ and the blog search index at
+// /blog-index.json. It asserts (a) that the baked grid lists exactly the homes the live
+// API reports as published, and (b) that the blog search index lists exactly the
+// published posts that actually serve, with no entry that redirects. It says
+// NOTHING about promotion, city, community or floor-plan freshness. Those ride
 // the same dispatch path, so a dead dispatch surfaces here first, but a renderer bug
 // confined to one of those page types will not trip this check. Do not read a green
 // probe as "the whole site is fresh".
+//
+// Floor plans are deliberately EXCLUDED rather than forgotten: a renamed plan (Antinori
+// -> Santa Cruz) currently still serves and is still linked under its old slug, because
+// pruneStaleQmiPages() is QMI-only and nothing prunes floor-plan directories. Asserting
+// that today would open an incident that cannot be closed until the rename is fixed, and
+// an alert that never clears is one people stop reading — the failure mode this whole
+// file is designed around. Add it once that defect is resolved.
 //
 // WHY THIS WATCHES THE OUTCOME RATHER THAN THE MECHANISM.
 //
@@ -51,6 +60,9 @@ import { fileURLToPath } from 'node:url';
 const SITE = process.env.ESP_SITE || 'https://esperanzahomes.hazardhouse.ai';
 const API = process.env.ESP_API || 'https://esperanza-api.round-base-ed8c.workers.dev/api/public';
 const GRID_PATH = '/new-homes/available/';
+// The blog search island's data source. No sitemap exists on this site (/sitemap.xml
+// 404s), so this is also the only cheap live enumeration of published posts.
+const BLOG_INDEX_PATH = '/blog-index.json';
 
 // A card's slug is the authoritative per-home marker in baked list HTML
 // (render-lists.mjs:505 emits `<div ... data-qmi-slug="...">`). Counting cards or
@@ -96,6 +108,79 @@ export function compareFreshness(apiHomes, gridHtml) {
   const missing = [...expected].filter((s) => !baked.has(s)).sort(); // published but not on the grid
   const extra = [...baked].filter((s) => !expected.has(s)).sort();   // on the grid but unpublished
   return { expected: expected.size, baked: baked.size, missing, extra, drift: missing.length + extra.length };
+}
+
+// ---------------------------------------------------------------------------
+// BLOG SEARCH INDEX PARITY.
+//
+// Second surface, added after #125. `/blog-index.json` is what the blog search island
+// (blog-search.js) filters — it is the ONLY way a reader finds a post by keyword, and
+// there is no sitemap on this site (/sitemap.xml 404s), so it is also the only cheap
+// live enumeration of published posts.
+//
+// It drifted for a real and instructive reason: scripts/gen-blog-index.mjs was invoked
+// only from build.mjs, which CI never runs, so posts got baked as PAGES while the index
+// stayed frozen at whoever last ran a local build. Measured 2026-07-29: the live index
+// held 125 entries while the committed tree could produce 127, and a published post
+// ("Vista Verde is Off to a Strong Start", HTTP 200) matched no search query at all.
+// #125 wired the generator into deploy.yml + rebuild-details.yml. This asserts it stays
+// wired, because the failure is invisible — the post is reachable by URL and only
+// missing from search.
+//
+// TWO-SIDED ON PURPOSE, and the second side is not symmetric with the QMI grid:
+//   missing = published post absent from the index -> unfindable by search (the #125 bug)
+//   extra   = indexed post that does NOT serve 200 -> a DEAD SEARCH HIT
+// A retired post keeps its baked directory (nothing prunes blog dirs) but gains a
+// redirects.mjs entry, so naively indexing every baked dir puts a result in front of a
+// reader that immediately bounces them to /blog/. gen-blog-index.mjs excludes redirected
+// posts for exactly this reason; `extra` is what proves that exclusion is still working.
+// Verified 2026-07-29 after #125 deployed: 126/126 indexed posts serve 200, 0 dead hits.
+//
+// Deliberately NOT asserted here: floor-plan parity. A renamed plan (Antinori ->
+// Santa Cruz) still serves and is still linked under its old slug because
+// pruneStaleQmiPages() is QMI-only and nothing prunes floor-plan dirs. That is a known
+// open defect awaiting a product call on 301-vs-404, so asserting it would open an
+// incident that cannot close — the permanently-red alarm this file's design rejects.
+
+// The index is [{href,title,...}]; the slug is the href's single path segment. Kept
+// tolerant of a missing/blank href so a shape change cannot silently yield an empty set
+// that reads as "every post is missing".
+export function indexedBlogSlugs(index) {
+  const out = new Set();
+  for (const p of Array.isArray(index) ? index : []) {
+    const href = typeof p === 'string' ? p : p?.href;
+    const slug = String(href ?? '').replace(/^\/blog\//, '').replace(/\/+$/, '').trim();
+    if (slug && !slug.includes('/')) out.add(slug);
+  }
+  return out;
+}
+
+// Mirrors gen-blog-index.mjs: pagination/category/year dirs are not posts, and a post
+// the worker redirects must stay out of the index.
+export function publishedBlogSlugs(posts) {
+  const out = new Set();
+  for (const b of posts ?? []) {
+    const f = homeFields(b);
+    const slug = String(f?.slug ?? '').trim();
+    if (!slug) continue;
+    if (/^(category|page-\d+|\d{4})$/.test(slug)) continue;
+    out.add(slug);
+  }
+  return out;
+}
+
+/**
+ * Pure comparison. `redirectedSlugs` are the posts the worker 301s: they are expected to
+ * be absent from the index, so they are excluded from `missing` rather than counted as
+ * drift. `deadHits` are index entries that do not serve 200 — passed in by the probe,
+ * since liveness needs the network.
+ */
+export function compareBlogIndex(apiPosts, index, { redirectedSlugs = new Set(), deadHits = [] } = {}) {
+  const expected = publishedBlogSlugs(apiPosts);
+  const indexed = indexedBlogSlugs(index);
+  const missing = [...expected].filter((s) => !indexed.has(s) && !redirectedSlugs.has(s)).sort();
+  const extra = [...deadHits].sort();
+  return { expected: expected.size, indexed: indexed.size, missing, extra, drift: missing.length + extra.length };
 }
 
 // THE SETTLE WINDOW MUST OUTLAST THE EDGE CACHE, OR THIS CHECK CRIES WOLF.
@@ -203,29 +288,44 @@ async function main() {
       console.error(`site-freshness: PARSER ERROR — ${last.payloadCount} homes in the payload but 0 slugs parsed. Refusing to report drift.`);
       process.exit(2);
     }
+    if (last.blog.parserError) {
+      console.error(`site-freshness: PARSER ERROR — ${last.blog.payloadCount} blog posts in the payload but 0 slugs parsed. Refusing to report drift.`);
+      process.exit(2);
+    }
     // Recomputed from the live response so a worker-side TTL change can't leave this
     // check probing inside a cache window it doesn't know about.
     budgetMs = settleBudgetMs(last.maxAge, { attempts, delayMs });
     console.log(
       `site-freshness attempt ${i}: api_published=${last.expected} grid_baked=${last.baked}`
       + ` missing=${last.missing.length} extra=${last.extra.length}`
+      + ` | blog api=${last.blog.expected} indexed=${last.blog.indexed}`
+      + ` missing=${last.blog.missing.length} dead=${last.blog.extra.length}`
       + ` [cf-cache-status=${last.cacheStatus ?? 'n/a'} age=${last.age ?? 'n/a'} max-age=${Number.isFinite(last.maxAge) ? last.maxAge : 'n/a'}]`
     );
-    if (!last.drift) {
-      console.log('site-freshness: grid matches the live API');
+    // Both surfaces ride the same deploy, so they settle together and share one budget.
+    const totalDrift = last.drift + last.blog.drift;
+    if (!totalDrift) {
+      console.log('site-freshness: grid matches the live API, and the blog search index matches the published posts');
       return;
     }
     const elapsed = Date.now() - startedAt;
     if (elapsed + delayMs > budgetMs) {
-      console.log(`  drift of ${last.drift} still present after ${Math.round(elapsed / 1000)}s (settle budget ${Math.round(budgetMs / 1000)}s, edge max-age ${Number.isFinite(last.maxAge) ? last.maxAge : '?'}s) — treating as real`);
+      console.log(`  drift of ${totalDrift} still present after ${Math.round(elapsed / 1000)}s (settle budget ${Math.round(budgetMs / 1000)}s, edge max-age ${Number.isFinite(last.maxAge) ? last.maxAge : '?'}s) — treating as real`);
       break;
     }
-    console.log(`  drift of ${last.drift} — the edge may still be serving a pre-deploy copy (age=${last.age ?? '?'}s of max-age=${Number.isFinite(last.maxAge) ? last.maxAge : '?'}s); waiting ${delayMs}ms and re-probing`);
+    console.log(`  drift of ${totalDrift} — the edge may still be serving a pre-deploy copy (age=${last.age ?? '?'}s of max-age=${Number.isFinite(last.maxAge) ? last.maxAge : '?'}s); waiting ${delayMs}ms and re-probing`);
     await new Promise((r) => setTimeout(r, delayMs));
   }
   if (last.missing.length) console.log(`  published but NOT on grid: ${last.missing.slice(0, 20).join(', ')}`);
   if (last.extra.length) console.log(`  on grid but NOT published: ${last.extra.slice(0, 20).join(', ')}`);
-  console.error(`site-freshness: DRIFT of ${last.drift} home(s) persisted across ${attempts} probes — the public grid does not match the live API.`);
+  if (last.blog.missing.length) console.log(`  published but NOT in the blog search index (unfindable by search): ${last.blog.missing.slice(0, 20).join(', ')}`);
+  if (last.blog.extra.length) console.log(`  in the blog search index but NOT serving 200 (dead search hits): ${last.blog.extra.slice(0, 20).join(', ')}`);
+  const totalDrift = last.drift + last.blog.drift;
+  const what = [
+    last.drift ? `${last.drift} home(s) between the public grid and the live API` : null,
+    last.blog.drift ? `${last.blog.drift} post(s) between the blog search index and the published posts` : null,
+  ].filter(Boolean).join(' and ');
+  console.error(`site-freshness: DRIFT of ${totalDrift} persisted across ${attempts} probes — ${what}.`);
   process.exit(1);
 }
 
@@ -256,7 +356,52 @@ async function probeOnce() {
   // baked card as stale — a 206-home false positive, which is exactly what the
   // first run of this script did. Zero parsed slugs from a non-empty payload is a
   // parser bug, never a real site state, so fail loudly and distinctly.
-  return { ...r, parserError: r.expected === 0, payloadCount: homes.length, cacheStatus, age, maxAge };
+  const blog = await probeBlogIndex();
+  return { ...r, parserError: r.expected === 0, payloadCount: homes.length, cacheStatus, age, maxAge, blog };
+}
+
+// Blog-index half of the probe. Separate function because it has its own failure modes
+// and its own parser guard; a throw here is caught by main()'s transient-error path just
+// like a grid fetch failure, so a network blip cannot be read as drift.
+async function probeBlogIndex() {
+  const idxRes = await fetch(`${SITE}${BLOG_INDEX_PATH}`, { headers: { 'Cache-Control': 'no-cache' } });
+  if (!idxRes.ok) throw new Error(`${BLOG_INDEX_PATH} -> ${idxRes.status}`);
+  const index = await idxRes.json();
+  if (!Array.isArray(index)) throw new Error(`${BLOG_INDEX_PATH} is not an array — refusing to judge blog freshness`);
+
+  const apiRes = await fetch(`${API}/blogs`, { headers: { 'Cache-Control': 'no-cache' } });
+  if (!apiRes.ok) throw new Error(`api /blogs -> ${apiRes.status}`);
+  const payload = await apiRes.json();
+  const posts = Array.isArray(payload) ? payload : (payload.blogs ?? payload.posts ?? []);
+  if (!posts.length) throw new Error('empty API blog payload — refusing to judge blog freshness');
+
+  // A published post absent from the index is only drift if it actually SERVES. A
+  // retired post keeps its baked dir and gains a redirects.mjs entry, so it is expected
+  // to be both absent from the index and non-200 — that is correct behaviour, not a bug.
+  // Resolve those with HEADs rather than hardcoding the redirect table, so this stays
+  // honest when the table changes. Only the candidates need checking (2 today), not all
+  // 127 posts, so the cost is bounded by the size of the DISAGREEMENT, not the corpus.
+  const indexed = indexedBlogSlugs(index);
+  const candidates = [...publishedBlogSlugs(posts)].filter((s) => !indexed.has(s));
+  const redirectedSlugs = new Set();
+  for (const slug of candidates) {
+    const res = await fetch(`${SITE}/blog/${slug}/`, { redirect: 'manual', headers: { 'Cache-Control': 'no-cache' } });
+    if (res.status >= 300 && res.status < 400) redirectedSlugs.add(slug);
+  }
+
+  // The other direction: an INDEXED post that does not serve 200 is a dead search hit.
+  // Every entry has to be checked to prove this, but it is cheap — measured ~12s for the
+  // full set sequentially against production, well inside the 15-minute cadence.
+  const deadHits = [];
+  for (const slug of indexed) {
+    const res = await fetch(`${SITE}/blog/${slug}/`, { redirect: 'manual', headers: { 'Cache-Control': 'no-cache' } });
+    if (res.status !== 200) deadHits.push(`${slug} (${res.status})`);
+  }
+
+  const r = compareBlogIndex(posts, index, { redirectedSlugs, deadHits });
+  // Same parser-guard reasoning as the grid: a non-empty payload that yields zero
+  // expected slugs means the shape changed, not that every post vanished.
+  return { ...r, parserError: r.expected === 0, payloadCount: posts.length };
 }
 
 // ENTRY-POINT GUARD, matching the repo convention (data.mjs:235, render-lists.mjs,
@@ -297,6 +442,63 @@ if (process.argv.includes('--check') && IS_ENTRY) {
   );
   // Flat shape must keep working, so the check survives an API flattening.
   assert.deepEqual([...publishedSlugs([{ slug: 'flat-st' }])], ['flat-st'], 'flat shape still supported');
+
+  // ---- blog search index parity -------------------------------------------------
+  // Slug extraction from the real artifact shape ([{href,title,...}]).
+  assert.deepEqual([...indexedBlogSlugs([{ href: '/blog/a-post/' }, { href: '/blog/b-post/' }])].sort(), ['a-post', 'b-post']);
+  assert.equal(indexedBlogSlugs([]).size, 0, 'empty index yields no slugs');
+  assert.equal(indexedBlogSlugs(null).size, 0, 'non-array index yields no slugs');
+  assert.equal(indexedBlogSlugs([{ href: '' }, { href: null }, {}]).size, 0, 'blank hrefs ignored');
+  // A paginated href is not a post; treating it as one would invent drift.
+  assert.equal(indexedBlogSlugs([{ href: '/blog/?i=0&page=2' }]).size, 1, 'query-string href keeps its single segment');
+
+  // Airtable-shaped and flat payloads both work, mirroring the QMI reasoning above.
+  assert.deepEqual([...publishedBlogSlugs([{ fields: { slug: 'a-post' } }])], ['a-post'], 'nested blog payload');
+  assert.deepEqual([...publishedBlogSlugs([{ slug: 'b-post' }])], ['b-post'], 'flat blog payload');
+  assert.deepEqual([...publishedBlogSlugs([{ slug: '' }, { title: 'no slug' }])], [], 'slugless posts skipped');
+  // Mirrors gen-blog-index.mjs's exclusions so the two cannot disagree.
+  assert.deepEqual([...publishedBlogSlugs([{ slug: 'page-3' }, { slug: 'category' }, { slug: '2026' }])], [],
+    'pagination/category/year dirs are not posts');
+
+  // Healthy state: every published post is indexed, nothing dead.
+  {
+    const r = compareBlogIndex([{ slug: 'a' }, { slug: 'b' }], [{ href: '/blog/a/' }, { href: '/blog/b/' }]);
+    assert.equal(r.drift, 0, 'matching index reports no drift');
+    assert.equal(r.expected, 2);
+    assert.equal(r.indexed, 2);
+  }
+  // THE #125 BUG: a published, serving post missing from the index is unfindable by
+  // search even though its URL works. This is the case that shipped undetected.
+  {
+    const r = compareBlogIndex([{ slug: 'a' }, { slug: 'unfindable' }], [{ href: '/blog/a/' }]);
+    assert.deepEqual(r.missing, ['unfindable'], 'published post absent from the index is drift');
+    assert.equal(r.drift, 1);
+  }
+  // A RETIRED post is expected to be absent: it 301s, so its absence is correct and must
+  // NOT be drift. Without this the watchdog would fire permanently on healthy behaviour.
+  {
+    const r = compareBlogIndex([{ slug: 'a' }, { slug: 'retired' }], [{ href: '/blog/a/' }],
+      { redirectedSlugs: new Set(['retired']) });
+    assert.deepEqual(r.missing, [], 'redirected post absent from the index is NOT drift');
+    assert.equal(r.drift, 0);
+  }
+  // THE OTHER DIRECTION: an indexed entry that does not serve 200 is a dead search hit —
+  // what would have shipped if gen-blog-index.mjs indexed every baked dir.
+  {
+    const r = compareBlogIndex([{ slug: 'a' }], [{ href: '/blog/a/' }, { href: '/blog/retired/' }],
+      { deadHits: ['retired (301)'] });
+    assert.deepEqual(r.extra, ['retired (301)'], 'indexed non-200 entry is drift');
+    assert.equal(r.drift, 1);
+  }
+  // Both directions at once still sum, so one failure cannot mask the other.
+  {
+    const r = compareBlogIndex([{ slug: 'a' }, { slug: 'missing-one' }], [{ href: '/blog/a/' }, { href: '/blog/dead/' }],
+      { deadHits: ['dead (404)'] });
+    assert.equal(r.drift, 2, 'missing and dead-hit drift are additive');
+  }
+  // Parser guard: a non-empty payload yielding zero expected slugs is a shape change,
+  // not "every post vanished" — the 206-home false positive this file already learned.
+  assert.equal(compareBlogIndex([{ notASlug: 'x' }], []).expected, 0, 'shape change yields expected=0 for the caller to catch');
 
   // The nested-shape regression, end to end: had homeFields() not existed, this
   // would report both cards as stale extras instead of a clean match.
