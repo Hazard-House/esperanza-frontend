@@ -418,12 +418,19 @@ async function handle(request, env, esFallback = false) {
         } catch { /* fall through to the 404 page */ }
       }
 
-      // A /es/ URL with no baked twin. Spanish is additive, so this must never 404:
-      // serve the Spanish live detail shell for home URLs (new homes appear between
-      // rebuilds), otherwise hand the bare path to the English pipeline — which also
-      // gets us every legacy redirect shape for free. `esFallback` caps the recursion.
+      // A /es/ URL with no baked twin. A stale canonical QMI gets the same verified
+      // manifest redirect as English, localized to its Spanish community; a republished
+      // or ambiguous home still reaches the live shell. Spanish is otherwise additive,
+      // so new home URLs between rebuilds must not 404. `esFallback` caps recursion.
       if (isEsPath(p) && !esFallback) {
         const bare = stripEsPrefix(p);
+        const canonicalQmi = bare.match(/^\/new-homes\/tx\/[^/]+\/[^/]+\/([^/]+)\/?$/);
+        if (canonicalQmi) {
+          const target = await staleQmiRedirectTarget(request, env, bare.endsWith("/") ? bare : bare + "/");
+          if (target && (await qmiSlugIsPublished(canonicalQmi[1], env)) === false) {
+            return Response.redirect(url.origin + toEsPath(target), 301);
+          }
+        }
         if (isUnbuiltHomePath(bare)) {
           const shell = await env.ASSETS.fetch(new Request(new URL(toEsPath("/new-homes/available/home/"), request.url)));
           if (shell.status === 200) return liveShell(shell);
