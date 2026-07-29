@@ -13,7 +13,7 @@ import { renderFloorplan } from './render-floorplan.mjs';
 import { setBuildRate, setLivePromoTexts, setHomePromoEntitlements } from './sections.mjs';
 import { livePromoTexts, homePromoEntitlements } from './promo-utils.mjs';
 import { regenerateListPages, isRenderableHome } from './render-lists.mjs';
-import { hydrateCommunity, hydrateCommunityStatus, applyHoaLinks } from './hydrate-scraped.mjs';
+import { hydrateCommunity, hydrateCommunityStatus, applyHoaLinks, hydrateCityHero } from './hydrate-scraped.mjs';
 import { slugify } from './data.mjs';
 import { ensureCommunityHomesLive, ensureCommunityCopyLive } from './rewrite.mjs';
 import { classifyDetail } from './build.mjs';
@@ -219,6 +219,25 @@ export function rehydrateScrapedCommunities(d, { outDir = OUT } = {}) {
   return { updated, skipped, checked: paths.size };
 }
 
+// City landing pages (/{slug}/) ship 1:1 from the June-8 scrape with the hero copy
+// frozen — community-copy-live.js refreshes it at runtime (build.mjs injected the tag
+// via CONTAINER_ISLANDS), but the baked HTML never followed a D1 edit, so crawlers and
+// no-JS visitors kept seeing the scrape copy indefinitely. Bake heroDescription on
+// every CI run, same pattern as rehydrateScrapedCommunities. Idempotent: replacing the
+// same innerHTML twice is a fixed point.
+export function rehydrateCityPages(d, { outDir = OUT } = {}) {
+  let updated = 0, skipped = 0;
+  for (const city of d.cities || []) {
+    if (!city.slug) { skipped++; continue; }
+    const file = join(outDir, city.slug, 'index.html');
+    if (!existsSync(file)) { skipped++; continue; }
+    const raw = readFileSync(file, 'utf8');
+    const html = hydrateCityHero(raw, city);
+    if (html !== raw) { writeFileSync(file, html); updated++; }
+  }
+  return { updated, skipped, checked: (d.cities || []).length };
+}
+
 // Communities with a scraped ID path in ship.txt ship 1:1 from the O'Neill page
 // (rescrape-community.mjs). CI must not overwrite their clean slug path with the
 // generated renderCommunity() template.
@@ -332,6 +351,7 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   writeFileSync(join(OUT, 'qmi-images.json'), JSON.stringify(imagesMap(d.qmis)));
   const strippedCards = stripIncentivesPages(new Set(d.qmis.map((h) => h.slug)));
   const { updated: rehydrated } = rehydrateScrapedCommunities(d);
+  const { updated: cityPages } = rehydrateCityPages(d);
   const hoaUpdated = refreshHoaLinksInCommunityTrees(d);
   // Blog pages from D1 (was: frozen June-8 scrape). Non-fatal so a blog hiccup never blocks
   // the pricing/inventory deploy; the count-parity guard still logs loudly on a shortfall.
@@ -348,8 +368,8 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // load-bearing safeguard; this ordering is safe because no later step consumes prunedQmi.
   const es = await bakeSpanish().catch(e => { console.error('es-bake:', e.message); return { pages: 0 }; });
   const prunedQmi = pruneStaleQmiPages(d.qmis);
-  console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; ${es.pages} Spanish pages`);
-  return { qmi: nqmi, prunedQmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, lists, islands, es: es.pages };
+  console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; ${cityPages} city hero copies baked; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; ${es.pages} Spanish pages`);
+  return { qmi: nqmi, prunedQmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, cityPages, hoaUpdated, lists, islands, es: es.pages };
 }
 
 function pruneCheck() {
@@ -421,20 +441,55 @@ function rehydrateCheck() {
   try {
     const file = join(outDir, rel);
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, '<html><body><section id="overview"><div class="wysiwyg">frozen June-8 copy</div></section></body></html>');
-    const d = { communities: [{ slug, name: slug, city, priceFrom: 0, homes: [], plans: [], hoaLinks: [] }] };
+    writeFileSync(file, '<html><body><section id="overview"><div class="wysiwyg">frozen June-8 copy</div>'
+      + '<div id="amenities-list" class="d-none"><div class="my-2">Frozen Amenity</div></div></section></body></html>');
+    const d = { communities: [{ slug, name: slug, city, priceFrom: 0, homes: [], plans: [], hoaLinks: [], description: 'Fresh D1 description.', amenities: '- Fresh Amenity' }] };
     const r1 = rehydrateScrapedCommunities(d, { outDir });
     assert.equal(r1.updated, 1, 'fixture community page rewritten');
+    const html1 = readFileSync(file, 'utf8');
     const tagCount = h => (h.match(/src="\/community-copy-live\.js"/g) || []).length;
-    assert.equal(tagCount(readFileSync(file, 'utf8')), 1,
+    assert.equal(tagCount(html1), 1,
       'scraped community page gains exactly one community-copy-live.js tag');
+    // D1 copy must be BAKED into the shipped HTML (SEO/no-JS), not only island-refreshed.
+    assert(html1.includes('<p>Fresh D1 description.</p>') && !html1.includes('frozen June-8 copy'),
+      'D1 description baked over the frozen scrape copy');
+    assert(html1.includes('<li>Fresh Amenity</li>') && !html1.includes('Frozen Amenity'),
+      'D1 amenities baked over the frozen scrape copy');
     rehydrateScrapedCommunities(d, { outDir });
-    assert.equal(tagCount(readFileSync(file, 'utf8')), 1,
+    const html2 = readFileSync(file, 'utf8');
+    assert.equal(tagCount(html2), 1,
       'community-copy-live.js injection is idempotent across rehydrate runs');
+    assert.equal(html2, html1, 'copy bake is idempotent across rehydrate runs');
   } finally { rmSync(outDir, { recursive: true, force: true }); }
   console.log('generate-details.mjs rehydrateCheck() passed');
 }
 
+// ponytail self-check: a city-landing fixture must get its frozen hero copy replaced
+// by D1 heroDescription via rehydrateCityPages — the bake that keeps crawlers/no-JS
+// visitors in sync with what community-copy-live.js shows humans at runtime.
+function cityCheck() {
+  const outDir = mkdtempSync(join(tmpdir(), 'esperanza-city-'));
+  try {
+    const file = join(outDir, 'mcallen', 'index.html');
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, '<html><body><h1 class="city-page-hero-title">McAllen, Texas</h1>'
+      + '<div class="wysiwyg text-white city-page-wysiwyg"><p>frozen June-8 city copy</p></div></body></html>');
+    const d = { cities: [
+      { slug: 'mcallen', name: 'McAllen', heroDescription: 'Fresh McAllen hero copy.' },
+      { slug: 'no-such-page', name: 'Nowhere', heroDescription: 'x' }, // baked page absent -> skipped, not fatal
+    ] };
+    const r1 = rehydrateCityPages(d, { outDir });
+    assert.equal(r1.updated, 1, 'city page with D1 copy rewritten');
+    assert.equal(r1.skipped, 1, 'city without a baked page skipped');
+    const html1 = readFileSync(file, 'utf8');
+    assert(html1.includes('Fresh <span style="font-weight: 700;">McAllen</span> hero copy.')
+      && !html1.includes('frozen June-8 city copy'), 'D1 hero copy baked over the frozen scrape copy');
+    const r2 = rehydrateCityPages(d, { outDir });
+    assert.equal(r2.updated, 0, 'city hero bake is idempotent (second run writes nothing)');
+  } finally { rmSync(outDir, { recursive: true, force: true }); }
+  console.log('generate-details.mjs cityCheck() passed');
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  if (process.argv.includes('--check')) { pruneCheck(); rehydrateCheck(); } else generateDetails();
+  if (process.argv.includes('--check')) { pruneCheck(); rehydrateCheck(); cityCheck(); } else generateDetails();
 }

@@ -169,6 +169,90 @@ function sub(html, re, fn, page, step) {
   return html.replace(re, fn);
 }
 
+// ---------------------------------------------------------------- CMS copy bake
+// D1 description/amenities/city-hero copy, baked at build time so crawlers and no-JS
+// visitors see current copy (community-copy-live.js refreshes the same targets at
+// runtime for humans; before this bake, the baked HTML stayed frozen at the June-8
+// scrape and only the island ever showed an admin edit).
+//
+// copyToHtml / cityCopyHtml MIRROR islands/community-copy-live.js — the island is a
+// classic browser script (no exports), so the normalizers are duplicated here; keep
+// the two in sync or the baked copy and the island's runtime rewrite will disagree.
+export function copyToHtml(raw, asList) {
+  const s = String(raw == null ? '' : raw).trim();
+  if (!s) return '';
+  if (s.charAt(0) === '<') return s; // already HTML (TipTap rich text)
+  const lines = s.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return '';
+  const allBullets = lines.every(l => /^[-*]\s+/.test(l));
+  if (asList || allBullets) {
+    return '<ul>' + lines.map(l => `<li>${esc(l.replace(/^[-*]\s+/, ''))}</li>`).join('') + '</ul>';
+  }
+  return lines.map(l => `<p>${esc(l)}</p>`).join('');
+}
+export function cityCopyHtml(raw, cityName) {
+  const s = String(raw == null ? '' : raw).trim();
+  if (!s) return '';
+  if (s.charAt(0) === '<') return s;
+  let html = esc(s).replace(/\r?\n/g, '<br>');
+  if (cityName) {
+    const cn = esc(cityName);
+    html = html.replace(cn, `<span style="font-weight: 700;">${cn}</span>`);
+  }
+  return html;
+}
+
+// Replace the balanced innerHTML of the first div matching openRe (same depth-counting
+// approach as bakeRecommend — the scraped description is Word-export div soup that no
+// single regex can span safely). Returns null when the open tag or its close is missing.
+function replaceDivInner(html, openRe, newInner) {
+  const m = html.match(openRe);
+  if (!m) return null;
+  const start = m.index + m[0].length;
+  let depth = 1, i = -1;
+  const tag = /<\/?div\b/g;
+  tag.lastIndex = start;
+  let t;
+  while (depth > 0 && (t = tag.exec(html))) { depth += t[0][1] === '/' ? -1 : 1; i = t.index; }
+  if (depth !== 0) return null;
+  return html.slice(0, start) + newInner + html.slice(i);
+}
+
+// Bake c.description into the overview wysiwyg and c.amenities into #amenities-list —
+// the same two targets community-copy-live.js rewrites at runtime. Only when D1 has a
+// value (empty D1 keeps the frozen scrape copy, matching the island); scoped to the
+// #overview section so the description swap can never touch another wysiwyg block.
+export function bakeCommunityCopy(html, c, page) {
+  if (c.description != null && String(c.description).trim()) {
+    const secStart = html.indexOf('<section id="overview"');
+    if (secStart === -1) miss(page, 'overview section (description bake)');
+    else {
+      const secEnd = html.indexOf('</section>', secStart);
+      const seg = html.slice(secStart, secEnd);
+      // Description div: the overview wysiwyg WITHOUT the amenities id (scraped shape:
+      // class="wysiwyg pt-2 pt-lg-4"; amenities is a separate #amenities-list div).
+      const out = replaceDivInner(seg, /<div class="wysiwyg[^"]*">/, copyToHtml(c.description, false));
+      if (out === null) miss(page, 'overview wysiwyg (description bake)');
+      else html = html.slice(0, secStart) + out + html.slice(secEnd);
+    }
+  }
+  if (c.amenities != null && String(c.amenities).trim()) {
+    const out = replaceDivInner(html, /<div [^>]*id="amenities-list"[^>]*>/, copyToHtml(c.amenities, true));
+    if (out === null) miss(page, 'amenities list (amenities bake)');
+    else html = out;
+  }
+  return html;
+}
+
+// City landing page (/{slug}/): bake heroDescription into .city-page-wysiwyg — the
+// same target the island rewrites at runtime. Empty D1 keeps the frozen copy.
+export function hydrateCityHero(html, city) {
+  if (!(city.heroDescription != null && String(city.heroDescription).trim())) return html;
+  const out = replaceDivInner(html, /<div class="[^"]*\bcity-page-wysiwyg\b[^"]*">/, cityCopyHtml(city.heroDescription, city.name));
+  if (out === null) { miss(`city ${city.slug}`, 'city hero wysiwyg'); return html; }
+  return out;
+}
+
 // Community page (new-homes/tx/<city>/<slug>/<id>/):
 // 1. hero "Starting at $X" -> c.priceFrom
 // 2. overview sidebar "HOMES FROM $X" -> c.priceFrom (same close-out / coming-soon
@@ -316,6 +400,11 @@ export function hydrateCommunity(html, c, d) {
         .replace(/(<div class="price">)\$[\d,]+(<\/div>)/g, (_, a, b) => a + money(price) + b);
     });
   } catch (e) { miss(page, `plan prices (${e.message})`); }
+  // D1 CMS copy LAST-but-before-graphic: description/amenities replace the frozen
+  // scrape copy; injectOverviewGraphic must run after so the community's promo graphic
+  // is re-appended inside the freshly baked wysiwyg (same order as the island, which
+  // appends OVERVIEW_GRAPHICS after its API refresh).
+  html = bakeCommunityCopy(html, c, page);
   html = injectOverviewGraphic(html, c);
   html = applyHoaLinks(html, c);
   html = fixPdfFeaturesLinks(html);
@@ -495,6 +584,48 @@ function demo() {
   const pf = fixPdfFeaturesLinks('<a href="/pdf-features/tx/brownsville/villas-las-lagunas/17778/">x</a>');
   assert(pf.includes('href="/pdf-features/tx/brownsville/villas-las-lagunas/17778/Features%20List.pdf"'), 'pdf-features direct file link');
   assert(fixPdfFeaturesLinks(pf) === pf, 'fixPdfFeaturesLinks idempotent');
+
+  // ---- CMS copy bake (description / amenities / city hero) ----
+  assert(copyToHtml('- Pool\n- Gym', true) === '<ul><li>Pool</li><li>Gym</li></ul>', 'copyToHtml markdown list');
+  assert(copyToHtml('<ul><li>Pool</li></ul>', true) === '<ul><li>Pool</li></ul>', 'copyToHtml html passthrough');
+  assert(copyToHtml('Line one.\nLine two.') === '<p>Line one.</p><p>Line two.</p>', 'copyToHtml prose -> paragraphs');
+  assert(copyToHtml('a & b < c') === '<p>a &amp; b &lt; c</p>', 'copyToHtml escapes plain text');
+  assert(copyToHtml('  ') === '', 'copyToHtml blank -> empty');
+  assert(cityCopyHtml('Welcome to Brownsville, TX', 'Brownsville') === 'Welcome to <span style="font-weight: 700;">Brownsville</span>, TX', 'cityCopyHtml bolds name');
+  assert(cityCopyHtml('<p>rich</p>', 'X') === '<p>rich</p>', 'cityCopyHtml html passthrough');
+  // Word-export div soup (the real scraped description shape): the NESTED divs must be
+  // consumed by the swap, not truncated at the first inner </div>.
+  const soup = '<section id="overview"><div class="col-12"><div class="wysiwyg pt-2 pt-lg-4">'
+    + '<div class="OutlineElement"><p><span>frozen June-8 copy</span></p></div><div class="OutlineElement"><p>more frozen</p></div>'
+    + '</div></div>'
+    + '<div id="amenities-list" class="d-none fs-8 px-3 py-2"><div class="my-2">Old Amenity</div></div></section>'
+    + '<div class="wysiwyg">other section copy</div>';
+  let baked = bakeCommunityCopy(soup, { description: 'Fresh D1 copy.', amenities: '- Pool\n- Trails' }, 'community test');
+  assert(baked.includes('<div class="wysiwyg pt-2 pt-lg-4"><p>Fresh D1 copy.</p></div>'), 'description replaces nested div soup');
+  assert(!baked.includes('frozen June-8 copy') && !baked.includes('more frozen'), 'no frozen description survives');
+  assert(baked.includes('<div id="amenities-list" class="d-none fs-8 px-3 py-2"><ul><li>Pool</li><li>Trails</li></ul></div>'), 'amenities baked as list');
+  assert(!baked.includes('Old Amenity'), 'frozen amenities replaced');
+  assert(baked.includes('other section copy'), 'wysiwyg outside #overview untouched');
+  assert(bakeCommunityCopy(baked, { description: 'Fresh D1 copy.', amenities: '- Pool\n- Trails' }, 'community test') === baked, 'bakeCommunityCopy idempotent');
+  // empty D1 values -> frozen copy stays (matches the island's only-overwrite-when-set rule)
+  assert(bakeCommunityCopy(soup, { description: '', amenities: null }, 'community test') === soup, 'empty D1 keeps frozen copy');
+  // generated pages (renderCommunity) put the description in a bare .wysiwyg without
+  // the pt-2 classes — the open-tag regex must match that shape too.
+  const gen = '<section id="overview" class="pagejump"><div class="wysiwyg"><p>old</p></div></section>';
+  assert(bakeCommunityCopy(gen, { description: 'new' }, 'community test').includes('<div class="wysiwyg"><p>new</p></div>'), 'generated-page wysiwyg shape matched');
+  // city hero
+  const cityPage = '<h1 class="city-page-hero-title">McAllen, Texas</h1>'
+    + '<div class="wysiwyg text-white city-page-wysiwyg"><p>Frozen city intro <b>McAllen, Texas</b>.</p></div><div>rest</div>';
+  const cityOut = hydrateCityHero(cityPage, { slug: 'mcallen', name: 'McAllen', heroDescription: 'Welcome to McAllen today.' });
+  assert(cityOut.includes('city-page-wysiwyg">Welcome to <span style="font-weight: 700;">McAllen</span> today.</div>'), 'city hero baked with bolded name');
+  assert(!cityOut.includes('Frozen city intro'), 'frozen city copy replaced');
+  assert(hydrateCityHero(cityOut, { slug: 'mcallen', name: 'McAllen', heroDescription: 'Welcome to McAllen today.' }) === cityOut, 'hydrateCityHero idempotent');
+  assert(hydrateCityHero(cityPage, { slug: 'mcallen', name: 'McAllen', heroDescription: '' }) === cityPage, 'empty heroDescription keeps frozen copy');
+  assert(hydrateCityHero('<div>no target</div>', { slug: 'x', name: 'X', heroDescription: 'copy' }) === '<div>no target</div>', 'missing target warns and keeps page');
+  // hydrateCommunity carries the copy bake (call-site wiring, not just the helper)
+  const wired = hydrateCommunity('<section id="overview"><div class="wysiwyg pt-2 pt-lg-4"><p>frozen</p></div></section>',
+    { slug: 'el-eden', name: 'El Eden', priceFrom: null, homes: [], plans: [], description: 'D1 wins.' }, {});
+  assert(wired.includes('<p>D1 wins.</p>') && !wired.includes('frozen'), 'hydrateCommunity bakes D1 description');
   console.log('hydrate-scraped.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
