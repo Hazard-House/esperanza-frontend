@@ -6,13 +6,33 @@ import { join } from 'node:path';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 import { freshBannerHtml } from './rewrite.mjs';
-import { isRatePromo, parsePromoRate, promoCalcScript } from './promo-utils.mjs';
+import { isRatePromo, parsePromoRate, promoCalcScript, isLivePromoText, normPromoText } from './promo-utils.mjs';
 
 // Harvested live-site facts (mortgage rate, per-community taxmultiplier, per-home
 // promo badges) — see harvest-live-facts.mjs. Build-time read; {} if missing.
 // Per-home promo badge harvested from the live site (fields.promo_text is often
 // just the site-wide banner) — {text, color} or null.
-export function homeBadge(h) { return (FACTS.badges || {})[slugify(h.address)] || null; }
+export function homeBadge(h) { return harvestBadge(h); }
+
+// Dead-promo gate for the June-8 harvest. The harvested badges are a FALLBACK for homes
+// the API has no promo_text for, so a promotion DELETED in D1 kept rendering out of the
+// snapshot forever (the 4.99% fixed-rate ribbon outlived the promotions row it came
+// from by weeks). generate-details.mjs calls setLivePromoTexts() once per build with the live
+// corpus; any harvested badge whose copy is no longer live is dropped. Unset/empty
+// corpus = fail open (see promo-utils.isLivePromoText) so an API hiccup can't blank
+// every badge on the site.
+let LIVE_PROMO_TEXTS = null;
+export function setLivePromoTexts(set) { LIVE_PROMO_TEXTS = set instanceof Set && set.size ? set : null; }
+export function getLivePromoTexts() { return LIVE_PROMO_TEXTS; }
+
+// Harvested badge for a home ({text,color}) — address-slug key first, then the
+// per-home cardFacts entry — gated on the live promo corpus. null when there is none
+// or its copy is dead.
+export function harvestBadge(h) {
+  const b = factOf(h).badge || (FACTS.badges || {})[slugify(h.address)] || null;
+  if (!b || !b.text) return null;
+  return isLivePromoText(b.text, LIVE_PROMO_TEXTS) ? b : null;
+}
 
 // Per-community property-tax multiplier (%) used by the payment calc. Stable value,
 // still from the harvest; the RATE itself comes live from Settings.
@@ -486,13 +506,36 @@ export function mortgageCalcModalHtml(h) {
     + `</div></div></div>`;
 }
 
-// Full O'Neill spec-card (community/floor-plan page variant: h-100, four-three-xl
-// aspect, no map data-attrs). Same anatomy as islands/available-live.js cardHTML.
-export function qmiCardHtml(h) {
+// Hidden map-popup template that oilib clones for the #oi-map infowindow. It must be
+// the LAST child of every .oi-map-item: OiMapMulti skips any card that hasn't got one, so
+// a card without it is silently missing from the map's `places` source (no pin, no
+// cluster, no fitBounds) — verified against the live Laredo page. Only the list variant
+// needs it; the community-page cards aren't map items.
+function oiInfowindowHtml(h, url) {
+  return `<div class="oi-infowindow-content" style="display:none;">`
+    + `<div class="oi-infowindow overflow-hidden">`
+    + `<a href="${esc(url)}">`
+    + (h.image ? `<div class="oi-aspect two-one rounded-top"><img src="${esc(h.image)}" loading="lazy" class="oi-aspect-img rounded-top" alt="Quick move-in home for sale, ${esc(h.address)} ${esc(h.city)} TX"></div>` : '')
+    + `<div class="row my-2 g-0">`
+    + `<div class="col px-2 my-auto"><div class="card-title">${esc(h.address)}</div>`
+    + `<div class="card-location">${esc(h.city)}, TX${h.postalCode ? ' ' + esc(h.postalCode) : ''}</div></div>`
+    + (h.price ? `<div class="col-auto px-2 my-auto"><div class="price-title">Priced at</div><div class="price mt-1">${money(h.price)}</div></div>` : '')
+    + `</div></a></div></div>`;
+}
+
+// Full O'Neill spec-card. Two variants, same anatomy as islands/available-live.js
+// cardHTML:
+//   default    community/floor-plan page — h-100, four-three-xl aspect, no map attrs
+//   {list:true} the /new-homes/available/ (+ city / saved-filter) grid — oi-map-item
+//               with data-listing-*/lat/lng for the Mapbox layer, wider column, and
+//               new-tab links, byte-for-byte the shape available-live.js renders so
+//               the served HTML and the island's client render agree.
+export function qmiCardHtml(h, { list = false } = {}) {
   const url = qmiPath(h);
-  // Live API promo_text + promo_banner_style are authoritative; cardFacts badge is fallback only.
+  // Live API promo_text + promo_banner_style are authoritative; cardFacts badge is a
+  // fallback only, and only while its copy is still live (see harvestBadge).
   const fact = factOf(h);
-  const badge = fact.badge || (FACTS.badges || {})[slugify(h.address)];
+  const badge = harvestBadge(h);
   const promoText = h.promo || (badge ? badge.text : '');
   const promoColor = promoBannerClass(h.promoStyle, promoText);
   let banners = '';
@@ -547,28 +590,40 @@ export function qmiCardHtml(h) {
       + `<span class="fs-9 overpass text-gray">PRICE: </span>` + inner
       + `</a>`;
   }
-  return `<div class="col-12 col-md-6 mb-2" data-qmi-slug="${esc(h.slug || '')}">`
-    + `<div class="card spec-card spec-card-detail mb-0 border border-gray p-2 h-100">`
-    + `<div class="row m-0 h-100">`
+  // Variant deltas (everything else is shared).
+  const tgt = list ? ' target="_blank" rel="noopener"' : '';
+  const col = list
+    ? `<div class="col-12 col-md-6 col-lg-12 mb-3 px-2" data-qmi-slug="${esc(h.slug || '')}">`
+    : `<div class="col-12 col-md-6 mb-2" data-qmi-slug="${esc(h.slug || '')}">`;
+  const card = list
+    ? `<div class="card spec-card spec-card-detail oi-map-item mb-0 border border-gray p-2" data-listing-type="spec" data-listing-id="${esc(h.id || '')}" data-latitude="${h.lat != null ? esc(h.lat) : ''}" data-longitude="${h.lng != null ? esc(h.lng) : ''}" data-marker-icon-wh="20,32" data-marker-icon-id="map_pin">`
+    : `<div class="card spec-card spec-card-detail mb-0 border border-gray p-2 h-100">`;
+  const row = list ? `<div class="row m-0">` : `<div class="row m-0 h-100">`;
+  const aspect = list ? 'sixteen-nine three-two-xxl' : 'sixteen-nine four-three-xl three-two-xxl';
+  return col
+    + card
+    + row
     + `<div class="col-12 col-xl-7 px-0 pe-xl-3 d-flex align-content-stretch flex-wrap">`
-    + `<div class="oi-aspect sixteen-nine four-three-xl three-two-xxl">${banners}`
-    + `<a href="${esc(url)}">${h.image ? `<img src="${esc(h.image)}" loading="lazy" class="oi-aspect-img" alt="${esc(h.address)}">` : ''}</a>`
+    + `<div class="oi-aspect ${aspect}">${banners}`
+    + `<a href="${esc(url)}"${tgt}>${h.image ? `<img src="${esc(h.image)}" loading="lazy" class="oi-aspect-img" alt="${esc(h.address)}">` : ''}</a>`
     + `<div class="hover-button d-none d-lg-flex"><div class="m-auto">`
-    + `<a href="${esc(url)}"><div class="btn card-button d-block my-3">VIEW HOME</div></a>`
-    + `<a href="${esc(url)}#request-a-tour"><div class="btn card-button green d-block my-3">REQUEST A TOUR</div></a>`
+    + `<a href="${esc(url)}"${tgt}><div class="btn card-button d-block my-3">VIEW HOME</div></a>`
+    + `<a href="${esc(url)}#request-a-tour"${tgt}><div class="btn card-button green d-block my-3">REQUEST A TOUR</div></a>`
     + `</div></div>`
     + `</div>`
     + commRow('d-none d-xl-flex')
     + `</div>`
     + `<div class="col-12 col-xl px-0 px-xl-1"><div class="card-body d-flex flex-column lh-2 h-100 px-xl-0 py-xl-1">`
-    + `<div class="row"><a href="${esc(url)}"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">${esc(h.address)}</div></a>`
+    + `<div class="row"><a href="${esc(url)}"${tgt}><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">${esc(h.address)}</div></a>`
     + `<div class="card-location text-green mb-2">${esc(h.city)}, TX${h.postalCode ? ' ' + esc(h.postalCode) : ''}</div></div>`
     + `<div class="row h-100">`
     + `<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">${money(h.price)}</div>${est}</div></div>`
     + `<div class="col-auto col-xl-12 stat-group mt-xl-2 stat-flex d-flex flex-column mx-auto">${stats}</div>`
     + `</div></div></div>`
     + commRow('d-flex d-xl-none')
-    + `</div></div></div>`;
+    + `</div>`
+    + (list ? oiInfowindowHtml(h, url) : '')
+    + `</div></div>`;
 }
 
 export function qmiSectionHtml(homes, title = 'Quick Move-Ins') {
@@ -637,6 +692,37 @@ function demo() {
   assert(card.includes('banner overlay-promo tan') && card.includes('ESTIMATED MONTHLY') && card.includes('REQUEST A TOUR'), 'card promo/est/tour');
   assert(card.includes('d-none d-xl-flex') && card.includes('d-flex d-xl-none'), 'card dual community-row');
   assert(!qmiCardHtml({ address: 'x', community: 'c', city: 'y', floorPlan: 'p', garage: 0, beds: 3 }).includes('Car Garage'), 'garage 0 omitted');
+  // available-grid variant: oi-map-item + map data-attrs + wide column + new-tab links
+  const lcard = qmiCardHtml({ id: 'h1', address: '1806 E Bella St', community: 'Villas at La Sienna', city: 'Edinburg', slug: '1806-e-bella-st', price: 229990, beds: 2, floorPlan: 'Lunelli', image: '/h.jpg', lat: 26.1, lng: -98.2 }, { list: true });
+  assert(lcard.includes('col-12 col-md-6 col-lg-12 mb-3 px-2') && lcard.includes('oi-map-item')
+    && lcard.includes('data-listing-type="spec"') && lcard.includes('data-latitude="26.1"') && lcard.includes('data-longitude="-98.2"')
+    && lcard.includes('oi-aspect sixteen-nine three-two-xxl') && lcard.includes('target="_blank"'), 'list-variant card shape');
+  assert(!card.includes('oi-map-item') && !card.includes('target="_blank"'), 'default variant keeps the community-page shape');
+  // the oilib map popup template must exist AND be the card's last child, or OiMapMulti
+  // drops the home from #oi-map entirely (no pin / no cluster / no fitBounds)
+  assert(lcard.includes('oi-infowindow-content') && lcard.includes('class="price-title">Priced at<'), 'list card carries the oilib infowindow template');
+  assert(lcard.indexOf('oi-infowindow-content') > lcard.indexOf('d-flex d-xl-none'), 'infowindow is the last child of .oi-map-item');
+  assert(!card.includes('oi-infowindow'), 'community-page card has no map popup (not a map item)');
+  // Dead-promo gate. Take a real harvested badge out of assets/live-facts.json and
+  // prove it renders while its copy is live and vanishes once it isn't — this is the
+  // "deleted incentive kept showing" bug (a promotion dropped from D1 lived on in the
+  // June-8 snapshot's per-home badge fallback).
+  const savedCorpus = getLivePromoTexts();
+  const harvested = Object.entries(FACTS.badges || {})[0];
+  if (harvested) {
+    const [addrSlug, b] = harvested;
+    const home = { address: addrSlug.replace(/-/g, ' '), community: 'c', city: 'y', floorPlan: 'p', price: 250000 };
+    setLivePromoTexts(new Set([normPromoText(b.text)]));
+    assert(harvestBadge(home) && harvestBadge(home).text === b.text, 'harvested badge kept while its copy is live');
+    assert(qmiCardHtml(home).includes('overlay-promo'), 'live harvested badge renders a promo banner');
+    setLivePromoTexts(new Set([normPromoText('some other promotion entirely')]));
+    assert(harvestBadge(home) === null, 'harvested badge dropped once its copy leaves the API');
+    assert(!qmiCardHtml(home).includes('overlay-promo'), 'dead harvested badge renders NO promo banner');
+    // API promo_text always wins, gate or no gate.
+    assert(qmiCardHtml({ ...home, promo: 'Live Only Promo' }).includes('Live Only Promo'), 'API promo_text is authoritative');
+  }
+  setLivePromoTexts(savedCorpus);
+  assert(harvestBadge({ address: 'no-such-home-anywhere-at-all' }) === null, 'no harvested badge -> null');
   const g = galleryHtml([{ url: '/a.jpg', alt: 'A' }, { url: '/b.jpg', alt: 'B' }], null, 'Home');
   assert(g.includes('id="detail-gallery"') && g.includes('data-fancybox="photos"') && g.includes('View 2 Photos'), 'gallery');
   // hero = the render (image_url), side thumbs = gallery photos, N = gallery size,

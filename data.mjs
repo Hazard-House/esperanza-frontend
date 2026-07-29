@@ -114,9 +114,13 @@ function normFloorplan(fp) {
 }
 
 export async function loadData() {
-  const [q, c, f, s] = await Promise.all([
+  // /promotions is non-fatal: it only feeds the "is this baked promo copy still live?"
+  // gate (promo-utils.livePromoTexts), which fails open on an empty list.
+  const [q, c, f, s, pr] = await Promise.all([
     getJSON('/qmi'), getJSON('/communities'), getJSON('/floorplans'), getJSON('/settings').catch(() => ({})),
+    getJSON('/promotions').catch(() => ({})),
   ]);
+  const promotions = pr.promotions || [];
   const qmis = (q.homes || []).map(normQmi);
   const communities = (c.communities || []).map(normCommunity);
   const fpRaw = f.floorplans || f.floor_plans || (Array.isArray(f) ? f : []);
@@ -180,7 +184,7 @@ export async function loadData() {
     fp.homes = qmis.filter(h => h.floorPlanId === fp.id).sort(byPriceAsc(h => h.price));
     fp.communityList = Object.keys(fp.communityPrices).map(n => commByName.get(n.toLowerCase())).filter(Boolean);
   }
-  return { qmis, communities, floorplans, settings: s, commById, commByName, fpById };
+  return { qmis, communities, floorplans, promotions, settings: s, commById, commByName, fpById };
 }
 
 async function demo() {
@@ -188,6 +192,7 @@ async function demo() {
   assert(d.qmis.length > 50, 'qmis loaded');
   assert(d.communities.length > 10, 'communities loaded');
   assert(d.floorplans.length > 20, 'floorplans loaded');
+  assert(Array.isArray(d.promotions), 'promotions is always an array (non-fatal fetch)');
   const withComm = d.qmis.find(h => h.communityObj);
   assert(withComm, 'at least one QMI cross-links to a community');
   const withStories = d.qmis.find(h => h.stories != null);

@@ -1,6 +1,6 @@
 // generate-details.mjs — render all detail pages from live D1 into public/.
 // Standalone (needs only committed templates + the API) OR called by build.mjs.
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, copyFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadData } from './data.mjs';
@@ -8,7 +8,9 @@ import { linksMap, imagesMap, qmiPath, communityPath, floorplanPath } from './pa
 import { renderQmi } from './render-qmi.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { renderFloorplan } from './render-floorplan.mjs';
-import { setBuildRate } from './sections.mjs';
+import { setBuildRate, setLivePromoTexts } from './sections.mjs';
+import { livePromoTexts } from './promo-utils.mjs';
+import { regenerateListPages, isRenderableHome } from './render-lists.mjs';
 import { hydrateCommunity, hydrateCommunityStatus, applyHoaLinks } from './hydrate-scraped.mjs';
 import { slugify } from './data.mjs';
 import { ensureCommunityHomesLive } from './rewrite.mjs';
@@ -188,6 +190,29 @@ function refreshHoaLinksInCommunityTrees(d, { outDir = OUT } = {}) {
   return updated;
 }
 
+// Refresh the islands already published in public/ from their source in islands/.
+// Only build.mjs used to copy them, and build.mjs needs the scrape — so CI (which runs
+// ONLY this file) shipped whatever public/<island>.js was committed, and AGENTS.md had
+// to tell humans to hand-edit both copies. That double-edit rule is exactly how a
+// hardcoded promo string survived in public/incentive-live.js after islands/ was fixed.
+// Refresh-only (never create): a brand-new island still needs a full build, because its
+// <script> tag is injected by build.mjs. Scrape-free — islands/ is committed.
+export function refreshIslands({ outDir = OUT, srcDir = join(import.meta.dirname, 'islands') } = {}) {
+  if (!existsSync(srcDir) || !existsSync(outDir)) return { updated: 0, checked: 0 };
+  let updated = 0, checked = 0;
+  for (const name of readdirSync(srcDir)) {
+    if (!name.endsWith('.js')) continue;
+    const dst = join(outDir, name);
+    if (!existsSync(dst)) continue; // not published -> not ours to add
+    checked++;
+    const src = join(srcDir, name);
+    if (readFileSync(src, 'utf8') === readFileSync(dst, 'utf8')) continue;
+    copyFileSync(src, dst);
+    updated++;
+  }
+  return { updated, checked };
+}
+
 // data + skip-sets are injectable so build.mjs can load the API once and skip
 // entities it already shipped as hydrated scrape copies (clean paths in the sets).
 export async function generateDetails(data, { skipCommunities, skipFloorplans } = {}) {
@@ -195,13 +220,36 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   const d = data || await loadData();
   // Bake payments off the live Settings mortgage rate (not the frozen 6.15 harvest).
   setBuildRate(d.settings?.settings?.mortgage_rate ?? d.settings?.mortgage_rate);
+  // Promo copy the live API still vouches for. Set BEFORE any page is rendered so the
+  // June-8 harvest can't hand a deleted incentive's badge to a home whose promo_text is
+  // empty (that's how the deleted 4.99% fixed-rate ribbon outlived its D1 row). Fails open on an
+  // empty corpus — see promo-utils.isLivePromoText.
+  const promoCorpus = livePromoTexts(d);
+  setLivePromoTexts(promoCorpus);
   // shell nav carries frozen June-8 "Coming Soon" badges — refresh from the API once
   const shell = hydrateCommunityStatus(readFileSync(SHELL_PATH, 'utf8'), d);
   const skipC = skipCommunities || scrapedCommunitySkipSet(d.communities);
   const skipF = skipFloorplans || new Set();
-  for (const h of d.qmis) writePage(qmiPath(h), renderQmi(h, shell));
+  // A handful of PUBLISHED D1 rows have neither `address` nor `slug` (un-addressed lots:
+  // real price + render + lot #, no street address yet). qmiPath() then has an empty
+  // final segment — `/new-homes/tx/brownsville/villas-las-lagunas//` — and writePage's
+  // join() swallows the double slash, so renderQmi's output LANDS ON THE COMMUNITY
+  // LANDING PAGE. That is how /new-homes/tx/brownsville/villas-las-lagunas/ and
+  // /new-homes/tx/mission/sendero-at-bentsen-palm/ came to serve
+  // "<title>undefined, Brownsville, TX New Home for Sale</title>". Skip those homes, and
+  // remember which community pages a previous run already clobbered so they get
+  // re-rendered instead of being left in place by the scraped-page skip set below.
+  const clobbered = new Set();
+  let nqmi = 0;
+  for (const h of d.qmis) {
+    if (!isRenderableHome(h)) { clobbered.add(qmiPath(h).replace(/\/{2,}$/, '/')); continue; }
+    writePage(qmiPath(h), renderQmi(h, shell));
+    nqmi++;
+  }
   let nc = 0, nf = 0;
-  for (const c of d.communities) if (!skipC.has(communityPath(c))) { writePage(communityPath(c), renderCommunity(c, shell)); nc++; }
+  // `|| clobbered.has(...)`: repair a community page a previous run overwrote with a QMI
+  // detail page. Without it the scraped-page skip set would preserve the damage forever.
+  for (const c of d.communities) if (!skipC.has(communityPath(c)) || clobbered.has(communityPath(c))) { writePage(communityPath(c), renderCommunity(c, shell)); nc++; }
   for (const fp of d.floorplans) if (!skipF.has(floorplanPath(fp))) { writePage(floorplanPath(fp), renderFloorplan(fp, shell)); nf++; }
   writeFileSync(join(OUT, 'qmi-links.json'), JSON.stringify(linksMap(d.qmis, d.communities)));
   writeFileSync(join(OUT, 'qmi-images.json'), JSON.stringify(imagesMap(d.qmis)));
@@ -211,8 +259,15 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // Blog pages from D1 (was: frozen June-8 scrape). Non-fatal so a blog hiccup never blocks
   // the pricing/inventory deploy; the count-parity guard still logs loudly on a shortfall.
   const blogs = await generateBlogs().catch(e => { console.error('generate-blogs:', e.message); return 0; });
-  console.log(`generate-details: ${d.qmis.length} qmi + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards`);
-  return { qmi: d.qmis.length, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated };
+  // LIST/INDEX pages last: /new-homes/available/, the per-city /available-homes/ pages and
+  // the /available/filter/<hash>/ saved searches shipped with their card grids frozen into
+  // the June-8 scrape — advertising unpublished homes, hiding new ones, and carrying promo
+  // copy for incentives long since deleted. Re-render them from the same live payload the
+  // detail pages use, then sweep dead promo ribbons off everything else in public/.
+  const lists = regenerateListPages(d, { live: promoCorpus });
+  const islands = refreshIslands();
+  console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed`);
+  return { qmi: nqmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, lists, islands };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();

@@ -22,13 +22,33 @@ is just lazy-loaded, not broken — scroll it into view before judging.
   Push to `main` → prod (esperanzahomes.hazardhouse.ai); push to `staging` → the workers.dev staging.
 - `public/` is committed; flagship/theme/blog pages ship as committed static. Regenerating THOSE
   needs the local O'Neill scrape (`~/Downloads/...`), but they don't change build-to-build.
-- Islands are copied to `public/` at build. For an island-only fix that must ship without a full
-  build, edit BOTH `islands/<name>.js` and the committed `public/<name>.js`.
+- Islands: edit `islands/<name>.js` only. `generate-details.mjs` (`refreshIslands`) copies every
+  island that already exists in `public/` over its published copy on every deploy + nightly run,
+  so the two can no longer drift. A **brand-new** island still needs a full `node build.mjs`,
+  because its `<script>` tag is injected there.
+- `public/live-facts.json` is **generated, never committed** (gitignored). It is
+  `assets/live-facts.json` with every per-home promo badge whose promotion left D1 pruned out
+  (`render-lists.writeLiveFacts`). If it is ever missing, the islands fall back to a neutral
+  empty state — which is the correct failure mode for promo copy.
 
 ## Live vs static
 - LIVE (reflect D1 immediately): `/new-homes/available/` grid, per-home detail shell
   (`/new-homes/available/home/?slug=`), which `worker.js` also serves for un-built home canonical URLs.
-- Refreshed on each deploy: community / floor-plan / QMI detail pages (via the CI detail build).
+- Refreshed on each deploy + nightly: community / floor-plan / QMI detail pages, the QMI
+  **list** pages (`/new-homes/available/`, `/new-homes/<city>/available-homes/`,
+  `/new-homes/available/filter/<hash>/` — `render-lists.mjs`), and promo copy
+  (`public/live-facts.json` badges + a dead-promo-ribbon sweep). All of it runs from
+  `generate-details.mjs`, so it is scrape-free and survives legacy DNS cutover.
+- Only the per-city / saved-filter list pages have **no** island — their served HTML *is*
+  what visitors see, so a stale bake there is a user-visible bug, not just a crawler one.
+- Promo copy rule: `qmi.promo_text` / active `promotions` win; the June-8 harvest badge in
+  `assets/live-facts.json` is a fallback that is dropped when its copy left the API
+  (`promo-utils.livePromoTexts` + `sections.setLivePromoTexts`). That gate is why a
+  promotion deleted in D1 no longer lingers on ~30 committed pages.
+- Published D1 rows with **no `address` and no `slug`** (un-addressed lots) are skipped by both
+  the list renderer and the QMI page writer: `qmiPath()` collapses to the community directory for
+  them, and the write used to land renderQmi's output ON the community landing page
+  (`<title>undefined, Brownsville, TX New Home for Sale</title>`). See `isRenderableHome`.
 - Draft preview is PER-HOME + explicit: only `?preview=1` hits the ungated `/api/preview/qmi`
   (staging worker adds `PREVIEW_SECRET`). Never blanket-rewrite the public list — it floods every
   surface with drafts.
