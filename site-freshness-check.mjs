@@ -139,8 +139,11 @@ export function compareFreshness(apiHomes, gridHtml) {
 // redirects.mjs entry, so naively indexing every baked dir puts a result in front of a
 // reader that immediately bounces them to /blog/. gen-blog-index.mjs excludes redirected
 // posts for exactly this reason; `extra` is what proves that exclusion is still working.
+//   invalid   = a raw record that is not a canonical /blog/<slug>/ -> never comparable or
+//               probeable, so it must be NAMED rather than silently normalized away.
 // Verified 2026-07-29 after #125 deployed: 126/126 indexed posts serve 200, 0 dead hits,
-// 0 orphans, 0 duplicates — so all four directions assert a state the site already meets.
+// 0 orphans, 0 duplicates, 0 malformed — so all five directions assert a state the site
+// already meets.
 //
 // Deliberately NOT asserted here: floor-plan parity. A renamed plan (Antinori ->
 // Santa Cruz) still serves and is still linked under its old slug because
@@ -148,15 +151,57 @@ export function compareFreshness(apiHomes, gridHtml) {
 // open defect awaiting a product call on 301-vs-404, so asserting it would open an
 // incident that cannot close — the permanently-red alarm this file's design rejects.
 
-// The index is [{href,title,...}]; the slug is the href's single path segment. Kept
-// tolerant of a missing/blank href so a shape change cannot silently yield an empty set
-// that reads as "every post is missing".
+// A canonical index entry is exactly `/blog/<slug>/` — one non-empty path segment, no
+// query, no fragment, no host. Anything else is a malformed record that a reader would see
+// in search results, so it must be NAMED rather than dropped.
+//
+// This exists because the Set-based extraction below silently discarded every shape it
+// could not normalize: a root `/blog/`, an external `https://evil.example/...`, a nested
+// `/blog/a/b/`, a wrong-prefix `/news/x/`, a blank or missing href, and query/hash
+// suffixes ALL vanished from the comparison, so the probe reported drift=0 on eight
+// distinct malformed indexes. Fail-open on a corpus the reader searches is the same class
+// of bug as the parser guard above: the check has to notice it cannot read its input.
+// Returns null for a valid entry, or a human-readable reason.
+export function blogHrefDefect(entry) {
+  const raw = typeof entry === 'string' ? entry : entry?.href;
+  if (raw == null || String(raw).trim() === '') return 'missing or blank href';
+  const href = String(raw).trim();
+  if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) return `absolute/external href: ${href}`;
+  if (href.includes('?') || href.includes('#')) return `href carries a query or fragment: ${href}`;
+  if (!href.startsWith('/blog/')) return `href is not under /blog/: ${href}`;
+  const rest = href.slice('/blog/'.length);
+  if (rest === '') return 'href is the blog root, not a post';
+  const segments = rest.replace(/\/+$/, '').split('/');
+  if (segments.length !== 1) return `href is not a single post segment: ${href}`;
+  const slug = segments[0].trim();
+  if (!slug) return `href has an empty slug: ${href}`;
+  // Pagination/category/year dirs are list pages, not posts; gen-blog-index.mjs excludes
+  // them, so their presence in the index is a generator regression.
+  if (/^(category|page-\d+|\d{4})$/.test(slug)) return `href is a list page, not a post: ${href}`;
+  return null;
+}
+
+// Every malformed raw entry, as named defects. Reported alongside the set comparisons so a
+// corrupt index cannot read as healthy.
+export function invalidBlogEntries(index) {
+  if (!Array.isArray(index)) return ['index is not an array'];
+  const out = [];
+  index.forEach((entry, i) => {
+    const defect = blogHrefDefect(entry);
+    if (defect) out.push(`#${i}: ${defect}`);
+  });
+  return out;
+}
+
+// The index is [{href,title,...}]; the slug is the href's single path segment. Only
+// entries that pass blogHrefDefect() contribute, so this stays a set of real post slugs —
+// but the rejects are no longer lost, because invalidBlogEntries() names them.
 export function indexedBlogSlugs(index) {
   const out = new Set();
   for (const p of Array.isArray(index) ? index : []) {
-    const href = typeof p === 'string' ? p : p?.href;
-    const slug = String(href ?? '').replace(/^\/blog\//, '').replace(/\/+$/, '').trim();
-    if (slug && !slug.includes('/')) out.add(slug);
+    if (blogHrefDefect(p)) continue;
+    const href = typeof p === 'string' ? p : p.href;
+    out.add(String(href).trim().slice('/blog/'.length).replace(/\/+$/, ''));
   }
   return out;
 }
@@ -168,9 +213,9 @@ export function indexedBlogSlugs(index) {
 export function duplicateBlogSlugs(index) {
   const counts = new Map();
   for (const p of Array.isArray(index) ? index : []) {
-    const href = typeof p === 'string' ? p : p?.href;
-    const slug = String(href ?? '').replace(/^\/blog\//, '').replace(/\/+$/, '').trim();
-    if (!slug || slug.includes('/')) continue;
+    if (blogHrefDefect(p)) continue;
+    const href = typeof p === 'string' ? p : p.href;
+    const slug = String(href).trim().slice('/blog/'.length).replace(/\/+$/, '');
     counts.set(slug, (counts.get(slug) ?? 0) + 1);
   }
   return [...counts.entries()].filter(([, n]) => n > 1).map(([s, n]) => `${s} x${n}`).sort();
@@ -222,6 +267,9 @@ export function compareBlogIndex(apiPosts, index, { redirectedSlugs = new Set(),
     .filter((s) => !expected.has(s) && !redirectedSlugs.has(s) && !deadSlugs.has(s))
     .sort();
   const duplicated = duplicateBlogSlugs(index);
+  // Malformed raw records. Counted as drift so a corrupt index cannot read as healthy:
+  // previously these were dropped during normalization and the probe reported drift=0.
+  const invalid = invalidBlogEntries(index);
   const extra = [...deadHits].sort();
   return {
     expected: expected.size,
@@ -229,8 +277,9 @@ export function compareBlogIndex(apiPosts, index, { redirectedSlugs = new Set(),
     missing,
     orphaned,
     duplicated,
+    invalid,
     extra,
-    drift: missing.length + orphaned.length + duplicated.length + extra.length,
+    drift: missing.length + orphaned.length + duplicated.length + invalid.length + extra.length,
   };
 }
 
@@ -351,7 +400,8 @@ async function main() {
       + ` missing=${last.missing.length} extra=${last.extra.length}`
       + ` | blog api=${last.blog.expected} indexed=${last.blog.indexed}`
       + ` missing=${last.blog.missing.length} orphaned=${last.blog.orphaned.length}`
-      + ` dup=${last.blog.duplicated.length} dead=${last.blog.extra.length}`
+      + ` dup=${last.blog.duplicated.length} invalid=${last.blog.invalid.length}`
+      + ` dead=${last.blog.extra.length}`
       + ` [cf-cache-status=${last.cacheStatus ?? 'n/a'} age=${last.age ?? 'n/a'} max-age=${Number.isFinite(last.maxAge) ? last.maxAge : 'n/a'}]`
     );
     // Both surfaces ride the same deploy, so they settle together and share one budget.
@@ -373,6 +423,7 @@ async function main() {
   if (last.blog.missing.length) console.log(`  published but NOT in the blog search index (unfindable by search): ${last.blog.missing.slice(0, 20).join(', ')}`);
   if (last.blog.orphaned.length) console.log(`  in the blog search index but NOT published (search hits for unpublished content): ${last.blog.orphaned.slice(0, 20).join(', ')}`);
   if (last.blog.duplicated.length) console.log(`  duplicated in the blog search index (repeated search results): ${last.blog.duplicated.slice(0, 20).join(', ')}`);
+  if (last.blog.invalid.length) console.log(`  malformed blog search index entries (never compared or probed): ${last.blog.invalid.slice(0, 20).join('; ')}`);
   if (last.blog.extra.length) console.log(`  in the blog search index but NOT serving 200 (dead search hits): ${last.blog.extra.slice(0, 20).join(', ')}`);
   const totalDrift = last.drift + last.blog.drift;
   const what = [
@@ -503,8 +554,12 @@ if (process.argv.includes('--check') && IS_ENTRY) {
   assert.equal(indexedBlogSlugs([]).size, 0, 'empty index yields no slugs');
   assert.equal(indexedBlogSlugs(null).size, 0, 'non-array index yields no slugs');
   assert.equal(indexedBlogSlugs([{ href: '' }, { href: null }, {}]).size, 0, 'blank hrefs ignored');
-  // A paginated href is not a post; treating it as one would invent drift.
-  assert.equal(indexedBlogSlugs([{ href: '/blog/?i=0&page=2' }]).size, 1, 'query-string href keeps its single segment');
+  // A paginated/query href is NOT a post: it is a malformed index record. This assertion
+  // originally claimed such an href "keeps its single segment" and should be indexed —
+  // which was precisely the fail-open Sol's review caught. It is now excluded from the
+  // slug set AND reported by invalidBlogEntries(), so it is named rather than dropped.
+  assert.equal(indexedBlogSlugs([{ href: '/blog/?i=0&page=2' }]).size, 0, 'query-string href is not a post slug');
+  assert.equal(invalidBlogEntries([{ href: '/blog/?i=0&page=2' }]).length, 1, 'query-string href is a named defect');
 
   // Airtable-shaped and flat payloads both work, mirroring the QMI reasoning above.
   assert.deepEqual([...publishedBlogSlugs([{ fields: { slug: 'a-post' } }])], ['a-post'], 'nested blog payload');
@@ -581,6 +636,35 @@ if (process.argv.includes('--check') && IS_ENTRY) {
   }
   assert.deepEqual(duplicateBlogSlugs([{ href: '/blog/a/' }, { href: '/blog/a/' }, { href: '/blog/a/' }]), ['a x3'], 'counts repeats');
   assert.deepEqual(duplicateBlogSlugs([{ href: '/blog/a/' }, { href: '/blog/b/' }]), [], 'no duplicates on a clean index');
+
+  // INVALID RAW ENTRIES MUST BE NAMED, NOT DROPPED. Every one of these previously
+  // normalized to nothing and vanished, so the probe reported drift=0 on a corrupt index —
+  // fail-open on the corpus the reader searches. Each is now a counted, named defect.
+  assert.equal(blogHrefDefect({ href: '/blog/a-post/' }), null, 'canonical entry is valid');
+  assert.equal(blogHrefDefect('/blog/a-post/'), null, 'bare string href is valid');
+  assert.match(blogHrefDefect({ href: '/blog/' }), /blog root/, 'root href rejected');
+  assert.match(blogHrefDefect({ href: 'https://evil.example/blog/x/' }), /external/, 'external href rejected');
+  assert.match(blogHrefDefect({ href: '//evil.example/blog/x/' }), /external/, 'protocol-relative href rejected');
+  assert.match(blogHrefDefect({ href: '' }), /missing or blank/, 'blank href rejected');
+  assert.match(blogHrefDefect({}), /missing or blank/, 'missing href rejected');
+  assert.match(blogHrefDefect({ href: '/blog/a/b/' }), /single post segment/, 'nested path rejected');
+  assert.match(blogHrefDefect({ href: '/news/x/' }), /not under \/blog\//, 'wrong prefix rejected');
+  assert.match(blogHrefDefect({ href: '/blog/x/?utm=1' }), /query or fragment/, 'query suffix rejected');
+  assert.match(blogHrefDefect({ href: '/blog/x/#top' }), /query or fragment/, 'hash suffix rejected');
+  assert.match(blogHrefDefect({ href: '/blog/page-2/' }), /list page/, 'pagination dir rejected');
+  assert.deepEqual(invalidBlogEntries([{ href: '/blog/ok/' }]), [], 'clean index has no invalid entries');
+  assert.deepEqual(invalidBlogEntries('not an array'), ['index is not an array'], 'non-array index is itself a defect');
+  // Index position is included so the defect can be located in the artifact.
+  assert.deepEqual(invalidBlogEntries([{ href: '/blog/ok/' }, { href: '/blog/' }]).length, 1);
+  assert.match(invalidBlogEntries([{ href: '/blog/ok/' }, { href: '/blog/' }])[0], /^#1: /, 'defect names its index');
+  // End to end: a malformed entry alongside a healthy one is drift, and the healthy
+  // entry is still compared normally rather than the whole index being discarded.
+  {
+    const r = compareBlogIndex([{ slug: 'live' }], [{ href: '/blog/live/' }, { href: '/blog/' }]);
+    assert.equal(r.drift, 1, 'malformed entry counts as drift');
+    assert.equal(r.indexed, 1, 'the valid entry is still counted');
+    assert.deepEqual(r.missing, [], 'a malformed sibling does not make the live post look missing');
+  }
   // Parser guard: a non-empty payload yielding zero expected slugs is a shape change,
   // not "every post vanished" — the 206-home false positive this file already learned.
   assert.equal(compareBlogIndex([{ notASlug: 'x' }], []).expected, 0, 'shape change yields expected=0 for the caller to catch');
