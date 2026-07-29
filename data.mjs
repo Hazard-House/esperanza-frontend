@@ -99,6 +99,11 @@ function normCommunity(c) {
   };
 }
 
+// City landing pages (/{slug}/): only the hero copy is CMS-editable today.
+function normCity(c) {
+  return { id: c.id, name: c.name, slug: c.slug, heroDescription: c.heroDescription };
+}
+
 function normFloorplan(fp) {
   return {
     id: fp.id, name: fp.name, slug: fp.slug, collection: fp.collection,
@@ -114,13 +119,17 @@ function normFloorplan(fp) {
 }
 
 export async function loadData() {
-  // /promotions is non-fatal: it only feeds the "is this baked promo copy still live?"
-  // gate (promo-utils.livePromoTexts), which fails open on an empty list.
-  const [q, c, f, s, pr] = await Promise.all([
+  // /promotions and /cities are non-fatal: promotions only feeds the "is this baked
+  // promo copy still live?" gate (promo-utils.livePromoTexts), which fails open on an
+  // empty list; cities only feeds the city-hero copy bake, which skips absent cities
+  // (the page keeps its committed copy — same freeze as before the bake existed).
+  const [q, c, f, s, pr, ct] = await Promise.all([
     getJSON('/qmi'), getJSON('/communities'), getJSON('/floorplans'), getJSON('/settings').catch(() => ({})),
     getJSON('/promotions').catch(() => ({})),
+    getJSON('/cities').catch(() => ({})),
   ]);
   const promotions = pr.promotions || [];
+  const cities = (ct.cities || []).map(normCity);
   const qmis = (q.homes || []).map(normQmi);
   const communities = (c.communities || []).map(normCommunity);
   const fpRaw = f.floorplans || f.floor_plans || (Array.isArray(f) ? f : []);
@@ -184,7 +193,7 @@ export async function loadData() {
     fp.homes = qmis.filter(h => h.floorPlanId === fp.id).sort(byPriceAsc(h => h.price));
     fp.communityList = Object.keys(fp.communityPrices).map(n => commByName.get(n.toLowerCase())).filter(Boolean);
   }
-  return { qmis, communities, floorplans, promotions, settings: s, commById, commByName, fpById };
+  return { qmis, communities, floorplans, promotions, cities, settings: s, commById, commByName, fpById };
 }
 
 async function demo() {
