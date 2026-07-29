@@ -24,6 +24,7 @@ concurrency:
 permissions:
   contents: write
   actions: write # dispatch deploy.yml after the commit-back push
+  issues: write # open/update the tracking issue when a run fails
 
 jobs:
   rebuild:
@@ -63,3 +64,43 @@ jobs:
           gh workflow run deploy.yml --ref main
         env:
           GH_TOKEN: ${{ github.token }}
+
+      # Nothing surfaced a failed nightly run before this. GitHub's only default signal for
+      # a failed cron is an email to whoever last edited the schedule — one person, easy to
+      # miss. A silent failure here is the worst case in the pipeline: Cloudflare keeps
+      # serving the last good deploy, so the site looks fine while every subsequent data fix
+      # stops reaching production. Surface the freeze in the repo instead of one inbox.
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: "CI failure: nightly rebuild/deploy is not reaching production"
+          WORKFLOW: ${{ github.workflow }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          BODY="$RUNNER_TEMP/ci-failure-body.md"
+          {
+            echo "\`$WORKFLOW\` failed on \`$REF\`: $RUN_URL"
+            echo
+            echo "**The site is not down — it is frozen.** Cloudflare keeps serving the last"
+            echo "successful deploy, so nothing looks broken, but no data or content fix"
+            echo "reaches production until this workflow is green again."
+            echo
+            echo "The most common cause is the stale-QMI prune backstop in"
+            echo "\`generate-details.mjs\` after a bulk unpublish: it refuses more than 50"
+            echo "newly-stale detail pages in one run, or a jump past 3x the prior run's"
+            echo "count. Search the run log for \`stale QMI prune:\`."
+            echo
+            echo "- Deletions intended and reviewed -> re-run with \`ESP_ALLOW_BULK_PRUNE=1\`."
+            echo "- Otherwise -> unpublish in smaller batches; do not raise the backstop."
+          } > "$BODY"
+          NUM="$(gh issue list --state open --limit 100 --json number,title \
+                   --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')"
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --body-file "$BODY"
+            echo "Appended to existing tracking issue #$NUM"
+          else
+            gh issue create --title "$TITLE" --body-file "$BODY"
+          fi

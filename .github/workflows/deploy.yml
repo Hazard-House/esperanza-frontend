@@ -39,6 +39,13 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
+# Only what this workflow needs: checkout reads the repo, the failure alert opens/updates a
+# tracking issue. Declaring these explicitly drops every other scope to none. Cloudflare
+# auth is the CLOUDFLARE_API_TOKEN secret, not GITHUB_TOKEN, so the deploy is unaffected.
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -73,3 +80,51 @@ jobs:
         env:
           # main/workflow_dispatch on main -> top-level config; staging branch -> staging env
           CLOUDFLARE_ENV: ${{ github.ref == 'refs/heads/staging' && 'staging' || '' }}
+
+      # See rebuild-details.yml for the reasoning. This leg matters just as much: the same
+      # generate-details.mjs runs here, so a prune-backstop trip blocks the 09:00 deploy
+      # too — the repo mirror and the deploy both stall on one root cause.
+      #
+      # Gated to main because this workflow also deploys `staging` on push, and the incident
+      # this issue describes ("production is frozen", prune-backstop runbook) is only true of
+      # the production leg. A failed staging deploy freezes nothing buyer-facing, so alerting
+      # on it would put a false production incident in front of responders — and, because the
+      # issue is keyed on a single title, would comment on and reopen the *production* thread.
+      # The nightly cron and workflow_dispatch on main both run as refs/heads/main, so the
+      # unattended path this PR exists to cover is fully covered. Staging failures stay
+      # visible the normal way: a red check on the push that caused them, with a human already
+      # watching. If staging ever needs its own alert it wants its own title/body, not this one.
+      - name: Alert on failure
+        if: failure() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: "CI failure: nightly rebuild/deploy is not reaching production"
+          WORKFLOW: ${{ github.workflow }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          BODY="$RUNNER_TEMP/ci-failure-body.md"
+          {
+            echo "\`$WORKFLOW\` failed on \`$REF\`: $RUN_URL"
+            echo
+            echo "**The site is not down — it is frozen.** Cloudflare keeps serving the last"
+            echo "successful deploy, so nothing looks broken, but no data or content fix"
+            echo "reaches production until this workflow is green again."
+            echo
+            echo "The most common cause is the stale-QMI prune backstop in"
+            echo "\`generate-details.mjs\` after a bulk unpublish: it refuses more than 50"
+            echo "newly-stale detail pages in one run, or a jump past 3x the prior run's"
+            echo "count. Search the run log for \`stale QMI prune:\`."
+            echo
+            echo "- Deletions intended and reviewed -> re-run with \`ESP_ALLOW_BULK_PRUNE=1\`."
+            echo "- Otherwise -> unpublish in smaller batches; do not raise the backstop."
+          } > "$BODY"
+          NUM="$(gh issue list --state open --limit 100 --json number,title \
+                   --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')"
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --body-file "$BODY"
+            echo "Appended to existing tracking issue #$NUM"
+          else
+            gh issue create --title "$TITLE" --body-file "$BODY"
+          fi
