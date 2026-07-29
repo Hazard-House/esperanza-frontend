@@ -9,6 +9,36 @@ import { patchHtmlLocale, stripEsPrefix, isEsPath, toEsPath } from "./locale.mjs
 
 const LIVE = "https://www.esperanzahomes.com";
 const API = "https://esperanza-api.round-base-ed8c.workers.dev";
+let staleQmiRedirects;
+
+// Read only after a static 404; healthy pages never fetch this. Cache per isolate.
+async function staleQmiRedirectTarget(request, env, path) {
+  if (!staleQmiRedirects) {
+    staleQmiRedirects = env.ASSETS.fetch(new Request(new URL("/stale-qmi-redirects.json", request.url)))
+      .then(async (response) => {
+        if (response.status !== 200) return {};
+        const manifest = await response.json();
+        return manifest.redirects || manifest; // supports the first manifest format too
+      }).catch(() => ({}));
+  }
+  return (await staleQmiRedirects)[path] || null;
+}
+
+// A manifest can lag a marketing republish. Unknown/API failure fails open to the live shell.
+async function qmiSlugIsPublished(slug, env) {
+  try {
+    const headers = new Headers({ accept: "application/json", origin: LIVE });
+    const request = new Request(API + "/api/public/qmi", { headers, redirect: "manual" });
+    let response = env.API ? await env.API.fetch(request) : null;
+    if (!response || response.status === 503) response = await fetch(new Request(request, { redirect: "manual" }), { cf: { cacheTtl: 300 } });
+    if (!response.ok) return null;
+    const { homes = [] } = await response.json();
+    return homes.some((home) => {
+      const fields = home.fields || home;
+      return fields.slug === slug || fields.seo_slug === slug;
+    });
+  } catch { return null; }
+}
 
 // ── Lead forms ────────────────────────────────────────────────────────────────
 // The O'Neill pages POST FormData to /xhr/<form>/ and expect
@@ -401,6 +431,16 @@ async function handle(request, env, esFallback = false) {
         const enUrl = new URL(bare, request.url);
         enUrl.search = url.search;
         return handle(new Request(enUrl, request), env, true);
+      }
+
+      // A static QMI page may have been pruned as unpublished. On a manifest hit, verify
+      // the live payload first: republished or ambiguous homes reach the live shell below.
+      const canonicalQmi = p.match(/^\/new-homes\/tx\/[^/]+\/[^/]+\/([^/]+)\/?$/);
+      if (canonicalQmi) {
+        const target = await staleQmiRedirectTarget(request, env, slashed);
+        if (target && (await qmiSlugIsPublished(canonicalQmi[1], env)) === false) {
+          return Response.redirect(url.origin + target, 301);
+        }
       }
 
       // Un-built QMI home page (draft or newly-published — no static page baked). Serve

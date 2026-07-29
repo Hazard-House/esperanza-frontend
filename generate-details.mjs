@@ -1,6 +1,8 @@
 // generate-details.mjs — render all detail pages from live D1 into public/.
 // Standalone (needs only committed templates + the API) OR called by build.mjs.
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, copyFileSync, rmSync, mkdtempSync } from 'node:fs';
+import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadData } from './data.mjs';
@@ -25,6 +27,67 @@ function writePage(urlPath, html) {
   const dst = join(OUT, urlPath.replace(/^\//, ''), 'index.html'); // urlPath ends with '/'
   mkdirSync(dirname(dst), { recursive: true });
   writeFileSync(dst, html);
+}
+
+// Static QMI leaf paths must also declare type=qmi. The content guard protects rich
+// numeric/id-path community pages that share the same directory depth.
+function qmiPageDirs(outDir = OUT) {
+  const root = join(outDir, 'new-homes', 'tx');
+  if (!existsSync(root)) return [];
+  const dirs = [];
+  for (const city of readdirSync(root, { withFileTypes: true })) {
+    if (!city.isDirectory()) continue;
+    for (const community of readdirSync(join(root, city.name), { withFileTypes: true })) {
+      if (!community.isDirectory()) continue;
+      for (const home of readdirSync(join(root, city.name, community.name), { withFileTypes: true })) {
+        if (!home.isDirectory()) continue;
+        const dir = join(root, city.name, community.name, home.name);
+        const index = join(dir, 'index.html');
+        if (existsSync(index) && readFileSync(index, 'utf8').includes('\"type\":\"qmi\"')) dirs.push(dir);
+      }
+    }
+  }
+  return dirs;
+}
+
+const MAX_PRUNE_COUNT = 50;
+const MAX_PRUNE_MULTIPLIER = 3;
+
+// Preserve redirect history and the prior run's prune count together. The comparison is
+// against the last run, rather than a static percentage of the tree, because normal sales
+// accumulate gradually. A sudden truncated payload is still refused before any deletion.
+export function pruneStaleQmiPages(qmis, { outDir = OUT, allowBulkPrune = process.env.ESP_ALLOW_BULK_PRUNE === '1' } = {}) {
+  const livePaths = new Set(qmis.filter(isRenderableHome).map(qmiPath));
+  const manifestPath = join(outDir, 'stale-qmi-redirects.json');
+  let prior = { redirects: {}, pruneCount: 0 };
+  try {
+    const loaded = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    prior = loaded.redirects ? loaded : { redirects: loaded, pruneCount: Object.keys(loaded).length };
+  } catch { /* first run */ }
+  const redirects = prior.redirects || {};
+  for (const path of Object.keys(redirects)) if (livePaths.has(path)) delete redirects[path];
+  const staleDirs = qmiPageDirs(outDir).filter((dir) => !livePaths.has(dir.slice(outDir.length).replace(/\\/g, '/') + '/'));
+  // Include historic manifest entries which are *still* absent from the payload. Otherwise
+  // repeated sub-threshold short payloads would delete a fresh slice every night forever.
+  const carriedStaleCount = Object.keys(redirects).filter((path) => !livePaths.has(path)).length;
+  const totalStaleCount = carriedStaleCount + staleDirs.length;
+  const jumped = prior.pruneCount > 0 && totalStaleCount > prior.pruneCount * MAX_PRUNE_MULTIPLIER;
+  if (!allowBulkPrune && staleDirs.length && (totalStaleCount > MAX_PRUNE_COUNT || jumped)) {
+    const reason = totalStaleCount > MAX_PRUNE_COUNT
+      ? `${totalStaleCount} total stale pages exceeds safety backstop of ${MAX_PRUNE_COUNT}`
+      : `total stale count jumped from ${prior.pruneCount} to ${totalStaleCount} (max ${MAX_PRUNE_MULTIPLIER}x)`;
+    throw new Error(`stale QMI prune: ${staleDirs.length} ${reason}; refusing to build (set ESP_ALLOW_BULK_PRUNE=1 for a reviewed bulk unpublish)`);
+  }
+  for (const dir of staleDirs) {
+    const rel = dir.slice(outDir.length).replace(/\\/g, '/') + '/';
+    const [, city, community] = rel.match(/^\/new-homes\/tx\/([^/]+)\/([^/]+)\//) || [];
+    if (!city || !community) continue;
+    redirects[rel] = `/new-homes/tx/${city}/${community}/`;
+    rmSync(dir, { recursive: true, force: true });
+  }
+  const manifest = { redirects, pruneCount: totalStaleCount };
+  writeFileSync(manifestPath, JSON.stringify(manifest));
+  return redirects;
 }
 
 // The /incentives/* promo pages ship 1:1 from the June-8 scrape — no live island, no
@@ -247,6 +310,7 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
     writePage(qmiPath(h), renderQmi(h, shell));
     nqmi++;
   }
+  const prunedQmi = pruneStaleQmiPages(d.qmis);
   let nc = 0, nf = 0;
   // `|| clobbered.has(...)`: repair a community page a previous run overwrote with a QMI
   // detail page. Without it the scraped-page skip set would preserve the damage forever.
@@ -271,7 +335,53 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // A bake error is logged but does not block the live inventory deploy.
   const es = await bakeSpanish().catch(e => { console.error('es-bake:', e.message); return { pages: 0 }; });
   console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; ${es.pages} Spanish pages`);
-  return { qmi: nqmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, lists, islands, es: es.pages };
+  return { qmi: nqmi, prunedQmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, lists, islands, es: es.pages };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();
+function pruneCheck() {
+  const makePage = (outDir, city, community, slug, type = 'qmi') => {
+    const dir = join(outDir, 'new-homes', 'tx', city, community, slug);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'index.html'), `<script>{"type":"${type}"}</script>`);
+    return dir;
+  };
+  const outDir = mkdtempSync(join(tmpdir(), 'esperanza-prune-'));
+  try {
+    const homes = Array.from({ length: 20 }, (_, i) => ({ slug: `live-${i}`, city: 'Laredo', community: 'El Eden' }));
+    const live = homes.map((h) => makePage(outDir, 'laredo', 'el-eden', h.slug));
+    const stale = makePage(outDir, 'brownsville', 'palo-alto-groves', '2309-grove-lane');
+    const community = makePage(outDir, 'brownsville', 'palo-alto-groves', '7522', 'community');
+    const expected = { '/new-homes/tx/brownsville/palo-alto-groves/2309-grove-lane/': '/new-homes/tx/brownsville/palo-alto-groves/' };
+    assert.deepEqual(pruneStaleQmiPages(homes, { outDir }), expected);
+    assert(live.every(existsSync)); assert(!existsSync(stale)); assert(existsSync(community));
+    assert.deepEqual(pruneStaleQmiPages(homes, { outDir }), expected, 'manifest persists');
+    assert.deepEqual(pruneStaleQmiPages([...homes, { slug: '2309-grove-lane', city: 'Brownsville', community: 'Palo Alto Groves' }], { outDir }), {}, 'republish clears redirect');
+  } finally { rmSync(outDir, { recursive: true, force: true }); }
+  const steady = mkdtempSync(join(tmpdir(), 'esperanza-prune-steady-'));
+  try {
+    // Today's real shape: 276 baked QMI pages, 25 legitimately absent. This must proceed.
+    const homes = Array.from({ length: 251 }, (_, i) => ({ slug: `live-${i}`, city: 'X', community: 'Y' }));
+    homes.forEach((h) => makePage(steady, 'x', 'y', h.slug));
+    for (let i = 0; i < 25; i++) makePage(steady, 'x', 'y', `stale-${i}`);
+    assert.equal(Object.keys(pruneStaleQmiPages(homes, { outDir: steady })).length, 25, '276 baked / 25 stale proceeds');
+  } finally { rmSync(steady, { recursive: true, force: true }); }
+  const partial = mkdtempSync(join(tmpdir(), 'esperanza-prune-partial-'));
+  try {
+    for (let i = 0; i < 200; i++) makePage(partial, 'x', 'y', `home-${i}`);
+    assert.throws(() => pruneStaleQmiPages([{ slug: 'home-0', city: 'X', community: 'Y' }], { outDir: partial }), /safety backstop/);
+    assert(existsSync(join(partial, 'new-homes', 'tx', 'x', 'y', 'home-199')));
+  } finally { rmSync(partial, { recursive: true, force: true }); }
+  const jump = mkdtempSync(join(tmpdir(), 'esperanza-prune-jump-'));
+  try {
+    const priorRedirects = Object.fromEntries(Array.from({ length: 5 }, (_, i) => [`/new-homes/tx/x/y/old-${i}/`, '/new-homes/tx/x/y/']));
+    writeFileSync(join(jump, 'stale-qmi-redirects.json'), JSON.stringify({ redirects: priorRedirects, pruneCount: 5 }));
+    for (let i = 0; i < 20; i++) makePage(jump, 'x', 'y', `new-${i}`);
+    assert.throws(() => pruneStaleQmiPages([], { outDir: jump }), /jumped from 5 to 25/, 'prior-run jump refuses cumulative erosion');
+    assert(existsSync(join(jump, 'new-homes', 'tx', 'x', 'y', 'new-19')));
+  } finally { rmSync(jump, { recursive: true, force: true }); }
+  console.log('generate-details.mjs pruneCheck() passed');
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  if (process.argv.includes('--check')) pruneCheck(); else generateDetails();
+}
