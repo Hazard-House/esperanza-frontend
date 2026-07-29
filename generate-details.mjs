@@ -16,6 +16,7 @@ import { slugify } from './data.mjs';
 import { ensureCommunityHomesLive } from './rewrite.mjs';
 import { classifyDetail } from './build.mjs';
 import { generateBlogs } from './generate-blogs.mjs';
+import { bakeSpanish } from './es-bake.mjs';
 
 const OUT = join(import.meta.dirname, 'public');
 const SHELL_PATH = join(import.meta.dirname, 'templates', 'detail-shell.html');
@@ -266,8 +267,11 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // detail pages use, then sweep dead promo ribbons off everything else in public/.
   const lists = regenerateListPages(d, { live: promoCorpus });
   const islands = refreshIslands();
-  console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed`);
-  return { qmi: nqmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, lists, islands };
+  // Spanish LAST: mirror the fully refreshed English tree, including list pages and islands.
+  // A bake error is logged but does not block the live inventory deploy.
+  const es = await bakeSpanish().catch(e => { console.error('es-bake:', e.message); return { pages: 0 }; });
+  console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; ${es.pages} Spanish pages`);
+  return { qmi: nqmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, hoaUpdated, lists, islands, es: es.pages };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) generateDetails();

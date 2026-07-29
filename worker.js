@@ -5,7 +5,7 @@
 // survives rebuilds.
 
 import { REDIRECTS } from "./redirects.mjs";
-import { patchHtmlLocale, localeCookieHeader, stripEsPrefix, isEsPath, parseCookie, LOCALE_COOKIE } from "./locale.mjs";
+import { patchHtmlLocale, stripEsPrefix, isEsPath, toEsPath } from "./locale.mjs";
 
 const LIVE = "https://www.esperanzahomes.com";
 const API = "https://esperanza-api.round-base-ed8c.workers.dev";
@@ -125,6 +125,27 @@ const SEC = {
 const SENTRY_LOADER =
   '<script src="https://js.sentry-cdn.com/c009f5391be2cc693451e1489dc3159c.min.js" crossorigin="anonymous"></script>';
 
+// A home URL with no baked page: /new-homes/tx/<city>/<community>/<slug>/ or
+// /new-homes/available/<slug>/ — NOT community pages (3-deep) or the shell/grid itself.
+// Bare (English) paths only; callers strip /es first.
+function isUnbuiltHomePath(p) {
+  return (
+    (/^\/new-homes\/tx\/[^/]+\/[^/]+\/[^/]+\/?$/.test(p) || /^\/new-homes\/available\/[^/]+\/?$/.test(p)) &&
+    p !== "/new-homes/available/home/" &&
+    p !== "/new-homes/available/home"
+  );
+}
+
+// The live detail shell, rendered by qmi-detail-live.js from the API. Never cached — the
+// same URL is a different home's page the moment inventory changes.
+function liveShell(shell) {
+  const out = new Response(shell.body, shell);
+  out.headers.set("Content-Type", "text/html; charset=utf-8");
+  out.headers.set("Cache-Control", "no-store");
+  for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
+  return out;
+}
+
 // One chokepoint: prepend the loader into <head> of every text/html response. Non-HTML
 // (API JSON, assets, redirects) passes through untouched.
 function withSentry(response) {
@@ -134,18 +155,13 @@ function withSentry(response) {
     .transform(response);
 }
 
-async function handle(request, env) {
+async function handle(request, env, esFallback = false) {
     const url = new URL(request.url);
     let p = url.pathname;
 
-    // Legacy /es/… URLs → English paths (Spanish i18n disabled).
-    if (isEsPath(p)) {
-      const bare = stripEsPrefix(p);
-      const dest = new URL(bare.endsWith("/") ? bare : `${bare}/`, request.url);
-      dest.search = url.search;
-      dest.searchParams.delete("lang");
-      return Response.redirect(dest.toString(), 301);
-    }
+    // Spanish is served from committed /es/ twins baked by es-bake.mjs — no redirect, no
+    // runtime translation. Paths without a twin fall back to English below (the 404 branch),
+    // so a not-yet-rebaked page is a 200 in the wrong language, never a 404.
 
     // Cleartext http must 301 to https (live does; "Always Use HTTPS" isn't on for
     // this hostname). Sniff the visitor's real scheme from cf-visitor/x-forwarded-proto
@@ -372,25 +388,28 @@ async function handle(request, env) {
         } catch { /* fall through to the 404 page */ }
       }
 
+      // A /es/ URL with no baked twin. Spanish is additive, so this must never 404:
+      // serve the Spanish live detail shell for home URLs (new homes appear between
+      // rebuilds), otherwise hand the bare path to the English pipeline — which also
+      // gets us every legacy redirect shape for free. `esFallback` caps the recursion.
+      if (isEsPath(p) && !esFallback) {
+        const bare = stripEsPrefix(p);
+        if (isUnbuiltHomePath(bare)) {
+          const shell = await env.ASSETS.fetch(new Request(new URL(toEsPath("/new-homes/available/home/"), request.url)));
+          if (shell.status === 200) return liveShell(shell);
+        }
+        const enUrl = new URL(bare, request.url);
+        enUrl.search = url.search;
+        return handle(new Request(enUrl, request), env, true);
+      }
+
       // Un-built QMI home page (draft or newly-published — no static page baked). Serve
       // the LIVE detail shell so qmi-detail-live.js renders the home by slug from the API
       // (drafts included on staging via the preview passthrough). Keeps the canonical URL
-      // and needs no rebuild. Matches the home shapes /new-homes/tx/<city>/<community>/<slug>/
-      // and /new-homes/available/<slug>/ — NOT community pages (3-deep) or the shell/grid.
-      const isHomeUrl =
-        (/^\/new-homes\/tx\/[^/]+\/[^/]+\/[^/]+\/?$/.test(p) ||
-          /^\/new-homes\/available\/[^/]+\/?$/.test(p)) &&
-        p !== "/new-homes/available/home/" &&
-        p !== "/new-homes/available/home";
-      if (isHomeUrl) {
+      // and needs no rebuild.
+      if (isUnbuiltHomePath(p)) {
         const shell = await env.ASSETS.fetch(new Request(new URL("/new-homes/available/home/", request.url)));
-        if (shell.status === 200) {
-          const out = new Response(shell.body, shell);
-          out.headers.set("Content-Type", "text/html; charset=utf-8");
-          out.headers.set("Cache-Control", "no-store"); // rendered live by the island
-          for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
-          return out;
-        }
+        if (shell.status === 200) return liveShell(shell);
       }
 
       // Serve our branded 404 page (1:1 with the legacy site) with a real 404 status.
@@ -405,7 +424,7 @@ async function handle(request, env) {
     const ct = resp.headers.get("content-type") || "";
     if (resp.ok && ct.includes("text/html")) {
       let html = await resp.text();
-      html = patchHtmlLocale(html);
+      html = patchHtmlLocale(html, p);
       const needsPromo =
         !html.includes("promotions-live.js") &&
         (html.includes('class="alert-banner"') || html.includes('id="incentives"') || slashed.startsWith("/incentives/"));
@@ -422,13 +441,7 @@ async function handle(request, env) {
       const out = new Response(html, resp);
       for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
       out.headers.set("Cache-Control", "public, max-age=300");
-      const langQ = url.searchParams.get("lang");
-      const hadEs =
-        langQ === "es" ||
-        parseCookie(request.headers.get("cookie"))[LOCALE_COOKIE] === "es";
-      if (langQ === "es" || langQ === "en" || hadEs) {
-        out.headers.append("Set-Cookie", localeCookieHeader("en"));
-      }
+      // Locale is in the URL only — no Set-Cookie, nothing for a shared cache to vary on.
       return out;
     }
 

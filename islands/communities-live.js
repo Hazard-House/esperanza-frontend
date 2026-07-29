@@ -7,6 +7,18 @@
  * with API fallback. Config injected by build.mjs as window.__ESPERANZA. */
 (function () {
   'use strict';
+  // ponytail: bake pass injects window.__ES_I18N on /es/ pages; English pages get {}.
+  var T = window.__ES_I18N || {};
+  function t(s) { return T[s] || s; }
+  // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
+  // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
+  var ES = document.documentElement.lang === 'es';
+  function u(p) {
+    if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
+    if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
+    if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
+    return '/es' + p;
+  }
   var CFG = window.__ESPERANZA || {};
   var API = CFG.API_BASE, TOKEN = CFG.MAPBOX_TOKEN, STYLE = CFG.MAPBOX_STYLE_COMMON;
   // API fetch with a timeout so a hung API rejects (into the .catch, baked cards
@@ -29,7 +41,7 @@
   var slugify = function (s) { return String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
   // qmi-links.json maps a community slug -> its shipped detail page (built from the pages).
   var LINKS = { qmi: {}, community: {} };
-  function communityUrl(c) { return LINKS.community[c.slug] || LINKS.community[slugify(c.name)] || ''; }
+  function communityUrl(c) { return u(LINKS.community[c.slug] || LINKS.community[slugify(c.name)] || ''); }
 
   function coordOf(c) {
     var k = (c.name || '').trim().toLowerCase();
@@ -50,23 +62,23 @@
     var lp = promoOf(c);
     var ribbonText = c.promoBadgeText || (lp.ribbon && lp.ribbon.text);
     var ribbonColor = c.promoBadgeText ? 'green' : (lp.ribbon && lp.ribbon.color) || 'green';
-    var banner = c.comingSoon ? '<div class="banner gray">Coming Soon</div>'
+    var banner = c.comingSoon ? '<div class="banner gray">' + t('Coming Soon') + '</div>'
       : (ribbonText ? '<div class="banner ' + ribbonColor + '">' + esc(ribbonText) + '</div>' : '');
-    var mpIcon = isMPC(c) ? '<img class="mp-location" src="' + ICON.masterplan + '" alt="Master Planned Community" loading="lazy" width="35">' : '';
+    var mpIcon = isMPC(c) ? '<img class="mp-location" src="' + ICON.masterplan + '" alt="' + t('Master Planned Community') + '" loading="lazy" width="35">' : '';
     var item = function (icon, v, label) {
       return v ? '<div class="item py-2"><img class="me-2" src="' + icon + '" aria-hidden="true" loading="lazy" width="18">' + esc(v) + ' ' + label + '</div>' : '';
     };
     var bare = !!lp.bare; // live original renders this card name/city(+ribbon) only
-    var stats = bare ? '' : item(ICON.bed, c.beds, 'Bed') + item(ICON.bath, c.baths, 'Bath') + item(ICON.sqft, c.sqft, 'Sq. Ft.');
+    var stats = bare ? '' : item(ICON.bed, c.beds, t('Bed')) + item(ICON.bath, c.baths, t('Bath')) + item(ICON.sqft, c.sqft, t('Sq. Ft.'));
     var price = (!bare && !c.comingSoon && c.priceFrom) ?
-      '<div class="col-auto ps-0 ms-auto py-2"><div class="price-title">Homes From</div><div class="price">' + money(c.priceFrom) + '</div></div>' : '';
+      '<div class="col-auto ps-0 ms-auto py-2"><div class="price-title">' + t('Homes From') + '</div><div class="price">' + money(c.priceFrom) + '</div></div>' : '';
     // ponytail: original's Learn More opens a promo modal that doesn't exist on the
     // mirror; a <span> keeps the classes and lets the click bubble to the card link.
     var incentiveText = lp.incentive || (lp.ribbon !== undefined ? null : c.promoBannerText); // harvested truth wins; API only when no harvest data at all
     var promo = (!bare && incentiveText) ?
       '<div class="mp-title"><div class="text-center p-2">' + esc(incentiveText) +
       '<div class="mp-title"><div class="btn btn-primary mt-1 xsmall-btn overpass">' +
-      '<span class="promoModalLink text-white border-0 bg-transparent">Learn More</span>' +
+      '<span class="promoModalLink text-white border-0 bg-transparent">' + t('Learn More') + '</span>' +
       '</div></div></div></div>' : '';
     return '' +
       '<div class="col-12 col-md-6 col-lg-12 mb-3 px-2">' +
@@ -77,14 +89,14 @@
       '<div class="oi-aspect sixteen-nine one-one-lg four-three-xl">' +
       banner + mpIcon +
       (c.image ? '<img src="' + esc(c.image) + '" loading="lazy" class="oi-aspect-img" alt="' + esc(c.name) + '">' : '') +
-      '<div class="hover-button d-flex"><div class="btn card-button m-auto">VIEW COMMUNITY</div></div>' +
+      '<div class="hover-button d-flex"><div class="btn card-button m-auto">' + t('VIEW COMMUNITY') + '</div></div>' +
       '</div>' +
       '</div>' +
       '<div class="col-12 col-lg-6 ps-lg-0 d-flex">' +
       '<div class="card-body d-flex flex-column h-100 my-auto">' +
       '<div class="card-title">' + esc(c.name) + '</div>' +
       '<div class="card-location">' + esc(c.town) + ', TX</div>' +
-      (isMPC(c) ? '<div class="mp-title">Master Planned Community</div>' : '') +
+      (isMPC(c) ? '<div class="mp-title">' + t('Master Planned Community') + '</div>' : '') +
       '<div class="row mt-3 mt-lg-auto">' +
       (stats ? '<div class="col-7"><div class="stat-group">' + stats + '</div></div>' : '<div class="col-12"></div>') +
       price + promo +
@@ -152,7 +164,7 @@
       (c.image ? '<div class="oi-aspect two-one rounded-top"><img src="' + esc(c.image) + '" loading="lazy" class="oi-aspect-img rounded-top" alt="' + esc(c.name) + '"></div>' : '') +
       '<div class="row my-2 g-0"><div class="col px-2 my-auto"><div class="card-title">' + esc(c.name) + '</div>' +
       '<div class="card-location">' + esc(c.town) + ', TX</div></div>' +
-      (c.priceFrom ? '<div class="col-auto px-2 my-auto"><div class="price-title">From</div><div class="price mt-1">' + money(c.priceFrom) + '</div></div>' : '') +
+      (c.priceFrom ? '<div class="col-auto px-2 my-auto"><div class="price-title">' + t('From') + '</div><div class="price mt-1">' + money(c.priceFrom) + '</div></div>' : '') +
       '</div>' + a1 + '</div>';
   }
   function toGeoJSON(list) {
@@ -224,7 +236,7 @@
       var grid = document.getElementById('oi-filter-results');
       function refresh() {
         var comms = applyFilters(all);
-        if (grid) grid.innerHTML = comms.length ? comms.map(cardHTML).join('') : '<div class="col-12 p-4 text-center text-gray">No communities found.</div>';
+        if (grid) grid.innerHTML = comms.length ? comms.map(cardHTML).join('') : '<div class="col-12 p-4 text-center text-gray">' + t('No communities found.') + '</div>';
         var count = document.getElementById('oi-results-count'); if (count) count.textContent = comms.length;
         updateMap(comms);
       }

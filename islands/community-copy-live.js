@@ -57,6 +57,13 @@ if (typeof window === 'undefined') {
 } else {
   (function () {
     'use strict';
+  // ponytail: /es/ is a URL namespace, not a different site — routing logic must see the bare
+  // English path, or every path-gated island silently no-ops on the Spanish twin.
+  function barePath() {
+    var p = location.pathname;
+    if (p === '/es') return '/';
+    return p.indexOf('/es/') === 0 ? (p.slice(3) || '/') : p;
+  }
     var CFG = window.__ESPERANZA || {}, API = CFG.API_BASE || '/api/public';
     // Live O'Neill pages embed promo/grand-opening graphics after overview body copy.
     // D1 description is text-only — re-append known graphics after the API refresh.
@@ -64,7 +71,7 @@ if (typeof window === 'undefined') {
       'villas-las-lagunas': '<p><img src="//img.hazardhouse.ai/cdn-cgi/image/format=auto,quality=82,width=1920/assets-media/153/2025/7/11/Villas_Las_Lagunas_Community_Grand_Opening.jpg" style="width: 750px;"></p>',
     };
     var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
-    var parts = location.pathname.replace(/^\/+|\/+$/g, '').split('/');
+    var parts = barePath().replace(/^\/+|\/+$/g, '').split('/');
 
     // Community page: /new-homes/tx/{city}/{slug}/ (exactly 4 parts). QMI detail is 5,
     // floor plans live under /floorplans/. URL-based so it works even on the older
