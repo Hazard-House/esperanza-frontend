@@ -15,7 +15,7 @@ import { livePromoTexts, homePromoEntitlements } from './promo-utils.mjs';
 import { regenerateListPages, isRenderableHome } from './render-lists.mjs';
 import { hydrateCommunity, hydrateCommunityStatus, applyHoaLinks } from './hydrate-scraped.mjs';
 import { slugify } from './data.mjs';
-import { ensureCommunityHomesLive } from './rewrite.mjs';
+import { ensureCommunityHomesLive, ensureCommunityCopyLive } from './rewrite.mjs';
 import { classifyDetail } from './build.mjs';
 import { generateBlogs } from './generate-blogs.mjs';
 import { bakeSpanish } from './es-bake.mjs';
@@ -207,6 +207,10 @@ export function rehydrateScrapedCommunities(d, { outDir = OUT } = {}) {
     const raw = readFileSync(file, 'utf8');
     let html = hydrateCommunityStatus(hydrateCommunity(raw, c, d), d);
     html = ensureCommunityHomesLive(html);
+    // Scraped community pages never went through build.mjs's CONTAINER_ISLANDS pass,
+    // so admin description/amenities edits stayed frozen at the June-8 scrape. Inject
+    // the live-copy island the same way the homes reconciler above is injected.
+    html = ensureCommunityCopyLive(html);
     if (html !== raw) {
       writeFileSync(file, html);
       updated++;
@@ -402,6 +406,35 @@ function pruneCheck() {
   console.log('generate-details.mjs pruneCheck() passed');
 }
 
+// ponytail self-check: a scraped-community fixture (anchored on the first real
+// ship.txt community entry, so the path shape stays honest) must gain exactly one
+// community-copy-live.js tag from rehydrateScrapedCommunities — the tag build.mjs
+// injects via CONTAINER_ISLANDS but CI never did, freezing admin copy edits at the
+// June-8 scrape. Idempotency asserted too: a second run must not double-inject.
+function rehydrateCheck() {
+  const rel = readFileSync(SHIP_PATH, 'utf8').split('\n').map(s => s.trim()).filter(Boolean)
+    .find(r => classifyDetail(r)?.type === 'community');
+  assert(rel, 'ship.txt has at least one scraped community page');
+  const { slug } = classifyDetail(rel);
+  const city = rel.match(/^new-homes\/tx\/([^/]+)\//)[1];
+  const outDir = mkdtempSync(join(tmpdir(), 'esperanza-rehydrate-'));
+  try {
+    const file = join(outDir, rel);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, '<html><body><section id="overview"><div class="wysiwyg">frozen June-8 copy</div></section></body></html>');
+    const d = { communities: [{ slug, name: slug, city, priceFrom: 0, homes: [], plans: [], hoaLinks: [] }] };
+    const r1 = rehydrateScrapedCommunities(d, { outDir });
+    assert.equal(r1.updated, 1, 'fixture community page rewritten');
+    const tagCount = h => (h.match(/src="\/community-copy-live\.js"/g) || []).length;
+    assert.equal(tagCount(readFileSync(file, 'utf8')), 1,
+      'scraped community page gains exactly one community-copy-live.js tag');
+    rehydrateScrapedCommunities(d, { outDir });
+    assert.equal(tagCount(readFileSync(file, 'utf8')), 1,
+      'community-copy-live.js injection is idempotent across rehydrate runs');
+  } finally { rmSync(outDir, { recursive: true, force: true }); }
+  console.log('generate-details.mjs rehydrateCheck() passed');
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  if (process.argv.includes('--check')) pruneCheck(); else generateDetails();
+  if (process.argv.includes('--check')) { pruneCheck(); rehydrateCheck(); } else generateDetails();
 }

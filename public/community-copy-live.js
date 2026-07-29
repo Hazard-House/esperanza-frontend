@@ -1,11 +1,12 @@
 /* community-copy-live.js — refresh the editable WYSIWYG copy live from D1 so admin
  * edits show immediately without a rebuild/deploy. Covers two page types (detected
  * from the URL, since neither reliably bakes __ESPERANZA_PAGE):
- *   community /new-homes/tx/{city}/{slug}/ (4 parts) — #overview .wysiwyg (description)
- *                                                    + #amenities-list (amenities)
+ *   community /new-homes/tx/{city}/{slug}/ (4 parts) or the scraped id path
+ *             /new-homes/tx/{city}/{slug}/{id}/ (5 parts, all-digit id)
+ *             — #overview .wysiwyg (description) + #amenities-list (amenities)
  *   city     /{slug}/ (1 part, matched against /cities) — .city-page-wysiwyg (hero copy)
- * Prices/QMI cards/maps are owned by other islands. No-ops on QMI (5 parts) /
- * floor-plan pages. Node-testable helpers via --check. */
+ * Prices/QMI cards/maps are owned by other islands. No-ops on QMI (5 parts, address
+ * tail) / floor-plan pages. Node-testable helpers via --check. */
 function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -39,6 +40,17 @@ function cityCopyHtml(raw, cityName) {
   }
   return html;
 }
+// Community slug from bare-path segments, or null when the URL isn't a community page.
+// Two live shapes: the canonical slug path /new-homes/tx/{city}/{slug}/ (4 parts) and
+// the scraped id path /new-homes/tx/{city}/{slug}/{id}/ (5 parts, id all digits) that
+// the slug path 301s to. QMI details are also 5 parts but end in an address slug
+// (e.g. 2144-sand-lane), never pure digits — so the \d+ test keeps the QMI no-op.
+function communitySlugFromParts(parts) {
+  if (parts[0] !== 'new-homes' || parts[1] !== 'tx') return null;
+  if (parts.length === 4) return parts[3];
+  if (parts.length === 5 && /^\d+$/.test(parts[4])) return parts[3];
+  return null;
+}
 
 if (typeof window === 'undefined') {
   if (process.argv.includes('--check')) {
@@ -52,6 +64,11 @@ if (typeof window === 'undefined') {
     assert(cityCopyHtml('Welcome to Brownsville, TX', 'Brownsville') === 'Welcome to <span style="font-weight: 700;">Brownsville</span>, TX', 'city bolds name');
     assert(cityCopyHtml('<p>rich</p>', 'X') === '<p>rich</p>', 'city html passthrough');
     assert(cityCopyHtml('  ', 'X') === '', 'city blank -> empty');
+    assert(communitySlugFromParts(['new-homes', 'tx', 'mcallen', 'villas-at-tres-lagos']) === 'villas-at-tres-lagos', 'canonical slug path');
+    assert(communitySlugFromParts(['new-homes', 'tx', 'mcallen', 'villas-at-tres-lagos', '18249']) === 'villas-at-tres-lagos', 'scraped id path');
+    assert(communitySlugFromParts(['new-homes', 'tx', 'brownsville', 'palo-alto-groves', '2144-sand-lane']) === null, 'QMI detail no-ops');
+    assert(communitySlugFromParts(['floorplans', 'indigo', '231384']) === null, 'floor plan no-ops');
+    assert(communitySlugFromParts(['mcallen']) === null, 'city page falls through to city branch');
     console.log('community-copy-live.js demo() passed');
   }
 } else {
@@ -73,11 +90,13 @@ if (typeof window === 'undefined') {
     var fetchT = function (u, ms) { return fetch(u, AbortSignal.timeout ? { signal: AbortSignal.timeout(ms || 10000) } : {}); };
     var parts = barePath().replace(/^\/+|\/+$/g, '').split('/');
 
-    // Community page: /new-homes/tx/{city}/{slug}/ (exactly 4 parts). QMI detail is 5,
-    // floor plans live under /floorplans/. URL-based so it works even on the older
-    // community pages that never got __ESPERANZA_PAGE baked.
-    if (parts[0] === 'new-homes' && parts[1] === 'tx' && parts.length === 4) {
-      var slug = parts[3];
+    // Community page: canonical /new-homes/tx/{city}/{slug}/ (4 parts) or the scraped
+    // id path /new-homes/tx/{city}/{slug}/{id}/ (5 parts, all-digit id) it 301s to —
+    // the 32 scraped pages SERVE from the id path, so a 4-part-only guard would no-op
+    // on every one of them. QMI detail ends in an address slug, never digits, and
+    // floor plans live under /floorplans/, so both still miss.
+    var slug = communitySlugFromParts(parts);
+    if (slug) {
       fetchT(API + '/communities').then(function (r) { return r.json(); }).then(function (res) {
         var raw = (res.communities || []).filter(function (c) { return (c.fields || c).slug === slug; })[0];
         if (!raw) return;
