@@ -135,6 +135,37 @@ export function parseMaxAge(cacheControl) {
   return m ? Number(m[1]) : NaN;
 }
 
+// The workflow's exit-code contract, declared here rather than only in YAML comments so
+// it can be TESTED. site-freshness.yml routes on these codes; the routing was where the
+// silent path lived, so the routing gets asserted.
+//
+//   OBSERVED codes: the probe reached both the site and the API and returned a verdict.
+//   Anything else means it produced no verdict at all.
+export const OBSERVED_EXIT_CODES = ['0', '1', '2'];
+
+/**
+ * Mirror of the four `if:` predicates in .github/workflows/site-freshness.yml, so the
+ * routing can be proven exhaustive without dispatching a run.
+ *
+ * This exists because of a real bug: the drift branch tested `code == 1 || code == 2` and
+ * the close branch tested `outcome == 'success'`, and exit 3 matched NEITHER. Since the
+ * step is `continue-on-error`, a persistently blind watchdog produced a GREEN run with no
+ * incident — silent failure in the one workflow whose entire job is to end silent failure.
+ *
+ * Keep these expressions in lockstep with the YAML. If they diverge, the test below is
+ * asserting a fiction, so the assertions also pin the exact literal predicates.
+ */
+export function routeExitCode(code) {
+  const c = code == null ? '' : String(code);
+  const observed = OBSERVED_EXIT_CODES.includes(c);
+  return {
+    openDrift: c === '1' || c === '2',
+    closeDrift: c === '0',
+    openUnavailable: !observed,
+    closeUnavailable: observed,
+  };
+}
+
 async function main() {
   // Retry before declaring drift: a flaky watchdog is worse than none, because people
   // learn to ignore it. Real drift persists across the whole window and still trips;
@@ -340,6 +371,95 @@ if (process.argv.includes('--check') && IS_ENTRY) {
     Math.max(0, 8 - 1) * 20000 < 300_000,
     'shipped interval x attempts is deliberately under the TTL; the floor supplies the rest'
   );
+
+  // ==========================================================================
+  // WORKFLOW ROUTING — the exit code must never fall between the branches.
+  //
+  // This is a regression test for a bug Sol caught in review: exit 3 matched neither the
+  // drift branch nor the close branch, and `continue-on-error` swallowed the failure, so a
+  // watchdog that could not see the site AT ALL produced a green run and no incident. The
+  // monitor built to end silent failure was failing silently.
+  //
+  // Every code below asserts what BOTH incidents do, not just the one under discussion,
+  // because the dangerous states are the combinations: a code that opens nothing, or one
+  // that closes a drift incident it has no evidence about.
+  const routes = [
+    // code, openDrift, closeDrift, openUnavailable, closeUnavailable
+    ['0', false, true, false, true], // healthy: clears both
+    ['1', true, false, false, true], // drift: opens drift, and CLEARS unavailable (it saw the site)
+    ['2', true, false, false, true], // parser broken: same — it observed, it just can't parse
+    ['3', false, false, true, false], // blind: opens unavailable, touches NEITHER drift branch
+  ];
+  for (const [code, openDrift, closeDrift, openUnavail, closeUnavail] of routes) {
+    const r = routeExitCode(code);
+    assert.equal(r.openDrift, openDrift, `exit ${code}: openDrift`);
+    assert.equal(r.closeDrift, closeDrift, `exit ${code}: closeDrift`);
+    assert.equal(r.openUnavailable, openUnavail, `exit ${code}: openUnavailable`);
+    assert.equal(r.closeUnavailable, closeUnavail, `exit ${code}: closeUnavailable`);
+  }
+
+  // THE ACTUAL BUG, named. Exit 3 must produce an incident, and it must not be the data
+  // one. Before the fix both of these were false and true respectively.
+  assert.ok(routeExitCode('3').openUnavailable, 'exit 3 MUST open the unavailable incident');
+  assert.ok(!routeExitCode('3').openDrift, 'exit 3 must NOT open a data-drift incident');
+  assert.ok(!routeExitCode('3').closeDrift, 'exit 3 must NOT close a data-drift incident');
+
+  // Sol's separation requirement: closing "watchdog unavailable" must never resolve real
+  // drift. Exit 1 is the case that proves the two are independent — observability is back,
+  // the data is still wrong, so one closes and the other opens.
+  assert.ok(routeExitCode('1').closeUnavailable && routeExitCode('1').openDrift,
+    'recovered-but-drifting: clears unavailable, keeps/opens drift');
+
+  // EXHAUSTIVENESS, including codes nobody planned for. A node crash, a 127 from a missing
+  // binary, or a step that died before writing $GITHUB_OUTPUT at all must default to
+  // surfacing something rather than to silence.
+  for (const code of ['3', '4', '127', '', null, undefined, 'abc', '00', ' 0']) {
+    const r = routeExitCode(code);
+    const opens = r.openDrift || r.openUnavailable;
+    assert.ok(opens, `unhandled exit ${JSON.stringify(code)} must open SOME incident, never pass silently`);
+  }
+  // Exactly-one-of on the open branches, and on the close branches, for every code: the
+  // two families partition the space rather than overlapping or leaving a gap.
+  for (const code of ['0', '1', '2', '3', '4', '127', '', 'abc']) {
+    const r = routeExitCode(code);
+    assert.notEqual(r.openDrift && r.openUnavailable, true, `exit ${code}: cannot open both incidents`);
+    assert.equal(r.openUnavailable, !r.closeUnavailable, `exit ${code}: unavailable open/close are complements`);
+  }
+  // '0' as a string is what GitHub gives us; a numeric 0 must route identically rather
+  // than falling through a truthiness check.
+  assert.deepEqual(routeExitCode(0), routeExitCode('0'), 'numeric 0 routes as "0"');
+
+  // PIN THE YAML. routeExitCode() is only a valid model of the workflow if the workflow
+  // still says what it says here. Assert the four literal `if:` predicates, so editing the
+  // YAML without editing this file fails the build instead of silently invalidating every
+  // assertion above.
+  const { readFileSync } = await import('node:fs');
+  const { dirname, join } = await import('node:path');
+  const wf = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '.github/workflows/site-freshness.yml'), 'utf8');
+  const expectedIfs = [
+    "if: steps.probe.outputs.exit_code == '1' || steps.probe.outputs.exit_code == '2'",
+    "if: steps.probe.outputs.exit_code == '0'",
+    "if: steps.probe.outputs.exit_code != '0' && steps.probe.outputs.exit_code != '1' && steps.probe.outputs.exit_code != '2'",
+    "if: steps.probe.outputs.exit_code == '0' || steps.probe.outputs.exit_code == '1' || steps.probe.outputs.exit_code == '2'",
+  ];
+  for (const expr of expectedIfs) {
+    assert.ok(wf.includes(expr), `site-freshness.yml must still contain: ${expr}`);
+  }
+  // No branch may route on step OUTCOME again. `continue-on-error` makes outcome/conclusion
+  // diverge, and `outcome == 'success'` is precisely what let exit 3 escape.
+  assert.ok(
+    !/^\s*if:.*steps\.probe\.outcome/m.test(wf),
+    'no branch may key on steps.probe.outcome — that is the bug that let exit 3 fall through'
+  );
+  // The two incident titles must be distinct, or "watchdog unavailable" would close real
+  // drift by title collision — the thing Sol explicitly required must not happen.
+  const titles = [...wf.matchAll(/^\s+TITLE:\s*"([^"]+)"/gm)].map((m) => m[1]);
+  assert.ok(titles.length >= 4, `expected 4 title-keyed steps, found ${titles.length}`);
+  assert.equal(new Set(titles).size, 2, 'exactly two distinct incident titles');
+  const [driftTitle, unavailTitle] = [...new Set(titles)];
+  assert.notEqual(driftTitle, unavailTitle, 'drift and unavailable incidents must be separately titled');
+  assert.equal(titles.filter((t) => t === driftTitle).length, 2, 'drift title used by exactly its open+close pair');
+  assert.equal(titles.filter((t) => t === unavailTitle).length, 2, 'unavailable title used by exactly its open+close pair');
 
   console.log('site-freshness-check.mjs --check passed');
 } else if (IS_ENTRY) {
