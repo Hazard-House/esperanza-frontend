@@ -339,9 +339,9 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // detail pages use, then sweep dead promo ribbons off everything else in public/.
   const lists = regenerateListPages(d, { live: promoCorpus, entitlements: promoEntitlements });
   const islands = refreshIslands();
-  // Spanish must be baked before stale-QMI pruning: its bake only writes, so removing
-  // English pages first leaves their old /es/ twins with no source to overwrite. Prune
-  // deletes both trees atomically immediately afterwards.
+  // Bake Spanish before pruning so the mirror is refreshed before its stale twins are
+  // atomically deleted. The explicit Spanish deletion in pruneStaleQmiPages is the
+  // load-bearing safeguard; this ordering is safe because no later step consumes prunedQmi.
   const es = await bakeSpanish().catch(e => { console.error('es-bake:', e.message); return { pages: 0 }; });
   const prunedQmi = pruneStaleQmiPages(d.qmis);
   console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; ${es.pages} Spanish pages`);
