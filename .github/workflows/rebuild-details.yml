@@ -49,6 +49,14 @@ jobs:
       - name: Rebuild detail + list pages from the live API (scrape-free)
         run: node generate-details.mjs
 
+      # Keep the COMMITTED blog search index converged too. deploy.yml regenerates this
+      # for the shipped artifact, but that bake is never committed, so without this step
+      # the committed index would stay stale and every deploy would rediscover the same
+      # diff from scratch — the same shape as the prune count that never reset because the
+      # commit-back lagged. `git add -A` below picks it up.
+      - name: Regenerate the blog search index from the baked posts
+        run: node scripts/gen-blog-index.mjs
+
       - name: Commit & push if anything changed
         run: |
           if [ -z "$(git status --porcelain)" ]; then

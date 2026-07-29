@@ -153,6 +153,19 @@ jobs:
       - name: Refresh detail + list pages from the live API (scrape-free)
         run: node generate-details.mjs
 
+      # blog-index.json feeds the client-side blog search island (blog-search.js fetches
+      # it; live's server-side /blog/?search= has no static equivalent). generate-details
+      # bakes blog PAGES but does not touch the index, and the generator is only invoked
+      # from build.mjs (build.mjs:191,308) — which CI never runs. So a post published via
+      # admin got a page but stayed missing from search until someone ran a full local
+      # build. Measured 2026-07-29 at ac9923ed: live index 125 entries, regenerating from
+      # the same committed tree gave 127, and one of the two extras
+      # ("Vista Verde is Off to a Strong Start", HTTP 200) matched no search query at all.
+      # Cheap (a directory scan of already-baked HTML, no network, no deps), so run it on
+      # every bake rather than trying to detect when the post set changed.
+      - name: Regenerate the blog search index from the baked posts
+        run: node scripts/gen-blog-index.mjs
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
