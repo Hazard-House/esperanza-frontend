@@ -356,6 +356,16 @@ export function ensureCommunityHomesLive(html) {
   return injectIsland(html, 'community-homes-live.js');
 }
 
+// Scraped community pages carry the frozen June-8 description/amenities copy and never
+// got the community-copy-live.js tag (build.mjs injects it via CONTAINER_ISLANDS, but
+// CI runs only generate-details.mjs, and refreshIslands is refresh-only). Same markers
+// as build.mjs: #overview (community description + amenities) / city-page-hero-title
+// (city hero copy). The island no-ops via its URL guard on QMI/floor-plan pages.
+export function ensureCommunityCopyLive(html) {
+  if (!html.includes('id="overview"') && !html.includes('city-page-hero-title')) return html;
+  return injectIsland(html, 'community-copy-live.js');
+}
+
 // Chrome shell for data-driven detail pages: rewritten page with the home-specific
 // region (first <section class="header"> up to <footer>) replaced by a marker.
 export function extractShell(rawHtml) {
