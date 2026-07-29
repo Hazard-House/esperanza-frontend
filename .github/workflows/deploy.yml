@@ -35,9 +35,11 @@ on:
   schedule:
     - cron: "0 9 * * *"  # 09:00 UTC ≈ 3–4am Central (off-peak)
 
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+# NO workflow-level concurrency. It used to be `deploy-${{ github.ref }}` with
+# cancel-in-progress: true, which placed no bound on WHERE a cancellation landed — it
+# could arrive while the run was fetching the API or uploading to Cloudflare. Concurrency
+# is now declared per job so a burst is cancelled in the cheap waiting room while the bake
+# itself is never interrupted — see the two jobs below.
 
 # Only what this workflow needs: checkout reads the repo, the failure alert opens/updates a
 # tracking issue. Declaring these explicitly drops every other scope to none. Cloudflare
@@ -47,8 +49,89 @@ permissions:
   issues: write
 
 jobs:
-  deploy:
+  # ===========================================================================
+  # Trailing-edge coalescer. The admin (packages/admin postWrite -> site-rebuild.ts)
+  # dispatches this workflow on EVERY public-facing write, so normal marketing work —
+  # editing five fields on one home, saving each — fires five dispatches in a couple of
+  # minutes. A production bake takes ~80s, so under the old workflow-level
+  # cancel-in-progress each new save cancelled the run before it.
+  #
+  # WHAT THAT DID AND DID NOT COST. It did NOT leave the site stale for the editing
+  # session: the bake reads the live API at bake time (data.mjs), not a snapshot pinned
+  # at dispatch, so whichever run survives renders current D1 and the last dispatch
+  # wins. An earlier account in this lane claimed a burst "starved" the rebuild and the
+  # site stayed stale until editing stopped; that was WRONG and is retracted — the
+  # 16:59:00Z cancellation was replaced by the 16:59:02Z run 2s later, which succeeded.
+  #
+  # So this split is bought for two reasons, and it is worth being exact about which is
+  # measured and which is insurance:
+  #
+  #   MEASURED — every superseded dispatch still starts a runner and is killed partway
+  #   through it. A five-save burst is five runners; any that reach step 5 have already
+  #   pulled the entire live API. The waiting room collapses the burst before a runner
+  #   has fetched anything or touched Cloudflare.
+  #
+  #   INSURANCE, NOT AN OBSERVED BREAK — cancel-in-progress on a workflow whose last step
+  #   is a production deploy puts no bound on where the kill lands. This has never been
+  #   seen here: both cancellations in this workflow's history (runs 30473236136 and
+  #   30473236139, 16:59:00Z) died at `checkout` within 9s, with the deploy step SKIPPED.
+  #   Nor is a partial deploy demonstrated — a Workers deployment activates atomically, so
+  #   an interrupted `wrangler deploy` most likely just does nothing. The point of
+  #   cancel-in-progress: false on the bake is that it makes that a GUARANTEE rather than
+  #   a timing accident, on the one step that touches production.
+  #
+  # Cancellation is also invisible to alerting — `if: failure()` does NOT fire on a
+  # cancelled run — so the cheapest place to put cancellations is a job that does nothing
+  # but sleep, where having no alert on them costs nothing.
+  #
+  # This job is a cancellable waiting room. Its group DOES cancel in progress, so a burst
+  # collapses here — during a sleep, before any runner has fetched the API or touched
+  # Cloudflare. The last dispatch in the burst is the one that survives to bake, and it
+  # bakes the state left by every earlier save in the burst (content comes from the live
+  # API at bake time, not from the dispatch).
+  #
+  # Only workflow_dispatch waits: that is the admin/bursty path (and rebuild-details.yml's
+  # post-commit dispatch). push and schedule are discrete one-off events with a human or a
+  # cron behind them, so they go straight to the bake and keep today's latency. They still
+  # get the job, so push-supersedes-push keeps working exactly as before.
+  #
+  # Cost: a save reaches the site in roughly QUIET_SECONDS + runner start + ~80s bake,
+  # about two minutes, and no bake is ever interrupted once started. Raise QUIET_SECONDS
+  # to coalesce more aggressively at the cost of latency.
+  # ===========================================================================
+  coalesce:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-coalesce-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Quiet period (collapse a burst of admin saves into one bake)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          QUIET_SECONDS: "20"
+        run: |
+          echo "Waiting ${QUIET_SECONDS}s. A newer dispatch on this ref cancels this run here,"
+          echo "before the bake starts, and bakes the same content itself."
+          sleep "$QUIET_SECONDS"
+
+  deploy:
+    needs: coalesce
+    # Skip ONLY when the quiet period was cancelled — that is the coalescing signal (a
+    # newer dispatch, or a human cancelling the run, both surface as 'cancelled'). A
+    # coalesce job that genuinely FAILED must not silently swallow the deploy: it does
+    # nothing but sleep, so a failure there is infrastructure, and the default
+    # skip-on-failed-dependency would drop a production bake with nothing to alert on.
+    if: ${{ !cancelled() && needs.coalesce.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    # cancel-in-progress: false is the other half of the fix. Once a bake is running it
+    # runs to completion — a later save can no longer abort a deploy that is already
+    # fetching the API or uploading to Cloudflare. GitHub keeps at most one in-progress
+    # plus one pending run per group and cancels any EARLIER pending run, so a save during
+    # a bake queues rather than interrupting, and only the newest queued bake survives to
+    # run. Both properties are measured, not assumed — see the probe in the PR description.
+    concurrency:
+      group: deploy-bake-${{ github.ref }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
@@ -94,6 +177,14 @@ jobs:
       # unattended path this PR exists to cover is fully covered. Staging failures stay
       # visible the normal way: a red check on the push that caused them, with a human already
       # watching. If staging ever needs its own alert it wants its own title/body, not this one.
+      #
+      # This covers FAILURE only, and deliberately so. A cancelled run is now a NORMAL,
+      # expected outcome — it means a newer save superseded this one — so cancellation can
+      # never be the alert signal. That leaves one uncovered hole: the admin's dispatch
+      # itself is best-effort (triggerFrontendRebuild swallows a failed POST), so if no run
+      # is ever created the site stays stale with nothing to fail. Closing that needs a
+      # watchdog on "content changed with no successful production bake since", which is a
+      # separate change and NOT in this PR.
       - name: Alert on failure
         if: failure() && github.ref == 'refs/heads/main'
         env:
