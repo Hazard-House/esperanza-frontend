@@ -252,3 +252,5 @@ jobs:
           else
             echo "No open unavailability incident; nothing to close."
           fi
+
+# probe run 2: assert a second blind probe UPDATES #123 instead of opening a duplicate
