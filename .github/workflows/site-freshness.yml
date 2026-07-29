@@ -36,6 +36,8 @@ name: Site freshness watchdog
 # types would NOT trip this check.
 
 on:
+  push:
+    branches: [fizz/freshness-exit3-probe]
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
@@ -75,6 +77,10 @@ jobs:
       - name: Probe grid/API parity
         id: probe
         continue-on-error: true
+        env:
+          ESP_API: "https://127.0.0.1:9/api/public"
+          ESP_FRESHNESS_ATTEMPTS: "3"
+          ESP_FRESHNESS_DELAY_MS: "1000"
         run: |
           set +e
           node site-freshness-check.mjs
