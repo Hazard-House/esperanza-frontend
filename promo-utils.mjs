@@ -45,6 +45,151 @@ export function isLivePromoText(text, live) {
   return live.has(n);
 }
 
+/** Promo copy each home is INDIVIDUALLY entitled to, keyed by every id the baked site
+ *  uses for that home.
+ *
+ *  livePromoTexts() answers "is this copy live ANYWHERE on the site?" — site-wide by
+ *  construction. That is the right question for a FULLY retired promotion and the wrong
+ *  one for a PARTIALLY retired one: one legitimate holder keeps the string in the corpus,
+ *  so the harvested-badge fallback re-renders it on every home that ever had it baked.
+ *  That is how "4.99% Rate + up to $5,000 in Closing Costs" shipped on 9 cards while
+ *  exactly ONE home (1045-w-star-flower-st) carries it in D1, and no promotions row
+ *  carries the copy at all — see RESEARCH/ESPERANZA_POST_DAY0_LIVE_STATE_2026_07_29.md.
+ *
+ *  A home is entitled to copy when ANY of these hold:
+ *    - the API gives the home the copy directly (qmi.promo_text), or
+ *    - its community / floor plan carries it (community.promoBannerText,
+ *      floorplan.promoBannerText), or
+ *    - an ACTIVE promotion carrying it targets the home's community or floor plan
+ *      (promotion_targets, exposed as communityIds/Names + floorPlanIds/Names), or
+ *    - an ACTIVE promotion carrying it has no community/plan targeting at all, i.e. it
+ *      is site-wide and entitles every home.
+ *
+ *  Keyed by home slug AND by slugify(address) AND by "<community-slug>/<housenumber>" —
+ *  the three shapes the site keys a home by (data-qmi-slug on baked cards;
+ *  live-facts.json `badges` / `cardFacts`). All three point at the same Set. */
+export function homePromoEntitlements({ qmis = [], communities = [], floorplans = [], promotions = [] } = {}) {
+  const global = new Set();
+  const byCommunityId = new Map();
+  const byCommunityName = new Map();
+  const byFloorPlanId = new Map();
+  const byFloorPlanName = new Map();
+  const put = (map, key, texts) => {
+    const k = normKey(key);
+    if (!k) return;
+    const cur = map.get(k) || new Set();
+    for (const t of texts) cur.add(t);
+    map.set(k, cur);
+  };
+
+  // Per-entity promo banners entitle that entity's homes, not the whole site.
+  for (const c of communities) {
+    const t = normPromoText(c && c.promo);
+    if (!t) continue;
+    put(byCommunityId, c.id, [t]);
+    put(byCommunityName, c.name, [t]);
+  }
+  for (const fp of floorplans) {
+    const t = normPromoText(fp && fp.promo);
+    if (!t) continue;
+    put(byFloorPlanId, fp.id, [t]);
+    put(byFloorPlanName, fp.name, [t]);
+  }
+
+  for (const p of promotions) {
+    if (!p || p.active === false) continue;
+    const texts = [p.title, p.bannerText, p.cardBadgeText].map(normPromoText).filter(Boolean);
+    if (!texts.length) continue;
+    const cids = (p.communityIds || []).filter(Boolean);
+    const cnames = (p.communityNames || []).filter(Boolean);
+    const fids = (p.floorPlanIds || []).filter(Boolean);
+    const fnames = (p.floorPlanNames || []).filter(Boolean);
+    // Untargeted = site-wide. collectionIds cannot be resolved to homes from the public
+    // payload (no collection id on /qmi), so a collection-scoped promotion is treated as
+    // site-wide too: fail OPEN rather than strip a badge we cannot prove is wrong.
+    if (!cids.length && !cnames.length && !fids.length && !fnames.length) {
+      for (const t of texts) global.add(t);
+      continue;
+    }
+    for (const id of cids) put(byCommunityId, id, texts);
+    for (const n of cnames) put(byCommunityName, n, texts);
+    for (const id of fids) put(byFloorPlanId, id, texts);
+    for (const n of fnames) put(byFloorPlanName, n, texts);
+  }
+
+  const out = new Map();
+  for (const h of qmis) {
+    if (!h) continue;
+    const allowed = new Set(global);
+    const own = normPromoText(h.promo);
+    if (own) allowed.add(own);
+    const lookups = [
+      [byCommunityId, h.communityId],
+      [byCommunityName, (h.communityObj && h.communityObj.name) || h.community],
+      [byFloorPlanId, h.floorPlanId],
+      [byFloorPlanName, (h.floorplanObj && h.floorplanObj.name) || h.floorPlan],
+    ];
+    for (const [map, key] of lookups) {
+      const hit = normKey(key) && map.get(normKey(key));
+      if (hit) for (const t of hit) allowed.add(t);
+    }
+    // Union on collision, never overwrite. Two homes CAN share an address slug (the
+    // duplicate-slug pairs from the non-unique idx_qmi_eci_key), and the union is the
+    // fail-open answer: an ambiguous key must not strip a badge one of the pair earns.
+    for (const k of homePromoKeys(h)) {
+      const cur = out.get(k);
+      if (cur) for (const t of allowed) cur.add(t);
+      else out.set(k, new Set(allowed));
+    }
+  }
+  return out;
+}
+
+/** Every key the baked site identifies `h` by — see homePromoEntitlements. Exported so
+ *  callers holding a live-facts key (address slug, "<community>/<housenumber>") or a
+ *  baked card's data-qmi-slug can hit the same map. */
+export function homePromoKeys(h) {
+  if (!h) return [];
+  const keys = [];
+  const push = k => { const n = normKey(k); if (n && !keys.includes(n)) keys.push(n); };
+  push(h.slug);
+  push(h.address);
+  const hn = String(h.address || '').match(/^(\d+)/);
+  const comm = (h.communityObj && h.communityObj.slug) || h.community;
+  if (hn && comm) push(String(comm) + '/' + hn[1]);
+  return keys;
+}
+
+/** Per-home gate for baked promo copy. `home` is a normalized home object OR a raw key
+ *  string (data-qmi-slug, live-facts badge key).
+ *
+ *  Fails OPEN when we cannot place the home — no map, or none of its keys are in the map
+ *  (a home the API dropped, a synthetic test home) — for the same reason isLivePromoText
+ *  does: a data gap must never blank correct badges site-wide. This gate is ADDITIVE to
+ *  isLivePromoText, never a replacement: the corpus check still evicts fully retired
+ *  copy, and this one narrows partially retired copy to its actual holders. */
+export function isPromoTextForHome(text, home, entitlements) {
+  const n = normPromoText(text);
+  if (!n) return true;
+  if (!(entitlements instanceof Map) || entitlements.size === 0) return true;
+  const keys = typeof home === 'string' ? [normKey(home)] : homePromoKeys(home);
+  let placed = null;
+  for (const k of keys) {
+    const hit = k && entitlements.get(k);
+    if (hit) { placed = hit; break; }
+  }
+  if (!placed) return true;
+  return placed.has(n);
+}
+
+/** Lookup-key normalizer. Deliberately NOT normPromoText: that strips digit-group commas
+ *  (promo-copy specific) and would fold distinct ids together. Slug-shaped, but keeps `/`
+ *  so the "<community>/<housenumber>" live-facts key round-trips. */
+function normKey(s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9/]+/g, '-')
+    .replace(/^-|-$/g, '').replace(/-?\/-?/g, '/');
+}
+
 /** Percent rate from promo text (e.g. "4.99% Rate + …" → 4.99). */
 export function parsePromoRate(text) {
   const m = String(text || '').match(/([\d.]+)\s*%/);
@@ -172,6 +317,72 @@ function demo() {
   assert(isLivePromoText('', live), 'empty text is a no-op, not "dead"');
   assert(isLivePromoText('4.99% 30 YEAR FIXED RATE*', new Set()), 'fail open on empty corpus');
   assert(isLivePromoText('4.99% 30 YEAR FIXED RATE*', null), 'fail open on missing corpus');
+  // --- per-home entitlements ------------------------------------------------------
+  // The PARTIALLY-retired case the site-wide corpus cannot express: `closing` is live on
+  // exactly one home and on NO promotions row, so the corpus says "live" for every home.
+  const closing = '4.99% Rate + up to $5,000 in Closing Costs';
+  const d = {
+    qmis: [
+      { slug: 'a-st', address: '10 A St', community: 'Rogers Coves', communityId: 'recRC', floorPlan: 'Bahia', floorPlanId: 'fpB', promo: closing },
+      { slug: 'b-st', address: '20 B St', community: 'Rogers Coves', communityId: 'recRC', floorPlan: 'Bahia', floorPlanId: 'fpB', promo: '' },
+      { slug: 'c-st', address: '30 C St', community: 'Los Prados', communityId: 'recLP', floorPlan: 'Emory', floorPlanId: 'fpE' },
+      { slug: 'd-st', address: '40 D St', community: 'Wolf Creek', communityId: 'recWC', floorPlan: 'Zia', floorPlanId: 'fpZ' },
+    ],
+    communities: [{ id: 'recLP', name: 'Los Prados', promo: 'Community Only Banner' }],
+    floorplans: [{ id: 'fpZ', name: 'Zia', promo: 'Plan Only Banner' }],
+    promotions: [
+      { active: true, title: 'Unlock Your $10K Flex Discount', cardBadgeText: 'UNLOCK YOUR 10K FLEX DISCOUNT NOW!', bannerText: '', communityIds: ['recWC'], communityNames: ['Wolf Creek'] },
+      { active: true, title: 'Site Wide Sale', cardBadgeText: '', bannerText: '', communityIds: [], communityNames: [], floorPlanIds: [], floorPlanNames: [] },
+      { active: false, title: 'Retired Everywhere', cardBadgeText: '', bannerText: '', communityIds: ['recRC'], communityNames: [] },
+    ],
+  };
+  const corpus = livePromoTexts(d);
+  const ent = homePromoEntitlements(d);
+  const [A, B, C, D] = d.qmis;
+  assert(isLivePromoText(closing, corpus), 'site-wide corpus still vouches for the copy (one holder keeps it alive)');
+  assert(isPromoTextForHome(closing, A, ent), 'the ONE entitled home keeps the partially-retired copy');
+  assert(isPromoTextForHome(closing, B, ent) === false,
+    'a same-community home with NO promo_text does NOT inherit it — this is the 9-cards-vs-1-home bug');
+  assert(isPromoTextForHome(closing, C, ent) === false, 'an unrelated home does not inherit it either');
+  // Promotion targeting, both id and name shaped.
+  assert(isPromoTextForHome('UNLOCK YOUR 10K FLEX DISCOUNT NOW!', D, ent), 'community-targeted promotion badge allowed on its target');
+  assert(isPromoTextForHome('UNLOCK YOUR 10K FLEX DISCOUNT NOW!', A, ent) === false, 'community-targeted promotion badge refused off-target');
+  assert(isPromoTextForHome('Unlock Your $10K Flex Discount', D, ent), 'promotion TITLE also entitles (baked copy uses either)');
+  // Per-entity banners scope to that entity, not the site.
+  assert(isPromoTextForHome('Community Only Banner', C, ent) && isPromoTextForHome('Community Only Banner', A, ent) === false,
+    'community promoBannerText is community-scoped');
+  assert(isPromoTextForHome('Plan Only Banner', D, ent) && isPromoTextForHome('Plan Only Banner', C, ent) === false,
+    'floorplan promoBannerText is plan-scoped');
+  // Untargeted active promotion = site-wide.
+  for (const h of d.qmis) assert(isPromoTextForHome('Site Wide Sale', h, ent), 'untargeted active promotion entitles every home');
+  // Deactivated promotions entitle nobody (and are already out of the corpus).
+  assert(isPromoTextForHome('Retired Everywhere', A, ent) === false, 'inactive promotion entitles nobody');
+  // Key shapes the baked site actually uses.
+  assert(isPromoTextForHome(closing, '10-a-st', ent) && isPromoTextForHome(closing, '20-b-st', ent) === false,
+    'address-slug key (live-facts badges) resolves');
+  assert(isPromoTextForHome(closing, 'rogers-coves/10', ent) && isPromoTextForHome(closing, 'rogers-coves/20', ent) === false,
+    '"<community>/<housenumber>" key (live-facts cardFacts) resolves');
+  // Fail open, every gap shape.
+  assert(isPromoTextForHome(closing, { slug: 'never-seen-this-home' }, ent), 'fail open on a home absent from the map');
+  assert(isPromoTextForHome(closing, A, new Map()), 'fail open on an empty map');
+  assert(isPromoTextForHome(closing, A, null), 'fail open on a missing map');
+  assert(isPromoTextForHome('', B, ent), 'empty text is a no-op, not "unentitled"');
+  // Casing/punctuation folded the same way as the corpus gate.
+  assert(isPromoTextForHome('4.99% RATE + UP TO $5000 IN CLOSING COSTS', A, ent),
+    'entitlement match is case/separator-insensitive (both spellings live in public/)');
+  // A collection-scoped promotion cannot be resolved per-home from the public payload —
+  // it must fail OPEN, not silently strip a legitimate badge.
+  const collEnt = homePromoEntitlements({ qmis: d.qmis, promotions: [{ active: true, title: 'Collection Deal', cardBadgeText: '', bannerText: '', collectionIds: ['colX'] }] });
+  for (const h of d.qmis) assert(isPromoTextForHome('Collection Deal', h, collEnt), 'collection-only promotion fails open');
+  // Duplicate address slugs (non-unique idx_qmi_eci_key) union rather than clobber.
+  const dupEnt = homePromoEntitlements({ qmis: [
+    { slug: 'dup-1', address: '99 Same St', community: 'X', promo: 'First Copy' },
+    { slug: 'dup-2', address: '99 Same St', community: 'X', promo: 'Second Copy' },
+  ] });
+  assert(isPromoTextForHome('First Copy', '99-same-st', dupEnt) && isPromoTextForHome('Second Copy', '99-same-st', dupEnt),
+    'colliding address slug keeps BOTH homes\u2019 entitlements');
+  assert(isPromoTextForHome('First Copy', { slug: 'dup-2', address: '99 Same St' }, dupEnt) === false,
+    'the unambiguous slug key still discriminates');
   assert(parsePromoRate('4.99% Rate + up to $5,000') === 4.99, 'parsePromoRate');
   assert(isRatePromo('4.99% ARM*', 6.35) && !isRatePromo('Flex Cash', 6.35), 'isRatePromo');
   assert(savingsOverTerm(2000, 1800, 30).startsWith('$72,000.00 Savings Over 30 Years'), 'savingsOverTerm');

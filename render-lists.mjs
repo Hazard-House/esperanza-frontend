@@ -21,10 +21,10 @@
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import { byPriceAsc, slugify } from './data.mjs';
-import { qmiCardHtml, setLivePromoTexts } from './sections.mjs';
-import { livePromoTexts, isLivePromoText } from './promo-utils.mjs';
+import { qmiCardHtml, setLivePromoTexts, setHomePromoEntitlements } from './sections.mjs';
+import { livePromoTexts, isLivePromoText, homePromoEntitlements, isPromoTextForHome } from './promo-utils.mjs';
 
 const ROOT = import.meta.dirname;
 const OUT = join(ROOT, 'public');
@@ -224,7 +224,50 @@ export function renderGrid(homes) {
 // on QMI detail headers) and only when its text is not in the live corpus.
 const PROMO_BANNER_OPEN_RE = /<div class="(?:banner|status-banner)[^"]*\boverlay-promo\b[^"]*"[^>]*>/g;
 
-export function stripDeadPromoBanners(html, live) {
+// Which home does a given byte offset belong to? Every card qmiCardHtml emits opens with
+// `<div class="col-…" data-qmi-slug="…">`, so the card's extent is that div's span
+// (closeOfDiv). Innermost containing span wins; offsets inside no card span (e.g. the QMI
+// detail page's own header ribbon) get `pageHome`, and when that is null too the banner is
+// unattributable and the per-home gate fails open.
+const QMI_SLUG_TAG_RE = /<div\b[^>]*\bdata-qmi-slug="([^"]*)"[^>]*>/g;
+export function homeCardSpans(html) {
+  const spans = [];
+  QMI_SLUG_TAG_RE.lastIndex = 0;
+  for (let m; (m = QMI_SLUG_TAG_RE.exec(html));) {
+    if (!m[1]) continue;
+    const start = m.index + m[0].length;
+    const end = closeOfDiv(html, start);
+    if (end === -1) continue;
+    spans.push({ start, end, slug: unent(m[1]) });
+  }
+  return spans;
+}
+const homeAt = (spans, pos, pageHome) => {
+  let best = null;
+  for (const s of spans) {
+    if (pos < s.start || pos >= s.end) continue;
+    if (!best || s.start > best.start) best = s;
+  }
+  return best ? best.slug : pageHome;
+};
+
+/** Home key for a baked QMI detail page from its path — `qmiPath` writes
+ *  `new-homes/tx/<city>/<community>/<slug>/index.html`, so the leaf directory IS the key
+ *  the entitlement map is built with. null for anything else (list/community pages carry
+ *  per-card data-qmi-slug instead). */
+export function detailPageHome(rel) {
+  const m = String(rel).replace(/^\/+/, '').match(/^new-homes\/tx\/[^/]+\/[^/]+\/([^/]+)\/index\.html$/);
+  return m ? m[1] : null;
+}
+
+/** Strip promo ribbons the API no longer vouches for. Two independent gates:
+ *   - `live` (site-wide corpus)  — evicts FULLY retired copy, as before.
+ *   - `entitlements` (per home)  — evicts copy that is still live SOMEWHERE but not for
+ *                                  the home whose card this ribbon sits in.
+ *  Both fail open. Pass `pageHome` for a QMI detail page so its header ribbon (which sits
+ *  in no card span) is gated too. */
+export function stripDeadPromoBanners(html, live, { entitlements = null, pageHome = null } = {}) {
+  const spans = entitlements ? homeCardSpans(html) : [];
   let out = '', pos = 0, dropped = 0;
   for (;;) {
     PROMO_BANNER_OPEN_RE.lastIndex = pos;
@@ -236,7 +279,10 @@ export function stripDeadPromoBanners(html, live) {
     const text = unent(html.slice(bodyStart, bodyEnd)).trim();
     out += html.slice(pos, m.index);
     let after = bodyEnd + '</div>'.length;
-    if (text && !isLivePromoText(text, live)) {
+    const dead = text && !isLivePromoText(text, live);
+    const unearned = text && !dead && entitlements
+      && !isPromoTextForHome(text, homeAt(spans, m.index, pageHome), entitlements);
+    if (dead || unearned) {
       dropped++;
       // The availability banner below it was pushed down only to clear the promo ribbon
       // (see qmiCardHtml) — with the ribbon gone it belongs back at the top.
@@ -250,26 +296,29 @@ export function stripDeadPromoBanners(html, live) {
   return { html: out, dropped };
 }
 
-/** Drop harvested per-home badges whose promotion is gone. Only `badges` and
- *  `cardFacts[*].badge` are gated — they hold the verbatim promotion badge string.
- *  bannerSlides / communityPromos hold hand-written marketing paraphrases that never
- *  matched a promotion record, so the corpus says nothing about them. */
-export function pruneLiveFactBadges(facts, live) {
+/** Drop harvested per-home badges whose promotion is gone, OR which the keyed home was
+ *  never entitled to. Only `badges` and `cardFacts[*].badge` are gated — they hold the
+ *  verbatim promotion badge string keyed by home. bannerSlides / communityPromos hold
+ *  hand-written marketing paraphrases that never matched a promotion record, so neither
+ *  the corpus nor the entitlement map says anything about them. */
+export function pruneLiveFactBadges(facts, live, { entitlements = null } = {}) {
   const out = { ...facts };
   let dropped = 0;
-  const gate = b => {
+  // The key IS the home (address slug, or "<community>/<housenumber>") — the entitlement
+  // map is built with both shapes, so it can be looked up directly.
+  const gate = (b, key) => {
     if (!b || !b.text) return null;
-    if (isLivePromoText(b.text, live)) return b;
-    dropped++;
-    return null;
+    if (!isLivePromoText(b.text, live)) { dropped++; return null; }
+    if (entitlements && !isPromoTextForHome(b.text, key, entitlements)) { dropped++; return null; }
+    return b;
   };
   if (facts.badges) {
     out.badges = {};
-    for (const [k, v] of Object.entries(facts.badges)) { const b = gate(v); if (b) out.badges[k] = b; }
+    for (const [k, v] of Object.entries(facts.badges)) { const b = gate(v, k); if (b) out.badges[k] = b; }
   }
   if (facts.cardFacts) {
     out.cardFacts = {};
-    for (const [k, v] of Object.entries(facts.cardFacts)) out.cardFacts[k] = { ...v, badge: gate(v && v.badge) };
+    for (const [k, v] of Object.entries(facts.cardFacts)) out.cardFacts[k] = { ...v, badge: gate(v && v.badge, k) };
   }
   return { facts: out, dropped };
 }
@@ -278,10 +327,10 @@ export function pruneLiveFactBadges(facts, live) {
  *  fetch this at runtime, so pruning here is what stops a deleted incentive rendering in
  *  the BROWSER for homes the API has no promo_text for. Idempotent, and the single writer
  *  of the file (build.mjs's copyRuntimeAssets defers to it). */
-export function writeLiveFacts(live, { outDir = OUT, src = FACTS_SRC } = {}) {
+export function writeLiveFacts(live, { outDir = OUT, src = FACTS_SRC, entitlements = null } = {}) {
   if (!existsSync(src)) return { written: false, dropped: 0 };
   const raw = JSON.parse(readFileSync(src, 'utf8'));
-  const { facts, dropped } = pruneLiveFactBadges(raw, live);
+  const { facts, dropped } = pruneLiveFactBadges(raw, live, { entitlements });
   writeFileSync(join(outDir, 'live-facts.json'), JSON.stringify(facts, null, 2) + '\n');
   return { written: true, dropped };
 }
@@ -294,17 +343,20 @@ function* walkHtml(dir) {
   }
 }
 
-/** Site-wide sweep for dead promo ribbons. The list pages above are fully re-rendered,
- *  but the same frozen ribbon also sits on /incentives/<slug>/ cards and on detail pages
- *  for homes the API has since dropped (generate-details never revisits an orphaned
- *  page). One pass over public/**\/*.html catches every copy. */
-export function sweepDeadPromoCopy(live, { outDir = OUT } = {}) {
+/** Site-wide sweep for dead AND unearned promo ribbons. The list pages above are fully
+ *  re-rendered, but the same frozen ribbon also sits on /incentives/<slug>/ cards,
+ *  community pages and detail pages for homes the API has since dropped (generate-details
+ *  never revisits an orphaned page). One pass over public/**\/*.html catches every copy. */
+export function sweepDeadPromoCopy(live, { outDir = OUT, entitlements = null } = {}) {
   if (!existsSync(outDir)) return { files: 0, dropped: 0 };
   let files = 0, dropped = 0;
   for (const file of walkHtml(outDir)) {
     const raw = readFileSync(file, 'utf8');
     if (!raw.includes('overlay-promo')) continue;
-    const res = stripDeadPromoBanners(raw, live);
+    // Path relative to outDir, /es/ prefix stripped: the Spanish bake mirrors the English
+    // tree, so both resolve to the same home key.
+    const rel = file.slice(outDir.length + 1).split(sep).join('/').replace(/^es\//, '');
+    const res = stripDeadPromoBanners(raw, live, { entitlements, pageHome: detailPageHome(rel) });
     if (res.dropped) { writeFileSync(file, res.html); files++; dropped += res.dropped; }
   }
   return { files, dropped };
@@ -316,10 +368,12 @@ export function sweepDeadPromoCopy(live, { outDir = OUT } = {}) {
 /** Regenerate every QMI list page from `d`, refresh public/live-facts.json, and sweep
  *  dead promo ribbons out of the rest of public/. Call AFTER the detail pages are
  *  written so the sweep also covers freshly rendered pages. */
-export function regenerateListPages(d, { outDir = OUT, live = null } = {}) {
+export function regenerateListPages(d, { outDir = OUT, live = null, entitlements = null } = {}) {
   const corpus = live || livePromoTexts(d);
+  const ent = entitlements || homePromoEntitlements(d);
   setLivePromoTexts(corpus); // gate the harvested badge fallback inside qmiCardHtml
-  const facts = writeLiveFacts(corpus, { outDir });
+  setHomePromoEntitlements(ent); // …and narrow it to the homes actually entitled to the copy
+  const facts = writeLiveFacts(corpus, { outDir, entitlements: ent });
   const pages = [];
   for (const rel of listPageFiles(outDir)) {
     const file = join(outDir, rel);
@@ -331,9 +385,9 @@ export function regenerateListPages(d, { outDir = OUT, live = null } = {}) {
     if (next !== raw) writeFileSync(file, next);
     pages.push({ rel, kind: picked.kind.kind, homes: picked.homes.length, changed: next !== raw });
   }
-  const swept = sweepDeadPromoCopy(corpus, { outDir });
-  console.log(`render-lists: ${pages.length} list pages regenerated (${pages.filter(p => p.changed).length} changed, ${pages.reduce((n, p) => n + p.homes, 0)} cards); live-facts badges pruned: ${facts.dropped}; dead promo ribbons swept: ${swept.dropped} in ${swept.files} files`);
-  return { pages, factsDropped: facts.dropped, swept, corpus };
+  const swept = sweepDeadPromoCopy(corpus, { outDir, entitlements: ent });
+  console.log(`render-lists: ${pages.length} list pages regenerated (${pages.filter(p => p.changed).length} changed, ${pages.reduce((n, p) => n + p.homes, 0)} cards); live-facts badges pruned: ${facts.dropped}; dead/unearned promo ribbons swept: ${swept.dropped} in ${swept.files} files`);
+  return { pages, factsDropped: facts.dropped, swept, corpus, entitlements: ent };
 }
 
 // ---------------------------------------------------------------------------
@@ -436,6 +490,69 @@ function demo() {
   assert(pruned.facts.cardFacts['a-st'].badge === null && pruned.facts.cardFacts['a-st'].lot === '7', 'cardFacts badge nulled, rest intact');
   assert.deepEqual(pruned.facts.bannerSlides, facts.bannerSlides, 'hand-written ticker slides are NOT gated by the promotion corpus');
   assert(pruneLiveFactBadges(facts, new Set()).dropped === 0, 'prune fails open on an empty corpus');
+
+  // --- PARTIALLY-retired promo copy: live for one home, unearned by the rest ---------
+  // The corpus gate cannot express this (one holder keeps the string live for everyone),
+  // which is how the 4.99% + $5,000 closing-costs ribbon shipped on 9 cards for exactly 1
+  // entitled home — RESEARCH/ESPERANZA_POST_DAY0_LIVE_STATE_2026_07_29.md.
+  const CLOSING = '4.99% Rate + up to $5,000 in Closing Costs';
+  const entHomes = [
+    { slug: '1045-w-star-flower-st', address: '1045 W Star Flower St', community: 'Rogers Coves', promo: CLOSING },
+    { slug: '1050-w-star-flower-st', address: '1050 W Star Flower St', community: 'Rogers Coves' },
+  ];
+  const ent = homePromoEntitlements({ qmis: entHomes, promotions: [] });
+  const entCorpus = livePromoTexts({ qmis: entHomes });
+  const ribbon = slug => `<div class="col-12 col-md-6 mb-2" data-qmi-slug="${slug}">`
+    + `<div class="card spec-card"><div class="oi-aspect sixteen-nine">`
+    + `<div class="banner overlay-promo green">${CLOSING}</div>`
+    + `<div class="banner green" style="top:2.5rem">Available Now</div>`
+    + `</div></div></div>`;
+  const twoCards = ribbon('1045-w-star-flower-st') + '\n' + ribbon('1050-w-star-flower-st');
+  // Baseline: without the per-home map, BOTH survive — the bug, reproduced.
+  assert(stripDeadPromoBanners(twoCards, entCorpus).dropped === 0,
+    'corpus-only gate keeps BOTH ribbons (this is the defect)');
+  const perHome = stripDeadPromoBanners(twoCards, entCorpus, { entitlements: ent });
+  assert(perHome.dropped === 1, `per-home gate drops exactly the unearned ribbon (dropped=${perHome.dropped})`);
+  const kept = perHome.html.slice(0, perHome.html.indexOf('1050-w-star-flower-st'));
+  const dropped2 = perHome.html.slice(perHome.html.indexOf('1050-w-star-flower-st'));
+  assert(kept.includes('overlay-promo'), 'the ENTITLED home keeps its ribbon');
+  assert(!dropped2.includes('overlay-promo'), 'the UNENTITLED home loses its ribbon');
+  assert(dropped2.includes('<div class="banner green">Available Now</div>'), 'availability banner un-offset on the stripped card');
+  assert(stripDeadPromoBanners(perHome.html, entCorpus, { entitlements: ent }).dropped === 0, 'per-home sweep is idempotent');
+  // Card attribution: innermost data-qmi-slug span wins, and a banner in no span is
+  // unattributable -> fail open unless a pageHome is supplied.
+  const spans = homeCardSpans(twoCards);
+  assert(spans.length === 2 && spans[0].slug === '1045-w-star-flower-st', 'one span per card, in document order');
+  assert(spans[0].end <= spans[1].start, 'card spans do not overlap');
+  const bare = `<div class="banner overlay-promo green">${CLOSING}</div>`;
+  assert(stripDeadPromoBanners(bare, entCorpus, { entitlements: ent }).dropped === 0,
+    'a ribbon in no card span fails open (unattributable)');
+  assert(stripDeadPromoBanners(bare, entCorpus, { entitlements: ent, pageHome: '1050-w-star-flower-st' }).dropped === 1,
+    'a QMI detail header ribbon is gated via pageHome');
+  assert(stripDeadPromoBanners(bare, entCorpus, { entitlements: ent, pageHome: '1045-w-star-flower-st' }).dropped === 0,
+    'the entitled home\u2019s detail header ribbon is kept');
+  // Fail open on every gap shape — a missing map must never blank the site.
+  assert(stripDeadPromoBanners(twoCards, entCorpus, { entitlements: null }).dropped === 0, 'null map fails open');
+  assert(stripDeadPromoBanners(twoCards, entCorpus, { entitlements: new Map() }).dropped === 0, 'empty map fails open');
+  assert(stripDeadPromoBanners(ribbon('a-home-the-api-never-returned'), entCorpus, { entitlements: ent }).dropped === 0,
+    'a card for a home absent from the map fails open');
+  // detailPageHome: only the QMI detail shape yields a page home.
+  assert(detailPageHome('new-homes/tx/edinburg/rogers-coves/1050-w-star-flower-st/index.html') === '1050-w-star-flower-st', 'qmi detail page home');
+  assert(detailPageHome('new-homes/tx/edinburg/rogers-coves/index.html') === null, 'community page has no page home');
+  assert(detailPageHome('new-homes/available/index.html') === null, 'list page has no page home');
+  assert(detailPageHome('incentives/499-rate-up-to-5000-in-closing-costs/index.html') === null, 'incentives page has no page home');
+  // live-facts badges: same two-gate treatment, keyed by the harvest's own key shapes.
+  const entFacts = {
+    badges: { '1045-w-star-flower-st': { text: CLOSING, color: 'green' }, '1050-w-star-flower-st': { text: CLOSING, color: 'green' } },
+    cardFacts: { 'rogers-coves/1050': { lot: '9', badge: { text: CLOSING, color: 'green' } } },
+  };
+  assert(pruneLiveFactBadges(entFacts, entCorpus).dropped === 0, 'corpus-only prune keeps both harvested badges (the defect)');
+  const entPruned = pruneLiveFactBadges(entFacts, entCorpus, { entitlements: ent });
+  assert('1045-w-star-flower-st' in entPruned.facts.badges && !('1050-w-star-flower-st' in entPruned.facts.badges),
+    'unearned harvested badge dropped, entitled one kept');
+  assert(entPruned.facts.cardFacts['rogers-coves/1050'].badge === null && entPruned.facts.cardFacts['rogers-coves/1050'].lot === '9',
+    '"<community>/<housenumber>" cardFacts key resolves; the rest of the fact is intact');
+  assert(entPruned.dropped === 2, `two unearned badges dropped (dropped=${entPruned.dropped})`);
 
   console.log('render-lists.mjs demo() passed');
 }

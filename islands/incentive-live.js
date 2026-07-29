@@ -58,10 +58,21 @@
 
   function fallbackPromo(slug) {
     if (slug === '499-rate-up-to-5000-in-closing-costs') {
+      // No cardBadgeText, and the title carries no "$5,000" claim. This fallback only
+      // exists when NO active promotion matches, i.e. exactly when D1 stopped vouching
+      // for the offer, so the frozen claim string is at best unbacked. It is dead data
+      // today — nothing renders it (the card ribbon is fields.promo_text, live per-home)
+      // and homeMatchesPromo short-circuits on its own
+      // /499-rate-up-to-5000-in-closing-costs/ branch (4.99 + closing in the home's LIVE
+      // promo_text) before it ever reads `badge`. It is removed as a TRAP, not a live
+      // bug: delete that dedicated branch and the generic `badge.slice(0, 12)` tail at
+      // the end of homeMatchesPromo starts matching homes off frozen June copy, which is
+      // the same corpus-vs-per-home confusion this PR fixes in sections.mjs. Same
+      // treatment as 499-interest-rates below, where the string WAS live.
       return {
         active: true,
-        title: '4.99% Rate + up to $5,000 in Closing Costs',
-        cardBadgeText: '4.99% Rate + up to $5,000 in Closing Costs',
+        title: '4.99% Rate + Closing Costs',
+        cardBadgeText: '',
         communityNames: [],
         communityIds: [],
       };
