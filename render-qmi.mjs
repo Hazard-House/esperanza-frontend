@@ -35,7 +35,12 @@ export function qmiContent(h) {
   // monthly AND "Savings Over 30 Years" LIVE from the Settings rates (mortgage + incentive)
   // — not the frozen June harvest. data-live="price" already carries the price.
   const tax = taxMultFor(h);
-  const header = `<section class="header text-center bg-tan-white pb-2 py-lg-4"${pidAttr}><div class="container"><div class="row align-items-center"><div class="col-12 col-md-9"><div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div><h1 class="bodoni text-gray fs-1 ls-sm">${esc(h.address)}</h1>${fpLink}${commLink}${avail}${promoB}</div><div class="col-12 col-md-3"><div><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4" data-live="price">${money(h.price)}</div></div>${saving}${promoCta}<div><a data-bs-toggle="modal" data-bs-target="#payment-calculator" data-tax="${tax}"><div class="btn btn-auto btn-learn">Calculate Monthly Payment<img class="ms-auto mb-1" src="${GREEN_ARROW}" aria-hidden="true" loading="lazy" width="16"></div></a></div></div></div></div></section>`;
+  // `data-promo-slot` marks WHERE each surface belongs, independently of whether one is
+  // rendered right now. hydrate-live.js needs an anchor to INSERT into: a page baked while
+  // a toggle was off has no node to refresh, and without a slot the island would have to
+  // guess at a location from theme classes. The slots are inert markers — they carry no
+  // copy, so they say nothing about entitlement and are safe on a promotion-free page.
+  const header = `<section class="header text-center bg-tan-white pb-2 py-lg-4" data-promo-slot="header"${pidAttr}><div class="container"><div class="row align-items-center"><div class="col-12 col-md-9" data-promo-slot="headline"><div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div><h1 class="bodoni text-gray fs-1 ls-sm">${esc(h.address)}</h1>${fpLink}${commLink}${avail}${promoB}</div><div class="col-12 col-md-3" data-promo-slot="cta"><div><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4" data-live="price">${money(h.price)}</div></div>${saving}${promoCta}<div><a data-bs-toggle="modal" data-bs-target="#payment-calculator" data-tax="${tax}"><div class="btn btn-auto btn-learn">Calculate Monthly Payment<img class="ms-auto mb-1" src="${GREEN_ARROW}" aria-hidden="true" loading="lazy" width="16"></div></a></div></div></div></div></section>`;
 
   // --- Overview: description | stat-group + share + osc-callout; CTA row spans below ---
   const stats = [
@@ -190,6 +195,18 @@ function demo() {
   const rate = qmiContent({ ...h, ...P, promo: '4.99% 30 Year Fixed Rate*', promoStyle: 'green' });
   assert(rate.includes('id="calculator-promo-saving"') && !hlOff.includes('id="calculator-promo-saving"'),
     'rate savings line follows the gated headline');
+  // The slots hydrate-live.js inserts into. They must exist even with NO promotion, because
+  // that is exactly the page that gains a surface later; without them the island has no
+  // honest anchor and silently no-ops. Asserted here so the renderer owns its half of the
+  // contract rather than relying on the island's fixture to notice.
+  for (const [label, s] of [['with a promotion', full], ['with no promotion at all', out]]) {
+    for (const slot of ['header', 'headline', 'cta']) {
+      assert(s.includes(`data-promo-slot="${slot}"`), `${slot} slot baked ${label}`);
+      assert((s.match(new RegExp(`data-promo-slot="${slot}"`, 'g')) || []).length === 1, `exactly one ${slot} slot ${label}`);
+    }
+  }
+  assert(!out.includes('data-promo-id') && !out.includes('data-promo-surface') && !out.includes('overlay-promo'),
+    'the slots carry no copy: a promotion-free page still renders no promo content');
   console.log('render-qmi.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

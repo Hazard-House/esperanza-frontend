@@ -31,6 +31,14 @@ const escText = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').repl
 class Node {
   constructor(type) { this.nodeType = type; this.parentNode = null; }
   get parentElement() { return this.parentNode && this.parentNode.nodeType === 1 ? this.parentNode : null; }
+  // The live-refresh islands INSERT a surface a stale page baked without, and the only
+  // honest place to put one is next to the node it belongs beside — so they need
+  // `insertBefore(node, ref.nextSibling)`, the standard "insert after" idiom.
+  get nextSibling() {
+    if (!this.parentNode) return null;
+    const i = this.parentNode.childNodes.indexOf(this);
+    return i === -1 ? null : (this.parentNode.childNodes[i + 1] || null);
+  }
   remove() {
     if (!this.parentNode) return;
     const i = this.parentNode.childNodes.indexOf(this);
