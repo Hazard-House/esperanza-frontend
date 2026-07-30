@@ -32,10 +32,17 @@ const ES_SHELL = readFileSync(join(ROOT, 'public', 'es', 'incentives', 'offer', 
 // the aliases table is that two of its targets do NOT resolve.
 const ARM = { id: 'adm5387b23e59a442', title: '4.99% ARM*', active: true, showIncentivePage: true, description: '<p>Rate buydown on select homes.</p>', rate: 4.99, ctaLabel: 'See Homes', ctaLink: 'https://www.esperanzahomes.com/new-homes/available/' };
 const FLEX25 = { id: 'adm077fd9d9ee7844', title: '$25K Flex Discount', active: true, showIncentivePage: true, description: 'Up to $25,000 your way.' };
+// The other two CURRENTLY HUB-PUBLISHED offers, verified against the live payload on
+// 2026-07-30. $10K/$15K/$25K are the collision that killed title matching: their titles
+// and badges differ only by the amount, and $10K's `bannerText` is even a differently-cased
+// copy of its own badge ("UNLOCK YOUR 10K FLEX DISCOUNT NOW!"). Block 1b below asserts all
+// four resolve to four distinct pages.
+const FLEX15 = { id: 'admb3d6d726a56543', title: 'Unlock Your $15K Flex Discount Now!', cardBadgeText: 'Unlock Your $15K Flex Discount Now!', bannerText: 'Unlock Your $15K Flex Discount Now!', active: true, showIncentivePage: true, description: 'Up to $15,000 your way.' };
+const FLEX10 = { id: 'recLS31iR3INg5THb', title: 'Unlock Your $10K Flex Discount', cardBadgeText: 'Unlock Your $10K Flex Discount Now!', bannerText: 'UNLOCK YOUR 10K FLEX DISCOUNT NOW!', active: true, showIncentivePage: true, description: 'Up to $10,000 your way.' };
 const FLEX20_NOT_HUB = { id: 'recyBSi11zNL5CLFi', title: '$20K Flex Discount', active: true, showIncentivePage: false };
 const BANNER_ONLY = { id: 'adm-3-new-floor-plans', title: '3 NEW Floor Plans Just Released!', active: true, showIncentivePage: false, showSiteBanner: true, bannerText: '3 NEW Floor Plans Just Released!', cardBadgeText: '' };
 const EXPIRED = { id: 'admExpiredOffer', title: 'Gone', active: false, showIncentivePage: true };
-const LIVE_PROMOS = [ARM, FLEX25, FLEX20_NOT_HUB, BANNER_ONLY, EXPIRED];
+const LIVE_PROMOS = [ARM, FLEX25, FLEX15, FLEX10, FLEX20_NOT_HUB, BANNER_ONLY, EXPIRED];
 
 // --- environment stub ---------------------------------------------------------------
 // `api` is a function so each case can choose the upstream behaviour, including throwing.
@@ -107,6 +114,52 @@ const loc = (res) => (res.headers.get('location') ? new URL(res.headers.get('loc
   assert.match(html, /id="available"/, 'the #available anchor the hub links to survives');
   // The CTA is an absolute live-host URL in D1; it must not link back to the legacy site.
   assert.match(html, /data-offer="cta" href="\/new-homes\/available\/"/, 'live-host CTA normalized to same-origin');
+}
+
+// --- 1b. all FOUR currently hub-published offers resolve, to four DISTINCT pages -------
+// Sol's mandatory fixture list: the offers that are live right now, not just a
+// representative one. This is also the direct regression test for the collision that
+// motivated the lane — $10K, $15K and $25K Flex differ only by an amount in their title and
+// badge, so every title-matching branch sent some pair of them to ONE page. /es/ is asserted
+// in the same loop because a per-offer bake that only works in English is a half-shipped
+// feature (block 2 covers the Spanish chrome and string table in depth).
+{
+  const hubPublished = [ARM, FLEX25, FLEX15, FLEX10];
+  assert.deepEqual(
+    LIVE_PROMOS.filter(p => p.active && p.showIncentivePage !== false).map(p => p.id).sort(),
+    hubPublished.map(p => p.id).sort(),
+    'the fixture payload has exactly these four hub-published offers (matches the live payload of 2026-07-30)',
+  );
+  const seen = new Set();
+  for (const promo of hubPublished) {
+    const path = offerPath(promo.id);
+    assert.equal(seen.has(path), false, `each offer has its OWN url: ${path} is not shared`);
+    seen.add(path);
+
+    const res = await GET(path);
+    assert.equal(res.status, 200, `${promo.id} resolves`);
+    assert.equal(res.headers.get('x-offer-state'), 'resolved', `${promo.id} is a resolved offer`);
+    const html = await res.text();
+    // The page is about THIS offer: its own title, its own id, its own description.
+    assert.match(html, new RegExp(`data-offer="title">${promo.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}<`),
+      `${promo.id} bakes its own title`);
+    assert.match(html, new RegExp(`data-promo-id="${promo.id}"`), `${promo.id} declares its own identity`);
+    assert.match(html, new RegExp(`<link rel="canonical" href="${path}">`), `${promo.id} canonicalizes to its own URL`);
+    assert.ok(html.includes(promo.description.replace(/<[^>]+>/g, '')), `${promo.id} renders its own description`);
+    // ...and about NO OTHER offer. This is the collision assertion: a page must not carry a
+    // sibling's id, which is what "two offers collapsed onto one page" looked like.
+    for (const other of hubPublished) {
+      if (other.id === promo.id) continue;
+      assert.doesNotMatch(html, new RegExp(`data-promo-id="${other.id}"`),
+        `${promo.id}'s page does not also claim to be ${other.id}`);
+    }
+    const esRes = await GET('/es' + path);
+    assert.equal(esRes.status, 200, `${promo.id} resolves on /es/ too`);
+    const esHtml = await esRes.text();
+    assert.match(esHtml, new RegExp(`data-promo-id="${promo.id}"`), `${promo.id} keeps its identity on /es/`);
+    assert.match(esHtml, new RegExp(`<link rel="canonical" href="/es${path}">`), `${promo.id} canonicalizes into /es/`);
+  }
+  assert.equal(seen.size, 4, 'four offers, four distinct URLs');
 }
 
 // --- 2. canonical ES id: /es/ parity, in Spanish, canonicalized into /es/ -------------
@@ -242,6 +295,71 @@ const loc = (res) => (res.headers.get('location') ? new URL(res.headers.get('loc
   const gone = await GET(offerPath(ARM.id));
   assert.equal(gone.status, 302, 'an empty but VALID payload retires the id');
   assert.equal(gone.headers.get('x-offer-state'), 'retired');
+  api = async () => Response.json({ promotions: LIVE_PROMOS });
+}
+
+// --- 4b. the LIFECYCLE, one id, driven only by the payload -----------------------------
+// Sol's mandatory fixture list: toggle / unpublish / expiry, asserted at the REQUEST level
+// on a single URL, because the property that matters is that the SAME link changes verdict
+// with the data and nothing else. Cached state is what makes this dangerous, so the
+// cache-control of each verdict is asserted alongside it.
+{
+  const path = offerPath(FLEX15.id);
+  const realApi = api;
+  const only = (promo) => { api = async () => Response.json({ promotions: [promo] }); };
+
+  // Published.
+  only(FLEX15);
+  let res = await GET(path);
+  assert.equal(res.status, 200, 'lifecycle: published -> the offer serves');
+  assert.equal(res.headers.get('cache-control'), 'no-store', 'and is never cached, so the next verdict is immediate');
+
+  // Un-published from the hub (showIncentivePage false, still active) — this is the
+  // "toggle" case, and it must retire the DETAIL page without touching the record.
+  only({ ...FLEX15, showIncentivePage: false });
+  res = await GET(path);
+  assert.equal(res.status, 302, 'lifecycle: hub-unpublished -> retired');
+  assert.equal(loc(res), '/incentives/', 'to the hub');
+  assert.equal(res.headers.get('cache-control'), 'no-store', 'retirement is never cached either — republishing must work at once');
+
+  // Deactivated entirely.
+  only({ ...FLEX15, active: false });
+  res = await GET(path);
+  assert.equal(res.status, 302, 'lifecycle: deactivated -> retired');
+
+  // Deleted from the payload altogether.
+  only(EXPIRED);
+  res = await GET(path);
+  assert.equal(res.status, 302, 'lifecycle: absent from the payload -> retired');
+
+  // Republished: the same URL works again with no purge, no rebuild, no cache bust. This is
+  // what `no-store` on the retirement redirect buys, and the reason it must not be a 301.
+  only(FLEX15);
+  res = await GET(path);
+  assert.equal(res.status, 200, 'lifecycle: republished -> the SAME url serves again');
+  assert.match(await res.text(), new RegExp(`data-promo-id="${FLEX15.id}"`), 'as the same offer');
+
+  // EXPIRY. `expirationDate` is a display fact, not a publication gate: the backend owns
+  // `active`, and this route must not invent a second, divergent expiry rule that could
+  // retire an offer marketing deliberately left running past its printed date.
+  const pastDate = { ...FLEX15, expirationDate: '2020-01-01' };
+  only(pastDate);
+  res = await GET(path);
+  assert.equal(res.status, 200,
+    'lifecycle: a PAST expirationDate on an active offer still serves — publication is `active`, not a date this route re-derives');
+  const expiredHtml = await res.text();
+  assert.match(expiredHtml, /data-offer="expiry">Offer ends January 1, 2020</,
+    'and the past date is rendered honestly rather than hidden');
+  // The same record with active=false — how an expired offer is ACTUALLY retired.
+  only({ ...pastDate, active: false });
+  res = await GET(path);
+  assert.equal(res.status, 302, 'an expired offer is retired by `active`, the field that owns publication');
+  // No expiry at all is open-ended, not a bogus epoch date.
+  only({ ...FLEX15, expirationDate: '' });
+  res = await GET(path);
+  assert.doesNotMatch(await res.text(), /Offer ends/, 'an empty expirationDate renders NO expiry line');
+
+  api = realApi;
 }
 
 // --- 5. upstream failures must NOT masquerade as retirement ---------------------------

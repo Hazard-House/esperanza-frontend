@@ -660,11 +660,15 @@ async function handle(request, env, esFallback = false) {
         (html.includes('class="alert-banner"') || html.includes('id="incentives"') || slashed.startsWith("/incentives/"));
       if (needsPromo) {
         const cfg = JSON.stringify({ API_BASE: "/api/public" });
-        let tag = `\n<script>window.__ESPERANZA=Object.assign(window.__ESPERANZA||{},${cfg});</script>\n<script src="/promotions-live.js" defer></script>\n`;
-        const incentiveDetail = /^\/incentives\/[^/]+\/?$/.test(slashed) && html.includes('id="available"');
-        if (incentiveDetail && !html.includes("incentive-live.js")) {
-          tag += `<script src="/incentive-live.js" defer></script>\n`;
-        }
+        // incentive-live.js is RETIRED (was: trim a scraped /incentives/<slug>/ page's
+        // #available grid to homes matching the promotion BY COPY). Every committed slug
+        // under public/incentives/ is a LEGACY_ALIAS_PROMO_IDS entry, and offerRouteResponse
+        // 301s those before this branch is ever reached, so the island could not run; the
+        // homes grid now lives on the ID-backed offer page and is rendered by exact
+        // promotion_id (offer-live.js). offer-worker-check.mjs asserts the alias-before-asset
+        // ordering that makes this true, and build.mjs --check fails if a NON-alias slug
+        // directory is ever committed here (which is the only way this page class returns).
+        const tag = `\n<script>window.__ESPERANZA=Object.assign(window.__ESPERANZA||{},${cfg});</script>\n<script src="/promotions-live.js" defer></script>\n`;
         const i = html.lastIndexOf("</body>");
         html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }
