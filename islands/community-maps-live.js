@@ -100,10 +100,13 @@
     ensurePin(map, function () {
       if (!map.getSource('places')) map.addSource('places', { type: 'geojson', data: fc });
       if (!map.getLayer('places-symbol')) map.addLayer({ id: 'places-symbol', type: 'symbol', source: 'places', layout: { 'icon-allow-overlap': true, 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom' } });
-      map.on('click', 'places-symbol', function (e) {
-        var c = e.features[0].geometry.coordinates.slice();
-        new mapboxgl.Popup({ offset: [0, -52] }).setLngLat(c).setHTML(e.features[0].properties.html).addTo(map);
-      });
+      // Popup on HOVER as well as click (marketing QA 2026-07-30). Click stays for touch.
+      var pinPopup = new mapboxgl.Popup({ offset: [0, -52] });
+      function showPinPopup(e) {
+        pinPopup.setLngLat(e.features[0].geometry.coordinates.slice()).setHTML(e.features[0].properties.html).addTo(map);
+      }
+      map.on('click', 'places-symbol', showPinPopup);
+      map.on('mouseenter', 'places-symbol', showPinPopup);
       map.on('mouseenter', 'places-symbol', function () { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'places-symbol', function () { map.getCanvas().style.cursor = ''; });
     });
