@@ -696,8 +696,9 @@ export function qmiCardHtml(h, { list = false } = {}) {
       + `<span class="fs-9 overpass text-gray">PRICE: </span>` + inner
       + `</a>`;
   }
-  // Variant deltas (everything else is shared).
-  const tgt = list ? ' target="_blank" rel="noopener"' : '';
+  // Variant deltas (everything else is shared). Internal home links open in the SAME
+  // tab on every variant (marketing QA 2026-07-30); only external CTAs get _blank.
+  const tgt = '';
   // Identity, always stamped when the record carries one — independent of every copy
   // surface. This is the link between a card and its offer page.
   const pid = promoIdAttr(s);
@@ -805,11 +806,11 @@ function demo() {
   assert(card.includes('banner overlay-promo tan') && card.includes('ESTIMATED MONTHLY') && card.includes('REQUEST A TOUR'), 'card promo/est/tour');
   assert(card.includes('d-none d-xl-flex') && card.includes('d-flex d-xl-none'), 'card dual community-row');
   assert(!qmiCardHtml({ address: 'x', community: 'c', city: 'y', floorPlan: 'p', garage: 0, beds: 3 }).includes('Car Garage'), 'garage 0 omitted');
-  // available-grid variant: oi-map-item + map data-attrs + wide column + new-tab links
+  // available-grid variant: oi-map-item + map data-attrs + wide column; same-tab links
   const lcard = qmiCardHtml({ id: 'h1', address: '1806 E Bella St', community: 'Villas at La Sienna', city: 'Edinburg', slug: '1806-e-bella-st', price: 229990, beds: 2, floorPlan: 'Lunelli', image: '/h.jpg', lat: 26.1, lng: -98.2 }, { list: true });
   assert(lcard.includes('col-12 col-md-6 col-lg-12 mb-3 px-2') && lcard.includes('oi-map-item')
     && lcard.includes('data-listing-type="spec"') && lcard.includes('data-latitude="26.1"') && lcard.includes('data-longitude="-98.2"')
-    && lcard.includes('oi-aspect sixteen-nine three-two-xxl') && lcard.includes('target="_blank"'), 'list-variant card shape');
+    && lcard.includes('oi-aspect sixteen-nine three-two-xxl') && !lcard.includes('target="_blank"'), 'list-variant card shape (same-tab links)');
   assert(!card.includes('oi-map-item') && !card.includes('target="_blank"'), 'default variant keeps the community-page shape');
   // the oilib map popup template must exist AND be the card's last child, or OiMapMulti
   // drops the home from #oi-map entirely (no pin / no cluster / no fitBounds)
