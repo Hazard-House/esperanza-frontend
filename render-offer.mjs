@@ -369,6 +369,20 @@ function demo() {
       `island wired exactly once: ${island}`);
   }
   assert(html.includes('window.__ESPERANZA_PAGE={"type":"offer","id":""}'), 'page config declares the offer type');
+  // …and every island the shell REFERENCES is actually published at that URL. build.mjs
+  // (copyRuntimeAssets) is the only step that CREATES public/<island>.js, and it needs the
+  // scrape; CI's scrape-free path runs generate-details.mjs, whose refreshIslands is
+  // refresh-only ("not published -> not ours to add"). So a new island named in a committed
+  // <script src> but never copied into public/ would 404 in production while every unit
+  // fixture stayed green — the page would silently fall back to the edge bake alone, with a
+  // permanently "Loading available homes…" grid. Existence, not byte-equality: refreshIslands
+  // legitimately owns the content refresh.
+  const published = join(OUT, 'offer-live.js');
+  for (const island of OFFER_ISLANDS) {
+    assert(existsSync(join(OUT, island)), `island published to public/: ${island} (run build.mjs)`);
+  }
+  assert(readFileSync(published, 'utf8') === readFileSync(join(import.meta.dirname, 'islands', 'offer-live.js'), 'utf8'),
+    'the published offer island matches its source in islands/ (refreshIslands keeps this true in CI)');
 
   // --- the edge bake lands on the committed page --------------------------------------
   const promo = {
