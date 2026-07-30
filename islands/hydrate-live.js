@@ -271,7 +271,12 @@ if (typeof window === 'undefined') {
       } else if (sec) {
         sec.style.display = 'none';
       }
-    }).catch(function () {});
+    }).catch(function () {
+      // Deliberately silent, and deliberately a NO-OP: the baked page is the last good
+      // render, so a failed refresh must leave the price, availability and promotion
+      // exactly as built. Clearing or retiring anything here would turn a transient API
+      // fault into a wrong page — the opposite of what this island is for.
+    });
   })();
 }
 
