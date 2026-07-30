@@ -203,9 +203,15 @@
             var f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
             map.getSource('places').getClusterExpansionZoom(f[0].properties.cluster_id, function (err, z) { if (!err) map.easeTo({ center: f[0].geometry.coordinates, zoom: z }); });
           });
-          map.on('click', 'places-symbol', function (e) {
-            new mapboxgl.Popup({ offset: [0, -52] }).setLngLat(e.features[0].geometry.coordinates.slice()).setHTML(e.features[0].properties.html).addTo(map);
-          });
+          // One reused popup, shown on HOVER as well as click (marketing QA 2026-07-30:
+          // pins must reveal their community without a click). Click still works — it's
+          // the only path on touch devices, where mouseenter never fires.
+          var pinPopup = new mapboxgl.Popup({ offset: [0, -52] });
+          function showPinPopup(e) {
+            pinPopup.setLngLat(e.features[0].geometry.coordinates.slice()).setHTML(e.features[0].properties.html).addTo(map);
+          }
+          map.on('click', 'places-symbol', showPinPopup);
+          map.on('mouseenter', 'places-symbol', showPinPopup);
           ['clusters', 'places-symbol'].forEach(function (l) {
             map.on('mouseenter', l, function () { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', l, function () { map.getCanvas().style.cursor = ''; });

@@ -266,18 +266,18 @@ var AvailableLive = (function () {
       '<div class="row m-0">' +
       '<div class="col-12 col-xl-7 px-0 pe-xl-3 d-flex align-content-stretch flex-wrap">' +
       '<div class="oi-aspect sixteen-nine three-two-xxl">' + banners +
-      '<a href="' + esc(url) + '" target="_blank" rel="noopener">' +
+      '<a href="' + esc(url) + '">' +
       (img ? '<img src="' + esc(img) + '" loading="lazy" class="oi-aspect-img" alt="' + esc(h.address) + '">' : '') +
       '</a>' +
       '<div class="hover-button d-none d-lg-flex"><div class="m-auto">' +
-      '<a href="' + esc(url) + '" target="_blank" rel="noopener"><div class="btn card-button d-block my-3">' + t('VIEW HOME') + '</div></a>' +
-      '<a href="' + esc(url) + '#request-a-tour" target="_blank" rel="noopener"><div class="btn card-button green d-block my-3">' + t('REQUEST A TOUR') + '</div></a>' +
+      '<a href="' + esc(url) + '"><div class="btn card-button d-block my-3">' + t('VIEW HOME') + '</div></a>' +
+      '<a href="' + esc(url) + '#request-a-tour"><div class="btn card-button green d-block my-3">' + t('REQUEST A TOUR') + '</div></a>' +
       '</div></div>' +
       '</div>' +
       commRow('d-none d-xl-flex') +
       '</div>' +
       '<div class="col-12 col-xl px-0 px-xl-1"><div class="card-body d-flex flex-column lh-2 h-100 px-xl-0 py-xl-1">' +
-      '<div class="row"><a href="' + esc(url) + '" target="_blank" rel="noopener"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">' + esc(h.address) + '</div></a>' +
+      '<div class="row"><a href="' + esc(url) + '"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">' + esc(h.address) + '</div></a>' +
       '<div class="card-location text-green mb-2">' + esc(h.city) + ', TX' + (h.postal ? ' ' + esc(h.postal) : '') + '</div></div>' +
       '<div class="row h-100">' +
       '<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">' + money(h.price) + '</div>' + est + promoCta + '</div></div>' +
@@ -363,7 +363,7 @@ var AvailableLive = (function () {
     m.loadImage('/map_pin.png', function (err, img) { if (!err && img && !m.hasImage('map_pin')) m.addImage('map_pin', img, { pixelRatio: 2 }); cb(); });
   }
   function popupHTML(p) {
-    return '<div class="oi-infowindow overflow-hidden"><a href="' + p.url + '" target="_blank" rel="noopener">' +
+    return '<div class="oi-infowindow overflow-hidden"><a href="' + p.url + '">' +
       (p.img ? '<div class="oi-aspect two-one rounded-top"><img src="' + p.img + '" loading="lazy" class="oi-aspect-img rounded-top" alt="' + p.address + '"></div>' : '') +
       '<div class="row my-2 g-0"><div class="col px-2 my-auto"><div class="card-title">' + p.address + '</div>' +
       '<div class="card-location">' + p.city + ', TX</div></div>' +
@@ -389,10 +389,13 @@ var AvailableLive = (function () {
             var f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
             map.getSource('homes').getClusterExpansionZoom(f[0].properties.cluster_id, function (err, z) { if (!err) map.easeTo({ center: f[0].geometry.coordinates, zoom: z }); });
           });
-          map.on('click', 'places-symbol', function (e) {
-            var c = e.features[0].geometry.coordinates.slice();
-            new mapboxgl.Popup({ offset: [0, -52] }).setLngLat(c).setHTML(popupHTML(e.features[0].properties)).addTo(map);
-          });
+          // Popup on HOVER as well as click (marketing QA 2026-07-30). Click stays for touch.
+          var pinPopup = new mapboxgl.Popup({ offset: [0, -52] });
+          function showPinPopup(e) {
+            pinPopup.setLngLat(e.features[0].geometry.coordinates.slice()).setHTML(popupHTML(e.features[0].properties)).addTo(map);
+          }
+          map.on('click', 'places-symbol', showPinPopup);
+          map.on('mouseenter', 'places-symbol', showPinPopup);
           ['clusters', 'places-symbol'].forEach(function (l) {
             map.on('mouseenter', l, function () { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', l, function () { map.getCanvas().style.cursor = ''; });

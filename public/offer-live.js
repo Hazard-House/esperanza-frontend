@@ -329,6 +329,10 @@ var OfferLive = (function () {
       + '<div class="card-body px-0 pt-2">'
       + '<a href="' + esc(url) + '"><div class="card-title lh-1 mb-1">' + esc(address) + '</div></a>'
       + '<div class="card-location text-green mb-2">' + city + '</div>'
+      // Community + floor plan lines — marketing QA 2026-07-30: the offer card must say
+      // WHERE the home is and WHICH plan it is, like every other spec card on the site.
+      + (str(f.Community) ? '<div class="fs-9 overpass text-gray lh-1 mb-1" data-offer-meta="community">' + esc(f.Community) + '</div>' : '')
+      + (str(f['Floor Plan']) ? '<div class="fs-9 overpass text-gray lh-1 mb-2" data-offer-meta="floorplan">' + esc(f['Floor Plan']) + '</div>' : '')
       + '<div class="spec-price lh-1">' + esc(money(f.Price)) + '</div>' + cta
       + '</div></div></div>';
   }
