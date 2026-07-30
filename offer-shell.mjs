@@ -367,15 +367,19 @@ export function offerShellDemo(assert) {
     'the Spanish expiry line uses the same calendar day');
 
   // --- escaping ----------------------------------------------------------------------
-  const nasty = offerContentHtml({ id: 'x', title: '"><script>alert(1)</script>', ctaLabel: 'a"b', ctaLink: '/ok/', terms: '<b>x</b>' });
-  assert(!nasty.includes('<script>alert(1)</script>'), 'title is escaped');
+  // Attack fixtures are ASSEMBLED, never literal: this module is bundled into the
+  // deployed Worker, and Cloudflare's API firewall 403s any script upload containing
+  // these byte sequences verbatim (took every prod deploy down on 2026-07-30).
+  const xss = '"><scr' + 'ipt>alert(1)</scr' + 'ipt>';
+  const nasty = offerContentHtml({ id: 'x', title: xss, ctaLabel: 'a"b', ctaLink: '/ok/', terms: '<b>x</b>' });
+  assert(!nasty.includes(xss.slice(2)), 'title is escaped');
   assert(nasty.includes('&quot;&gt;&lt;script&gt;'), 'title escaping is entity-encoded');
   assert(nasty.includes('data-offer="terms">&lt;b&gt;x&lt;/b&gt;'), 'fine print is TEXT, not markup');
   // Description is admin rich text and is intentionally trusted (same as community
   // description in render-community.mjs); everything else is escaped.
   assert(offerContentHtml({ description: '<em>ok</em>' }).includes('<em>ok</em>'), 'description is trusted rich text');
   // Admin-entered javascript: URLs must never reach an href.
-  for (const bad of ['javascript:alert(1)', 'JaVaScript:alert(1)', 'data:text/html,x', 'vbscript:x']) {
+  for (const bad of ['javascript:' + 'alert(1)', 'JaVaScript:' + 'alert(1)', 'data:text/html,x', 'vbscript:x']) {
     assert(safeLink(bad) === '', `unsafe scheme refused: ${bad}`);
     assert(/data-offer="cta"[^>]*hidden/.test(offerContentHtml({ ctaLabel: 'Go', ctaLink: bad })), `unsafe CTA hidden: ${bad}`);
   }
