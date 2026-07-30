@@ -133,12 +133,44 @@ var PromotionsLive = (function () {
       '<div class="row g-2 mt-auto pt-2">' + btns + '</div></div></div></div>';
   }
 
-  /** Hub cards: every hub-published promotion, in sortOrder. Returns the number rendered,
-   *  or -1 when this page has no hub grid. */
+  /** Admin-controlled roll-up (QA 2026-07-30, item 4): promos sharing the same non-empty
+   *  hubRollupTitle collapse into ONE card. The face is the lowest-sort member — its
+   *  image / CTA / offer link carry the card — retitled with the shared roll-up text,
+   *  and the community blurb counts the UNION of every member's communities. Mirrors the
+   *  legacy backend's single "up to $20,000 Flex Cash — Available in 20 communities" card. */
+  function rollupHubCards(cards) {
+    var out = [], byTitle = {};
+    for (var i = 0; i < cards.length; i++) {
+      var p = cards[i], key = str(p.hubRollupTitle);
+      if (!key) { out.push(p); continue; }
+      var g = byTitle[key];
+      if (!g) {
+        // Shallow copy so the retitle/blurb never mutate the shared promos array.
+        g = {}; for (var k in p) g[k] = p[k];
+        g.title = key;
+        byTitle[key] = g; out.push(g);
+        g.__names = (p.communityNames || []).slice();
+      } else {
+        var names = p.communityNames || [];
+        for (var n = 0; n < names.length; n++) { if (g.__names.indexOf(names[n]) === -1) g.__names.push(names[n]); }
+        if ((p.sortOrder || 0) < (g.sortOrder || 0)) {
+          // A lower-sort member becomes the face: keep the merged names + shared title.
+          var keep = g.__names;
+          for (var k2 in p) g[k2] = p[k2];
+          g.title = key; g.__names = keep;
+        }
+      }
+    }
+    for (var j = 0; j < out.length; j++) { if (out[j].__names) { out[j].communityNames = out[j].__names; delete out[j].__names; } }
+    return out;
+  }
+
+  /** Hub cards: every hub-published promotion, in sortOrder (rolled up first). Returns
+   *  the number rendered, or -1 when this page has no hub grid. */
   function refreshIncentivesIndex(doc, promos) {
     var section = doc.querySelector('#incentives .row');
     if (!section) return -1;
-    var cards = (promos || []).filter(isHubPromo);
+    var cards = rollupHubCards((promos || []).filter(isHubPromo));
     cards.sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
     // An empty hub is a legitimate state (nothing is published right now), but the baked
     // grid is the June-8 snapshot, so leaving it would advertise retired offers. Only a
@@ -212,7 +244,7 @@ var PromotionsLive = (function () {
   return {
     OFFER_PREFIX: OFFER_PREFIX, isValidPromoId: isValidPromoId, offerPath: offerPath,
     isHubPromo: isHubPromo, safeLink: safeLink, bannerCenterText: bannerCenterText,
-    cardHref: cardHref, incentiveCard: incentiveCard, refreshIncentivesIndex: refreshIncentivesIndex,
+    cardHref: cardHref, incentiveCard: incentiveCard, refreshIncentivesIndex: refreshIncentivesIndex, rollupHubCards: rollupHubCards,
     bannerSlides: bannerSlides, slideHtml: slideHtml, refreshBanner: refreshBanner,
     barePath: barePath, setEs: setEs, u: u, boot: boot,
   };
@@ -277,6 +309,21 @@ async function promotionsLiveDemo() {
   // The four hub offers, in sortOrder, and the whole payload.
   var HUB_FOUR = [ARM, FLEX25, FLEX15, FLEX10];
   var ALL = [INACTIVE, ARM, FLEX25, FLEX15, FLEX10, BANNER_ONLY, FLEX20_NOT_HUB, LOS_PRADOS];
+
+  // ── roll-up (hubRollupTitle): shared text → ONE card; blank → per-promotion cards ──
+  (function () {
+    var a = { id: 'rA', title: 'A $25K', hubRollupTitle: 'Up to $25K Flex Cash!', sortOrder: 5, active: true, showIncentivePage: true, communityNames: ['Wolf Creek', 'El Eden'], image: '/a.jpg', ctaLabel: 'Go A' };
+    var b = { id: 'rB', title: 'B $10K', hubRollupTitle: 'Up to $25K Flex Cash!', sortOrder: 2, active: true, showIncentivePage: true, communityNames: ['El Eden', 'Aquero'] };
+    var c = { id: 'rC', title: 'C solo', hubRollupTitle: '', sortOrder: 9, active: true, showIncentivePage: true };
+    var rolled = P.rollupHubCards([a, b, c]);
+    assert(rolled.length === 2, 'two rolled members + one solo -> 2 cards');
+    var g = rolled[0];
+    assert(g.title === 'Up to $25K Flex Cash!', 'group card carries the shared roll-up title');
+    assert(g.id === 'rB' && (g.sortOrder || 0) === 2, 'lowest-sort member is the face (link + position)');
+    assert(g.communityNames.length === 3, 'community blurb counts the UNION of members');
+    assert(a.title === 'A $25K' && a.communityNames.length === 2, 'source promos are never mutated');
+    assert(rolled[1].title === 'C solo', 'blank hubRollupTitle keeps a per-promotion card');
+  })();
   // HUB_FOUR must BE the hub-published subset of the payload, not a hand-kept list beside
   // it: otherwise dropping an entry here would quietly narrow every loop below while the
   // count assertions still passed. Derived and compared, so the ledger cannot shrink.
