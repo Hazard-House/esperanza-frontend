@@ -374,7 +374,7 @@ function demo() {
   const promo = {
     id: 'recLS31iR3INg5THb', title: 'Unlock Your $10K Flex Discount',
     description: '<p>Get up to <strong>$10,000</strong> toward your new home.</p>',
-    ctaLabel: 'See Eligible Homes', ctaLink: '/new-homes/available/', rate: 4.99, endDate: '2026-09-30',
+    ctaLabel: 'See Eligible Homes', ctaLink: '/new-homes/available/', rate: 4.99, expirationDate: '2026-09-30',
     terms: 'Terms and conditions apply.', image: '//img.x/promo.jpg',
   };
   const baked = bakeOfferShell(html, promo);

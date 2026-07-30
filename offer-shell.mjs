@@ -82,15 +82,42 @@ export function offerStrings(lang) {
   return OFFER_STRINGS[String(lang || 'en')] || OFFER_STRINGS.en;
 }
 
-/** Offer expiry line. `endDate` is an ISO date from D1; a promotion with no end date is
+/**
+ * Split a date-only bound into calendar parts, or null when it is absent/unparseable.
+ *
+ * The API's `expirationDate` is `asStr(promo.end_date)` — a bare `YYYY-MM-DD` or `''`
+ * (packages/api/src/index.ts, serializePromotionRow). The backend compares it LEXICALLY
+ * against a date-only `now` derived from UTC, so it carries no time-of-day and no offset.
+ *
+ * Parsed by string, NOT by `new Date()`, because a Date is a moment and this value is a
+ * calendar day. `new Date('2026-09-30').getDate()` is 29 anywhere west of UTC (the site's
+ * own audience is UTC-5/-6), so the page would announce a deadline one day before the one
+ * the backend enforces. Reading the digits cannot drift by locale or by where the render
+ * happens — build machine, POP, or browser.
+ */
+export function dateOnlyParts(raw) {
+  const m = String(raw == null ? '' : raw).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s]|$)/);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  // Reject a day the month does not have (2026-02-30) without going through Date's
+  // silent rollover, which would render "March 2" for a February bound.
+  const dim = [31, (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  if (day > dim) return null;
+  return { year, month, day };
+}
+
+/** Offer expiry line. `expirationDate` is the LIVE contract key (`endDate`/`end_date` are
+ *  accepted so an older payload shape still renders); a promotion with no end date is
  *  open-ended and must render NOTHING rather than an invented deadline. */
 export function expiryText(promo, lang = 'en') {
-  const raw = promo && (promo.endDate || promo.end_date);
-  if (!raw) return '';
-  const d = new Date(String(raw));
-  if (Number.isNaN(d.getTime())) return '';
+  const raw = promo && (promo.expirationDate || promo.endDate || promo.end_date);
+  const parts = dateOnlyParts(raw);
+  if (!parts) return '';
   const t = offerStrings(lang);
-  return t.expiry(t.months[d.getUTCMonth()], d.getUTCDate(), d.getUTCFullYear());
+  return t.expiry(t.months[parts.month - 1], parts.day, parts.year);
 }
 
 /** Mortgage-rate line, only when D1 carries a rate. Rendered as its own hook so the
@@ -281,7 +308,7 @@ export function offerShellDemo(assert) {
     id: 'recLS31iR3INg5THb', title: 'Unlock Your $10K Flex Discount', image: '//img.x/promo.jpg',
     description: '<p>Get up to <strong>$10,000</strong> toward your new home.</p>',
     ctaLabel: 'See Eligible Homes', ctaLink: 'https://www.esperanzahomes.com/new-homes/available/',
-    pdf: 'https://img.x/flex.pdf', rate: 4.99, endDate: '2026-09-30', terms: 'Terms and conditions apply.',
+    pdf: 'https://img.x/flex.pdf', rate: 4.99, expirationDate: '2026-09-30', terms: 'Terms and conditions apply.',
   };
   const full = offerContentHtml(promo);
   assert(full.includes('>Unlock Your $10K Flex Discount</h1>'), 'title baked into the h1');
@@ -301,10 +328,43 @@ export function offerShellDemo(assert) {
   assert(/data-offer="cta"[^>]*hidden/.test(offerContentHtml({ ...promo, ctaLabel: '' })), 'link without label hides the CTA');
   assert(/data-offer="pdf"[^>]*hidden/.test(offerContentHtml({ ...promo, pdf: '' })), 'no PDF hides the PDF button');
   assert(/data-offer="rate"[^>]*hidden/.test(offerContentHtml({ ...promo, rate: 0 })), 'rate 0 hides the rate line');
-  assert(/data-offer="expiry"[^>]*hidden/.test(offerContentHtml({ ...promo, endDate: null })),
+  assert(/data-offer="expiry"[^>]*hidden/.test(offerContentHtml({ ...promo, expirationDate: null })),
     'an open-ended offer states no deadline');
-  assert(/data-offer="expiry"[^>]*hidden/.test(offerContentHtml({ ...promo, endDate: 'not-a-date' })),
+  assert(/data-offer="expiry"[^>]*hidden/.test(offerContentHtml({ ...promo, expirationDate: 'not-a-date' })),
     'an unparseable end date is dropped, never rendered raw');
+  // `expirationDate` is the key the LIVE payload uses (verified against
+  // packages/api/src/index.ts serializePromotionRow: `expirationDate: asStr(promo.end_date)`).
+  // An empty string is how the API spells "open-ended" for 13 of the 15 live rows.
+  assert(expiryText({ expirationDate: '2026-06-07' }) === 'Offer ends June 7, 2026', 'expirationDate is the live key');
+  assert(expiryText({ expirationDate: '' }) === '', 'an empty expirationDate is open-ended, not "January 1"');
+  assert(expiryText({ endDate: '2026-06-07' }) === 'Offer ends June 7, 2026', 'the older endDate shape still renders');
+  assert(expiryText({ expirationDate: '2026-06-07', endDate: '2030-01-01' }) === 'Offer ends June 7, 2026',
+    'expirationDate wins over a stale endDate');
+  // DATE-ONLY SEMANTICS. A bare YYYY-MM-DD is a calendar day, not a moment: in every
+  // timezone west of UTC — including the site's own UTC-5/-6 audience —
+  // `new Date('2026-09-30').getDate()` is 29. Parsing the digits is what keeps the
+  // rendered deadline equal to the one the backend enforces lexically, wherever this
+  // runs (build host, POP, or browser).
+  assert(expiryText({ expirationDate: '2026-09-30' }) === 'Offer ends September 30, 2026',
+    'the rendered day equals the stored day (no local-timezone shift)');
+  assert(expiryText({ expirationDate: '2026-01-01' }) === 'Offer ends January 1, 2026',
+    'a Jan 1 bound does not slip into the previous year');
+  assert(dateOnlyParts('2026-01-01').day === 1 && dateOnlyParts('2026-01-01').month === 1 && dateOnlyParts('2026-01-01').year === 2026,
+    'dateOnlyParts reads the digits, not a Date');
+  assert(dateOnlyParts('2026-12-31').month === 12 && dateOnlyParts('2026-12-31').day === 31, 'Dec 31 stays Dec 31');
+  // Date's own rollover would turn these into a real (wrong) day; they must be refused.
+  for (const bad of ['2026-02-30', '2026-13-01', '2026-00-10', '2026-06-00', '2026-6-7', '', '  ', 'not-a-date', null, undefined, '20260607']) {
+    assert(dateOnlyParts(bad) === null, `unparseable/invalid date-only bound refused: ${String(bad)}`);
+  }
+  assert(dateOnlyParts('2024-02-29') !== null && dateOnlyParts('2026-02-29') === null, 'leap day is valid only in a leap year');
+  assert(dateOnlyParts('2000-02-29') !== null && dateOnlyParts('1900-02-29') === null, 'century leap rule applied');
+  // A timestamp-shaped bound is tolerated by taking its DATE part, never its local time.
+  assert(expiryText({ expirationDate: '2026-09-30T00:00:00Z' }) === 'Offer ends September 30, 2026',
+    'a timestamp-shaped bound renders its calendar date');
+  assert(expiryText({ expirationDate: '2026-09-30 00:00:00' }) === 'Offer ends September 30, 2026',
+    'a space-separated timestamp renders its calendar date too');
+  assert(expiryText({ expirationDate: '2026-09-30' }, 'es') === 'La oferta termina el 30 de septiembre de 2026',
+    'the Spanish expiry line uses the same calendar day');
 
   // --- escaping ----------------------------------------------------------------------
   const nasty = offerContentHtml({ id: 'x', title: '"><script>alert(1)</script>', ctaLabel: 'a"b', ctaLink: '/ok/', terms: '<b>x</b>' });
