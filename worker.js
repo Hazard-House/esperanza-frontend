@@ -672,6 +672,15 @@ async function handle(request, env, esFallback = false) {
         const i = html.lastIndexOf("</body>");
         html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }
+      // /events/ (+ /es/ twin): the admin's Event Highlights section, rendered by an
+      // island injected at the edge — the scraped page needs no rebake to gain the
+      // surface, and zero published highlights leaves it visually unchanged.
+      if ((slashed === "/events/" || slashed === "/es/events/") && !html.includes("events-highlights-live.js")) {
+        const ecfg = JSON.stringify({ API_BASE: "/api/public" });
+        const etag2 = `\n<script>window.__ESPERANZA=Object.assign(window.__ESPERANZA||{},${ecfg});</script>\n<script src="/events-highlights-live.js" defer></script>\n`;
+        const j = html.lastIndexOf("</body>");
+        html = j === -1 ? html + etag2 : html.slice(0, j) + etag2 + html.slice(j);
+      }
       const out = new Response(html, resp);
       for (const [k, v] of Object.entries(SEC)) out.headers.set(k, v);
       out.headers.set("Cache-Control", "public, max-age=300");
