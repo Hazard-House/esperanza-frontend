@@ -73,14 +73,6 @@ function patchDevHtml(html, req, reqPath) {
   // to English), so the document language always matches the page we actually serve.
   const path = (reqPath || new URL(req.url || '/', `http://localhost:${PORT}`).pathname).replace(/\/index\.html$/, '/');
   out = patchHtmlLocale(out, path);
-  const incentiveDetail = /^\/incentives\/[^/]+\/?$/.test(path) && out.includes('id="available"');
-  if (incentiveDetail && !out.includes('incentive-live.js')) {
-    if (!out.includes('__ESPERANZA')) {
-      const cfg = JSON.stringify({ API_BASE: '/api/public' });
-      out = out.replace('</body>', `<script>window.__ESPERANZA=${cfg};</script>\n</body>`);
-    }
-    out = out.replace('</body>', '<script src="/incentive-live.js" defer></script>\n</body>');
-  }
   const needsPromo =
     !out.includes('promotions-live.js') &&
     (out.includes('class="alert-banner"') || out.includes('id="incentives"') || path.startsWith('/incentives/'));

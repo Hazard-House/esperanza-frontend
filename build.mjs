@@ -20,7 +20,10 @@ import { communityPath, floorplanPath } from './paths.mjs';
 import { hydrateCommunity, hydrateFloorplan, hydratePlanInCommunity, swapCommunityBanner, bakeRecommend, hydrateCommunityStatus } from './hydrate-scraped.mjs';
 import { renderCommunity } from './render-community.mjs';
 import { writeLiveFacts } from './render-lists.mjs';
-import { livePromoTexts, homePromoEntitlements } from './promo-utils.mjs';
+import { livePromoTexts, homePromoEntitlements, bannerFallbackPromos, isLegacyIncentiveSlug } from './promo-utils.mjs';
+// The promotion-detail shell's islands, from the module that renders the shell — so the
+// script tags it emits and the files shipped to public/ cannot drift apart.
+import { OFFER_ISLANDS } from './render-offer.mjs';
 
 const SCRAPE = '/Users/mgd/Downloads/esperanzahomes.com-static-2026-06-08';
 const WWW = join(SCRAPE, 'www.esperanzahomes.com');
@@ -121,7 +124,7 @@ function writeOut(rel, html) {
 // source is committed (islands/, assets/) — no scrape dependency. Extracted so the
 // scrape-free fallback can reuse it verbatim.
 function copyRuntimeAssets() {
-  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js', 'community-homes-live.js', 'incentives-live.js', 'incentive-live.js', 'promotions-live.js']);
+  const islands = new Set([...Object.values(LIVE_PAGES), ...CONTAINER_ISLANDS.map(c => c.island), ...Object.values(EXTRA_SCRIPTS).flat(), SHELL.island, 'hydrate-live.js', 'detail-extras.js', 'mapbox-patch.js', 'sitesearch-live.js', 'community-homes-live.js', 'incentives-live.js', 'promotions-live.js', ...OFFER_ISLANDS]);
   for (const island of islands) cpSync(join(import.meta.dirname, 'islands', island), join(OUT, island));
   cpSync(join(import.meta.dirname, 'islands', 'map_pin.png'), join(OUT, 'map_pin.png'));
   cpSync(join(import.meta.dirname, 'islands', 'mp_pin.png'), join(OUT, 'mp_pin.png'));
@@ -174,6 +177,11 @@ async function build() {
   // Live data, loaded ONCE (generateDetails reuses it below).
   const d = await loadData();
   LIVE_DATA = d;
+  // Surface any banner-enabled promotion still driving the ticker from bannerText. The
+  // fallback is deliberate and temporary; this is what keeps it from becoming permanent
+  // by being invisible. Warning only — it must never fail a build or blank the ticker.
+  // data.loadData() guarantees `promotions` is an array (asserted in its own demo).
+  warnBannerFallback(d.promotions);
 
   // Scrape-free fallback. The June-8 O'Neill scrape (theme + flagship/blog/detail
   // HTML) isn't on every machine (CI, a fresh checkout). The theme + flagship pages
@@ -277,9 +285,12 @@ async function build() {
         html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }
     }
+    // incentives-live.js only (the hub grid). incentive-live.js is RETIRED: it trimmed a
+    // scraped detail page's #available grid by matching promotion COPY against each home's
+    // promo_text, and every committed /incentives/<slug>/ is now a legacy alias the worker
+    // 301s to the ID-backed offer page, whose homes grid is selected by exact promotion_id.
     if (/^incentives\/[^/]+\/index\.html$/.test(rel) && html.includes('data-listing-id')) {
       if (!html.includes('incentives-live.js')) html = injectIsland(html, 'incentives-live.js');
-      if (!html.includes('incentive-live.js')) html = injectIsland(html, 'incentive-live.js');
     }
     writeOut(rel, html);
     n++;
@@ -348,7 +359,136 @@ function demo() {
   assert.deepEqual(classifyDetail('new-homes/tx/mcallen/harvest-coves/15176/index﹖utm_campaign=x.html'), { type: 'skip' }, 'utm variant skipped');
   assert.equal(classifyDetail('floorplans/index.html'), null, 'floorplans index ships normally');
   assert.equal(classifyDetail('new-homes/available/index.html'), null, 'available page ships normally');
+  promotionContractCheck();
   console.log('demo() rewrite + shell + routing checks passed');
+}
+
+// ---------------------------------------------------------------------------
+// Promotion contract checks (plan Phase 3.4 / Phase 4)
+// ---------------------------------------------------------------------------
+// Two properties that are about the SHIPPED TREE rather than any one module, so neither
+// has a natural home in a renderer's own fixture.
+function promotionContractCheck() {
+  // 1. No island may be referenced by a committed page without being published. A
+  //    <script src> pointing at a file that is not in public/ 404s in production while
+  //    every unit fixture stays green — the failure mode render-offer.mjs already guards
+  //    for the offer islands, generalized to every page we ship. This is also what keeps
+  //    the retirement of incentive-live.js honest: deleting the file without cleaning the
+  //    six alias pages that referenced it would leave exactly that dangling reference.
+  const pagesDir = existsSync(OUT) ? OUT : null;
+  if (pagesDir) {
+    const missing = [];
+    const walk = (dir) => {
+      for (const e of readdirSync(dir)) {
+        const full = join(dir, e);
+        if (statSync(full).isDirectory()) { walk(full); continue; }
+        if (!e.endsWith('.html')) continue;
+        const html = readFileSync(full, 'utf8');
+        for (const m of html.matchAll(/<script src="\/([A-Za-z0-9._-]+\.js)"/g)) {
+          if (!existsSync(join(OUT, m[1]))) missing.push(`${full.slice(OUT.length)} -> /${m[1]}`);
+        }
+      }
+    };
+    walk(pagesDir);
+    assert.equal(missing.length, 0, `committed pages reference unpublished islands (would 404 in production):\n  ${missing.slice(0, 10).join('\n  ')}`);
+  }
+
+  // 1b. …and every published island is byte-identical to its source in islands/. AGENTS.md
+  //    makes islands/ the only file a human edits, and generate-details.refreshIslands
+  //    copies them on deploy — but the committed public/ copy is what ships if that step is
+  //    ever skipped, and a drifted copy is invisible to every unit fixture (they import
+  //    islands/). Caught this exact drift by hand once during this lane; now it fails here.
+  if (pagesDir) {
+    const srcDir = join(import.meta.dirname, 'islands');
+    const drifted = [];
+    for (const name of readdirSync(srcDir)) {
+      if (!name.endsWith('.js')) continue;
+      const published = join(OUT, name);
+      if (!existsSync(published)) continue; // not published -> not ours to add (refreshIslands' rule)
+      if (readFileSync(join(srcDir, name), 'utf8') !== readFileSync(published, 'utf8')) drifted.push(name);
+    }
+    assert.equal(drifted.length, 0,
+      `published island(s) differ from islands/ source — the committed copy is what ships: ${drifted.join(', ')}`);
+  }
+
+  // 2. Every committed /incentives/<slug>/ directory must be a curated alias. The worker
+  //    301s aliases BEFORE the static-asset fetch, which is what makes those frozen June-8
+  //    detail pages unreachable and is why incentive-live.js (which trimmed their homes
+  //    grid by matching promotion COPY) could be retired. Commit a NON-alias slug and that
+  //    page class comes back — served raw, with no island and no copy gate — so fail here
+  //    instead of discovering it in production.
+  for (const base of [join(OUT, 'incentives'), join(OUT, 'es', 'incentives')]) {
+    if (!existsSync(base)) continue;
+    for (const e of readdirSync(base)) {
+      if (!statSync(join(base, e)).isDirectory() || e === 'offer') continue;
+      assert(isLegacyIncentiveSlug(e),
+        `public/${base.slice(OUT.length + 1)}/${e}/ is a committed incentive detail page that is NOT a legacy alias. `
+        + 'The worker only 301s LEGACY_ALIAS_PROMO_IDS slugs, so this page would serve raw. '
+        + 'Either add it to promo-identity.mjs (with a promotion id) or delete the directory.');
+    }
+  }
+
+  // 3. Site-banner promotions still relying on the bannerText compatibility fallback.
+  //    cardBadgeText is canonical (the Builder labels it "Banner Overlay Promo" and its
+  //    preview binds the ticker to it); bannerText is TEMPORARY, kept only because
+  //    adm-3-new-floor-plans ships cardBadgeText:"" today. This WARNS rather than fails —
+  //    the fallback is deliberate and the data is not ours to fix from here — but it must
+  //    actually PRINT, or the backfill becomes silently permanent. So the assertion is on
+  //    warnBannerFallback's own output (with console.warn captured), not merely on the
+  //    predicate it wraps: a warning nobody emits is the failure mode being guarded.
+  //    Once the records are backfilled, delete the fallback, this warning, and the
+  //    bannerCenterText fallback branch together.
+  const STRAGGLER = { id: 'adm-3-new-floor-plans', active: true, showSiteBanner: true, cardBadgeText: '', bannerText: '3 NEW Floor Plans Just Released!' };
+  const promos = [
+    STRAGGLER,
+    { id: 'ok', active: true, showSiteBanner: true, cardBadgeText: 'CANON', bannerText: 'legacy' },
+    { id: 'notBanner', active: true, showSiteBanner: false, cardBadgeText: '', bannerText: 'x' },
+    { id: 'inactive', active: false, showSiteBanner: true, cardBadgeText: '', bannerText: 'x' },
+  ];
+  assert.deepEqual(bannerFallbackPromos(promos).map(p => p.id), ['adm-3-new-floor-plans'],
+    'bannerFallbackPromos flags exactly the ACTIVE banner-enabled promotions whose cardBadgeText is empty');
+  const warned = [];
+  const realWarn = console.warn;
+  console.warn = (...a) => warned.push(a.join(' '));
+  let count;
+  try {
+    count = warnBannerFallback(promos);
+  } finally {
+    console.warn = realWarn;
+  }
+  assert.equal(count, 1, 'warnBannerFallback reports one straggler');
+  assert.equal(warned.length, 1, 'and actually EMITS one warning (a silent check is the bug being guarded)');
+  assert.match(warned[0], /adm-3-new-floor-plans/, 'the warning names the record to backfill');
+  assert.match(warned[0], /cardBadgeText/, 'and names the field');
+  // ...and is ACTIONABLE. A warning that reports a condition without saying what to do
+  // about it gets ignored, which for a "temporary" fallback means permanent.
+  assert.match(warned[0], /backfill/i, 'and says what to do about it');
+  assert.match(warned[0], /3 NEW Floor Plans Just Released!/, 'and quotes the text currently carrying the ticker');
+  // A clean payload must be SILENT, or the warning becomes noise everyone ignores.
+  const quiet = [];
+  console.warn = (...a) => quiet.push(a.join(' '));
+  try {
+    assert.equal(warnBannerFallback([promos[1], promos[2]]), 0, 'a fully backfilled payload has no stragglers');
+  } finally {
+    console.warn = realWarn;
+  }
+  assert.equal(quiet.length, 0, 'and prints nothing');
+  assert.equal(warnBannerFallback([]), 0, 'an empty payload is not an error');
+  assert.equal(warnBannerFallback(undefined), 0, 'nor is a missing one (promotions is a non-fatal fetch)');
+}
+
+/** Report banner-enabled promotions still relying on the bannerText fallback. Called with
+ *  the LIVE payload during a real build (where the data is), so the backfill shows up in
+ *  build output rather than only in a fixture. Never throws: blanking the live ticker to
+ *  punish a data gap would be worse than the gap. */
+export function warnBannerFallback(promotions) {
+  const stragglers = bannerFallbackPromos(promotions || []);
+  for (const p of stragglers) {
+    console.warn(`warn: promotion ${p.id} drives the site banner from bannerText because cardBadgeText is empty `
+      + `("${String(p.bannerText).slice(0, 60)}"). cardBadgeText is canonical — backfill it in admin, `
+      + 'then the bannerText fallback in promo-identity.bannerCenterText can be deleted.');
+  }
+  return stragglers.length;
 }
 
 // Only build when run directly — classifyDetail is importable without side effects.

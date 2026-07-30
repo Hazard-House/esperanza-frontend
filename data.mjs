@@ -71,6 +71,16 @@ function normQmi(h) {
     elevation: f.elevation,
     availability: f.availability_text, availableNow: f['Available Now'], moveInDate: f['Move-In Date'],
     description: f.Description, promo: f.promo_text, promoStyle: f.promo_banner_style,
+    // Phase 1 additive contract. `promotionId` is IDENTITY and is never gated: the
+    // backend's show_card_badge / show_card_cta flags empty the copy fields only, so a
+    // home with both surfaces off still declares which offer it won (that attribute is
+    // what the offer page's probes and the card-level links key on). `cardBadge` and the
+    // CTA pair are independent surfaces — empty means render nothing AND strip whatever
+    // the June-8 harvest baked there, never fall back to the old copy. Named `cardBadge`
+    // rather than `badge` because `badge` is already the harvest's {text,color} object in
+    // sections.mjs (harvestBadge), and two different shapes under one name is a trap.
+    promotionId: un(f.promotion_id), cardBadge: f.card_badge_text,
+    promoCtaLabel: f.promo_cta_label, promoCtaLink: f.promo_cta_link,
     selfTourAvailable: !!f.self_tour_available, nterNow: f.nter_now || null,
     pdfUrl: f['Dynamic PDF'],
     lat: f.latitude != null ? Number(f.latitude) : (f.geo_latitude != null ? Number(f.geo_latitude) : null),
@@ -93,6 +103,10 @@ function normCommunity(c) {
     photoGallery: Array.isArray(c.photoGallery) ? c.photoGallery.map(g => ({ url: fixHost(g && g.url != null ? g.url : g), alt: (g && g.alt) || c.name })) : [],
     priceFrom: c.priceFrom, comingSoon: !!c.comingSoon, sqft: c.sqft, beds: c.beds, baths: c.baths,
     description: c.description, amenities: c.amenities, promo: c.promoBannerText,
+    // Phase 1 additive contract, camelCase for location records. Identity is ungated;
+    // the copy fields arrive already gated by show_card_badge / show_card_cta.
+    promotionId: c.promotionId, cardBadge: c.promoBadgeText,
+    promoStyle: c.promoBannerStyle, promoCtaLabel: c.promoCtaLabel, promoCtaLink: c.promoCtaLink,
     officePhone: c.officePhone, officeHours: c.officeHours, scheduleVisit: c.scheduleVisit,
     // HOA documents (CCRs, amendments) — [{title, link}], link is an R2 PDF url.
     hoaLinks: Array.isArray(c.hoaLinks) ? c.hoaLinks.filter((l) => l && l.link) : [],
@@ -115,6 +129,10 @@ function normFloorplan(fp) {
     image: fixHost(fp.image), description: fp.description, floorPlanImage: fixHost(fp.floorPlanImage),
     planViewerUrl: fp.planViewerUrl, virtualTourUrl: fp.virtualTourUrl, brochurePdfUrl: fp.brochurePdfUrl,
     promo: fp.promoBannerText,
+    // Plan caveat 1: the floor-plan payload already carried both strings, but this mapping
+    // retained only promoBannerText, so the gated badge and CTA could never reach a card.
+    promotionId: fp.promotionId, cardBadge: fp.promoBadgeText,
+    promoStyle: fp.promoBannerStyle, promoCtaLabel: fp.promoCtaLabel, promoCtaLink: fp.promoCtaLink,
   };
 }
 

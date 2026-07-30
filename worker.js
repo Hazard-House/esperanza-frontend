@@ -5,7 +5,12 @@
 // survives rebuilds.
 
 import { REDIRECTS } from "./redirects.mjs";
-import { patchHtmlLocale, stripEsPrefix, isEsPath, toEsPath } from "./locale.mjs";
+import { patchHtmlLocale, stripEsPrefix, isEsPath, toEsPath, ES_PREFIX } from "./locale.mjs";
+import {
+  OFFER_PREFIX, offerPath, offerIdFromPath, isOfferNamespacePath, legacyAliasFromPath,
+  findHubPromoById, LEGACY_ALIAS_PROMO_IDS,
+} from "./promo-identity.mjs";
+import { bakeOfferShell, OFFER_STRINGS } from "./offer-shell.mjs";
 
 const LIVE = "https://www.esperanzahomes.com";
 const API = "https://esperanza-api.round-base-ed8c.workers.dev";
@@ -38,6 +43,172 @@ async function qmiSlugIsPublished(slug, env) {
       return fields.slug === slug || fields.seo_slug === slug;
     });
   } catch { return null; }
+}
+
+// ── Promotion detail route ────────────────────────────────────────────────────
+// /incentives/offer/<promotion-id>/ is ONE committed shell (render-offer.mjs) that this
+// route bakes with the live promotion at the edge. See promo-identity.mjs for why the
+// namespace is ID-keyed rather than title-derived.
+
+const OFFER_HUB = "/incentives/";
+
+// Where the offer route's decision is observable without parsing HTML, so acceptance
+// probes can tell a retirement from an upstream failure by header alone.
+const OFFER_STATE_HEADER = "X-Offer-State";
+
+/**
+ * The public promotions payload, or `null` for ANY failure — transport, non-2xx, or a
+ * body that is not `{promotions: [...]}`.
+ *
+ * `null` and `[]` mean different things on purpose. `[]` is the API answering honestly
+ * that no promotion exists, so an id that does not resolve is genuinely retired. `null`
+ * is "we do not know", which must never be rendered as retirement: a 5-minute API outage
+ * would otherwise permanently redirect every live offer URL to the hub.
+ */
+async function fetchPromotions(env) {
+  try {
+    const headers = new Headers({ accept: "application/json", origin: LIVE });
+    const sub = new Request(API + "/api/public/promotions", { headers, redirect: "manual" });
+    // Same env.API-then-plain-fetch pattern as qmiSlugIsPublished: the service binding is
+    // a 503 stub under `wrangler dev`.
+    let resp = env.API ? await env.API.fetch(sub) : null;
+    if (!resp || resp.status === 503) resp = await fetch(new Request(sub, { redirect: "manual" }), { cf: { cacheTtl: 60 } });
+    if (!resp.ok) return null;
+    const body = await resp.json();
+    const promotions = body && body.promotions;
+    return Array.isArray(promotions) ? promotions : null;
+  } catch { return null; }
+}
+
+/**
+ * An offer URL whose id does not name a hub-published promotion (unknown, inactive,
+ * showIncentivePage=false, or a charset-invalid id). Sends the visitor to the hub, which
+ * lists what IS available, instead of a contentless 200 (plan Phase 2.2).
+ *
+ * 302, NOT 301 — a deliberate deviation from the plan's wording. Publication state is
+ * mutable: an offer that is unpublished today can be republished tomorrow, and a
+ * permanent redirect would poison its canonical URL in every browser and POP cache long
+ * after it came back. This file already draws that line for asset redirects ("an
+ * immutable-cached redirect poisons that URL for a whole POP", below). `no-store` keeps
+ * even the temporary redirect out of caches, so retirement tracks D1 within the API's
+ * own 60s cache window.
+ */
+function offerRetire(url, esPrefix) {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: url.origin + esPrefix + OFFER_HUB,
+      "Cache-Control": "no-store",
+      [OFFER_STATE_HEADER]: "retired",
+      ...SEC,
+    },
+  });
+}
+
+/** The committed shell for a locale, falling back to the English twin when /es/ has not
+ *  been re-baked yet — Spanish is additive (same rule as the 404 branch), so a missing
+ *  twin must not turn a live offer into an error. */
+async function offerShellHtml(request, env, esPrefix) {
+  for (const prefix of esPrefix ? [esPrefix, ""] : [""]) {
+    const resp = await env.ASSETS.fetch(new Request(new URL(prefix + OFFER_PREFIX, request.url)));
+    if (resp && resp.status === 200) return resp.text();
+  }
+  return null;
+}
+
+/**
+ * Upstream failure state: transport error, non-2xx, or malformed payload. Serves the
+ * shell with an explicit "temporarily unavailable" message and the template's noindex
+ * intact, under a 503 so crawlers and monitors read it as a transient fault.
+ *
+ * This is emphatically NOT retirement. A redirect here would tell every cache the offer
+ * is gone because the API blipped; a 200 would let a crawler index a contentless page as
+ * the offer. The island still runs and can fill the hooks from the browser's own request,
+ * so a visitor often sees the real offer anyway.
+ */
+async function offerUpstreamResponse(request, env, esPrefix, lang, p) {
+  const shell = await offerShellHtml(request, env, esPrefix);
+  const strings = OFFER_STRINGS[lang] || OFFER_STRINGS.en;
+  const body = shell === null
+    ? strings.upstream
+    : bakeOfferShell(patchHtmlLocale(shell, p), null, { esPrefix, lang, state: strings.upstream });
+  return new Response(body, {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Retry-After": "60",
+      [OFFER_STATE_HEADER]: "upstream",
+      ...SEC,
+    },
+  });
+}
+
+/**
+ * Resolve and serve /incentives/offer/<id>/ (either locale). Returns null only when the
+ * path is not in the namespace at all, so the caller can fall through.
+ */
+async function offerRouteResponse(request, env, { url, p, bare, esPrefix }) {
+  const lang = esPrefix ? "es" : "en";
+
+  // Legacy detail slugs are hand-curated inbound compatibility (LEGACY_ALIAS_PROMO_IDS).
+  // Deliberately NO payload fetch here: the alias→id mapping is permanent data, so this
+  // hop can be a real 301, and the mutable publication decision is left to the canonical
+  // URL below (which answers it with a cache-safe 302). Verifying the promotion here
+  // instead would make a PERMANENT redirect depend on live state — the poisoning bug the
+  // retirement comment describes.
+  const alias = legacyAliasFromPath(bare);
+  if (alias) {
+    // `?promo=<id>` is what the CURRENT hub cards emit (promotions-live.js promoHref) and
+    // what any bookmark or email from the live site carries, so it is real inbound traffic.
+    // It names the promotion EXACTLY, where the alias table can only name the one tier the
+    // slug advertised — the four Flex tiers all share one legacy slug. Honor it when the id
+    // passes the charset gate, and fall back to the curated table otherwise. Still a 301:
+    // id-to-path is a pure deterministic mapping, so this hop cannot go stale (the mutable
+    // publication question is answered by the canonical URL's own 302).
+    const queried = offerPath(url.searchParams.get("promo") || "");
+    const target = queried || offerPath(LEGACY_ALIAS_PROMO_IDS[alias]) || OFFER_HUB;
+    return new Response(null, {
+      status: 301,
+      headers: {
+        Location: url.origin + esPrefix + target,
+        "Cache-Control": "public, max-age=3600",
+        [OFFER_STATE_HEADER]: "alias",
+        ...SEC,
+      },
+    });
+  }
+
+  if (!isOfferNamespacePath(bare)) return null;
+
+  // An id that fails the charset gate (or the bare namespace root, which is the template)
+  // must not fall through to the static-asset fetch — that would ship the un-baked shell
+  // as a contentless 200 under an arbitrary URL.
+  const id = offerIdFromPath(bare);
+  if (!id) return offerRetire(url, esPrefix);
+
+  const promos = await fetchPromotions(env);
+  if (promos === null) return offerUpstreamResponse(request, env, esPrefix, lang, p);
+
+  const promo = findHubPromoById(promos, id);
+  if (!promo) return offerRetire(url, esPrefix);
+
+  const shell = await offerShellHtml(request, env, esPrefix);
+  // The committed shell is missing from the deploy: treat as an upstream-class fault
+  // rather than retiring a promotion that D1 says is live.
+  if (shell === null) return offerUpstreamResponse(request, env, esPrefix, lang, p);
+
+  const html = bakeOfferShell(patchHtmlLocale(shell, p), promo, { esPrefix, lang });
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      // The same URL is a different page the moment marketing edits the offer, and the
+      // API's own 60s cache is the only staleness this route should carry.
+      "Cache-Control": "no-store",
+      [OFFER_STATE_HEADER]: "resolved",
+      ...SEC,
+    },
+  });
 }
 
 // ── Lead forms ────────────────────────────────────────────────────────────────
@@ -332,6 +503,18 @@ async function handle(request, env, esFallback = false) {
       }
     }
 
+    // Promotion detail route. MUST come before REDIRECTS and before the static-asset
+    // fetch: /incentives/offer/ is a committed page, so falling through would serve the
+    // un-baked template shell as a contentless 200 for any id at all. The legacy
+    // /incentives/<slug>/ aliases are also committed directories (frozen June-8 mirrors),
+    // so they too have to be intercepted before ASSETS answers them.
+    const offerBare = isEsPath(p) ? stripEsPrefix(p) : p;
+    const offerEsPrefix = isEsPath(p) ? ES_PREFIX : "";
+    const offer = await offerRouteResponse(request, env, {
+      url, p, bare: offerBare, esPrefix: offerEsPrefix,
+    });
+    if (offer) return offer;
+
     // Legacy live-site URL shapes (long QMI ids, drifted floor-plan ids, /new-homes/tx/
     // city stubs, retired blog slugs) 301 onto the mirror page with the same content.
     // Data lives in redirects.mjs (generated by scripts/gen-redirects.mjs against the
@@ -477,11 +660,15 @@ async function handle(request, env, esFallback = false) {
         (html.includes('class="alert-banner"') || html.includes('id="incentives"') || slashed.startsWith("/incentives/"));
       if (needsPromo) {
         const cfg = JSON.stringify({ API_BASE: "/api/public" });
-        let tag = `\n<script>window.__ESPERANZA=Object.assign(window.__ESPERANZA||{},${cfg});</script>\n<script src="/promotions-live.js" defer></script>\n`;
-        const incentiveDetail = /^\/incentives\/[^/]+\/?$/.test(slashed) && html.includes('id="available"');
-        if (incentiveDetail && !html.includes("incentive-live.js")) {
-          tag += `<script src="/incentive-live.js" defer></script>\n`;
-        }
+        // incentive-live.js is RETIRED (was: trim a scraped /incentives/<slug>/ page's
+        // #available grid to homes matching the promotion BY COPY). Every committed slug
+        // under public/incentives/ is a LEGACY_ALIAS_PROMO_IDS entry, and offerRouteResponse
+        // 301s those before this branch is ever reached, so the island could not run; the
+        // homes grid now lives on the ID-backed offer page and is rendered by exact
+        // promotion_id (offer-live.js). offer-worker-check.mjs asserts the alias-before-asset
+        // ordering that makes this true, and build.mjs --check fails if a NON-alias slug
+        // directory is ever committed here (which is the only way this page class returns).
+        const tag = `\n<script>window.__ESPERANZA=Object.assign(window.__ESPERANZA||{},${cfg});</script>\n<script src="/promotions-live.js" defer></script>\n`;
         const i = html.lastIndexOf("</body>");
         html = i === -1 ? html + tag : html.slice(0, i) + tag + html.slice(i);
       }

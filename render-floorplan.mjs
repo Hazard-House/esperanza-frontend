@@ -1,7 +1,7 @@
 // render-floorplan.mjs — full brand-wide floor-plan detail page (/floorplans/<slug>/).
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, galleryHtml, tourHtml, idaproPlanHtml, formSlotHtml, qmiCardHtml, finalizePage } from './sections.mjs';
+import { esc, money, num, galleryHtml, tourHtml, idaproPlanHtml, formSlotHtml, qmiCardHtml, finalizePage, cardSurfaces, bannerHtml, promoCtaHtml, promoIdAttr } from './sections.mjs';
 import { floorplanPath, communityPath } from './paths.mjs';
 
 export function floorplanContent(fp) {
@@ -22,8 +22,11 @@ export function floorplanContent(fp) {
   }).join('');
   const homes = (fp.homes || []).map(qmiCardHtml).join('');
   const locCount = (fp.communityList || []).length;
+  // Plan caveat 1: floor-plan records carry a resolved promotion whose headline/CTA this
+  // page never rendered. Identity is ungated; the copy surfaces are independent.
+  const surf = cardSurfaces(fp);
   return [
-    `<section class="header pagejump text-center bg-tan-white pb-2 py-lg-4"><div class="container"><h1 class="bodoni text-gray fs-1 ls-sm">${esc(fp.name)}</h1>${fp.collection ? `<div class="text-brown">${esc(fp.collection)} Collection</div>` : ''}${locCount ? `<a href="#mp-locations" class="d-block text-brown">Available in ${locCount} Communit${locCount == 1 ? 'y' : 'ies'}</a>` : ''}${fp.startingPrice ? `<div class="overpass bold text-dark-green fs-4 mt-2">Starting at ${money(fp.startingPrice)}</div>` : ''}</div></section>`,
+    `<section class="header pagejump text-center bg-tan-white pb-2 py-lg-4"${promoIdAttr(surf)}><div class="container"><h1 class="bodoni text-gray fs-1 ls-sm">${esc(fp.name)}</h1>${fp.collection ? `<div class="text-brown">${esc(fp.collection)} Collection</div>` : ''}${locCount ? `<a href="#mp-locations" class="d-block text-brown">Available in ${locCount} Communit${locCount == 1 ? 'y' : 'ies'}</a>` : ''}${fp.startingPrice ? `<div class="overpass bold text-dark-green fs-4 mt-2">Starting at ${money(fp.startingPrice)}</div>` : ''}${bannerHtml('', surf)}${promoCtaHtml(surf)}</div></section>`,
     galleryHtml(fp.image ? [{ url: fp.image, alt: fp.name }] : [], fp.image, fp.name),
     `<section id="overview" class="pagejump pt-4 pt-lg-5 bg-tan-white reverse pb-4"><div class="container-lg pt-3"><div class="row mb-3"><div class="col-12 col-md-7">${fp.description ? `<div class="wysiwyg">${fp.description}</div>` : ''}<div class="mt-4">${fp.brochurePdfUrl ? `<a href="${esc(fp.brochurePdfUrl)}" target="_blank" rel="noopener" class="btn btn-green oi-brochure-download me-2 mb-2">Download Brochure</a>` : ''}<a href="#request-a-tour" class="btn btn-auto btn-learn mb-2">Request Information</a></div></div><div class="col-12 col-md-5 col-lg-4 offset-lg-1 mt-4"><div class="row stat-group border-gray py-2">${stats}</div></div></div></div></section>`,
     tourHtml(fp.virtualTourUrl),
@@ -55,6 +58,34 @@ function demo() {
   for (const id of ['id="overview"', 'id="virtualtour"', 'id="plans"', 'id="mp-locations"', 'id="specs"', 'id="request-a-tour"']) assert(out.includes(id), 'has ' + id);
   assert(out.includes('Starting at $396,990') && out.includes('HERS Score: 43') && out.includes('Aqualina at Tres Lagos') && out.includes('$451,990'), 'content');
   assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'clean');
+
+  // --- promotion surfaces on the FLOOR-PLAN header (plan caveat 1) ---------------------
+  // data.mjs's normFloorplan dropped badge and CTA entirely, so a plan-targeted promotion
+  // could not reach this page at all. Contract: identity ungated, headline and CTA
+  // independently gated, an empty value emits nothing, page survives.
+  const surfaces = s => [...s.matchAll(/data-promo-surface="([^"]+)"/g)].map(m => m[1]).sort();
+  const P = { promotionId: 'recFP1', promo: 'Agave Plan Incentive', cardBadge: 'PLAN BADGE', promoCtaLabel: 'See Offer', promoCtaLink: '/incentives/offer/recFP1/', promoStyle: 'green' };
+  const full = floorplanContent({ ...fp, ...P });
+  assert(full.includes('data-promo-id="recFP1"'), 'floor-plan header stamps identity');
+  assert(full.slice(0, full.indexOf('id="overview"')).includes('data-promo-surface="headline"'), 'headline renders in the header');
+  assert(full.includes('status-banner overlay-promo mt-2 align-top green') && full.includes('data-live="promo"'), 'API style + live hook');
+  assert(full.includes('href="/incentives/offer/recFP1/"') && full.includes('See Offer'), 'CTA label + link');
+  const hdrOf = s => s.slice(0, s.indexOf('id="overview"'));
+  const hlOff = floorplanContent({ ...fp, ...P, promo: '', cardBadge: '' });
+  assert.deepEqual(surfaces(hdrOf(hlOff)), ['cta'], 'headline off leaves ONLY the CTA in the header');
+  assert(hlOff.includes('data-promo-id="recFP1"') && !hlOff.includes('overlay-promo'), 'promotion_id survives headline off');
+  const ctaOff = floorplanContent({ ...fp, ...P, promoCtaLabel: '', promoCtaLink: '' });
+  assert.deepEqual(surfaces(hdrOf(ctaOff)), ['headline'], 'CTA off leaves ONLY the headline in the header');
+  assert(ctaOff.includes('data-promo-id="recFP1"') && !ctaOff.includes('promo-cta'), 'promotion_id survives CTA off');
+  const bare = floorplanContent({ ...fp, ...P, promo: '', cardBadge: '', promoCtaLabel: '', promoCtaLink: '' });
+  assert(bare.includes('data-promo-id="recFP1"') && !hdrOf(bare).includes('data-promo-surface'),
+    'all off: identity remains, no surface node remains');
+  assert(bare.includes('Agave') && bare.includes('Starting at $396,990') && bare.includes('HERS Score: 43')
+    && bare.includes('id="mp-locations"') && bare.includes('id="specs"'),
+    'the header and page survive an all-off record');
+  assert(!floorplanContent({ ...fp, ...P, promotionId: '' }).includes('data-promo-id'), 'no winner -> no identity attribute');
+  assert(!out.includes('data-promo-id') && !out.includes('data-promo-surface') && !out.includes('overlay-promo'),
+    'a promotion-free plan renders no promo markup at all');
   console.log('render-floorplan.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

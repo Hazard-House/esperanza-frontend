@@ -1,7 +1,7 @@
 // render-qmi.mjs — full QMI detail page from a normalized home + the chrome shell.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, selfTourCalloutHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, factOf, promoBannerClass, taxMultFor, getBuildRate } from './sections.mjs';
+import { esc, money, num, statItem, ICON, descHtml, descWantsUl, galleryHtml, mobileGalleryBarHtml, subnavHtml, selfTourCalloutHtml, tourHtml, elevationHtml, idaproPlanHtml, energyHtml, communityBlurbHtml, mapSalesHtml, formSlotHtml, recommendedHtml, mortgageCalcModalHtml, setHead, finalizePage, fmtLot, factOf, promoBannerClass, taxMultFor, getBuildRate, cardSurfaces, promoCtaHtml, promoHeadlineHtml, promoIdAttr } from './sections.mjs';
 import { isRatePromo } from './promo-utils.mjs';
 import { qmiPath, communityPath, floorplanPath } from './paths.mjs';
 import { slugify } from './data.mjs';
@@ -20,15 +20,27 @@ export function qmiContent(h) {
   const commLink = h.community ? `<div class="d-block"><a href="${esc(commHref)}" class="text-brown">${esc(h.community)}${h.city ? ` in ${esc(h.city)}, TX` : ''}</a></div>` : '';
   const avail = h.availability ? `<div class="status-banner gray mt-2 align-top" data-live="availability">${esc(h.availability)}</div>` : '';
   // Live, not baked: hydrate-live.js refreshes text + color from promo_banner_style.
-  const promoText = h.promo;
-  const promoB = promoText ? `<div class="status-banner overlay-promo mt-2 align-top ${promoBannerClass(h.promoStyle, promoText)}" data-live="promo">${esc(promoText)}</div>` : '';
+  // Gated surfaces: the detail header carries the headline and (independently) the CTA;
+  // the corner badge is a card affordance and has no place in this layout.
+  const surf = cardSurfaces(h);
+  const promoText = surf.headline;
+  const promoB = promoHeadlineHtml(surf, { kind: 'detail' });
+  const promoCta = promoCtaHtml(surf);
+  // Identity, ungated: present whenever the home won an offer, even with every copy
+  // surface off, so the detail page can be probed for WHICH promotion applies.
+  const pidAttr = promoIdAttr(surf);
   const saving = isRatePromo(promoText, getBuildRate())
     ? `<p id="calculator-promo-saving" class="small mb-2"></p>` : '';
   // Bake price + per-community tax so the calculator (detail-extras.js) computes the
   // monthly AND "Savings Over 30 Years" LIVE from the Settings rates (mortgage + incentive)
   // — not the frozen June harvest. data-live="price" already carries the price.
   const tax = taxMultFor(h);
-  const header = `<section class="header text-center bg-tan-white pb-2 py-lg-4"><div class="container"><div class="row align-items-center"><div class="col-12 col-md-9"><div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div><h1 class="bodoni text-gray fs-1 ls-sm">${esc(h.address)}</h1>${fpLink}${commLink}${avail}${promoB}</div><div class="col-12 col-md-3"><div><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4" data-live="price">${money(h.price)}</div></div>${saving}<div><a data-bs-toggle="modal" data-bs-target="#payment-calculator" data-tax="${tax}"><div class="btn btn-auto btn-learn">Calculate Monthly Payment<img class="ms-auto mb-1" src="${GREEN_ARROW}" aria-hidden="true" loading="lazy" width="16"></div></a></div></div></div></div></section>`;
+  // `data-promo-slot` marks WHERE each surface belongs, independently of whether one is
+  // rendered right now. hydrate-live.js needs an anchor to INSERT into: a page baked while
+  // a toggle was off has no node to refresh, and without a slot the island would have to
+  // guess at a location from theme classes. The slots are inert markers — they carry no
+  // copy, so they say nothing about entitlement and are safe on a promotion-free page.
+  const header = `<section class="header text-center bg-tan-white pb-2 py-lg-4" data-promo-slot="header"${pidAttr}><div class="container"><div class="row align-items-center"><div class="col-12 col-md-9" data-promo-slot="headline"><div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 me-auto d-none d-lg-block"></div><h1 class="bodoni text-gray fs-1 ls-sm">${esc(h.address)}</h1>${fpLink}${commLink}${avail}${promoB}</div><div class="col-12 col-md-3" data-promo-slot="cta"><div><div class="overpass fs-7">PRICED AT</div><div class="overpass bold text-dark-green fs-4" data-live="price">${money(h.price)}</div></div>${saving}${promoCta}<div><a data-bs-toggle="modal" data-bs-target="#payment-calculator" data-tax="${tax}"><div class="btn btn-auto btn-learn">Calculate Monthly Payment<img class="ms-auto mb-1" src="${GREEN_ARROW}" aria-hidden="true" loading="lazy" width="16"></div></a></div></div></div></div></section>`;
 
   // --- Overview: description | stat-group + share + osc-callout; CTA row spans below ---
   const stats = [
@@ -151,6 +163,50 @@ function demo() {
   const page = renderQmi(h, '<head><title>x</title></head><body><!--CONTENT--></body>');
   assert(page.includes('hydrate-live.js') && page.includes('community-maps-live.js') && page.includes('__ESPERANZA_PAGE'), 'islands+config');
   assert(page.includes('<title>5131 Carambola Ln, Laredo, TX New Home for Sale | Esperanza Homes</title>'), 'live-format SEO title');
+
+  // --- promotion surfaces on the QMI DETAIL header ----------------------------------
+  // Same contract as the cards (sections.surfaceContractDemo), asserted on this page's own
+  // markup: identity ungated, headline and CTA independently gated, an empty value emits
+  // nothing while the header itself survives. The corner badge is a card affordance and
+  // deliberately has no place in this layout.
+  const surfaces = s => [...s.matchAll(/data-promo-surface="([^"]+)"/g)].map(m => m[1]).sort();
+  const P = { promotionId: 'recP1', promo: 'Unlock Your $15K Flex Discount Now!', cardBadge: 'CORNER BADGE', promoCtaLabel: 'See Offer Details', promoCtaLink: '/incentives/offer/recP1/', promoStyle: 'gold' };
+  const full = qmiContent({ ...h, ...P });
+  assert(full.includes('data-promo-id="recP1"'), 'detail header stamps identity');
+  assert.deepEqual(surfaces(full), ['cta', 'headline'], 'detail header renders headline + CTA');
+  assert(full.includes('status-banner overlay-promo mt-2 align-top tan') && full.includes('data-live="promo"'), 'headline keeps its hydrate hook + API color');
+  assert(!full.includes('CORNER BADGE'), 'the corner badge is a card affordance, not a detail-header one');
+  // Independent toggles: each removes only its own node, and identity survives both.
+  const hlOff = qmiContent({ ...h, ...P, promo: '', cardBadge: '' });
+  assert.deepEqual(surfaces(hlOff), ['cta'], 'headline off leaves ONLY the CTA');
+  assert(hlOff.includes('data-promo-id="recP1"') && !hlOff.includes('overlay-promo'), 'promotion_id survives headline off; no ribbon');
+  const ctaOff = qmiContent({ ...h, ...P, promoCtaLabel: '', promoCtaLink: '' });
+  assert.deepEqual(surfaces(ctaOff), ['headline'], 'CTA off leaves ONLY the headline');
+  assert(ctaOff.includes('data-promo-id="recP1"') && !ctaOff.includes('promo-cta'), 'promotion_id survives CTA off; no anchor');
+  // Every surface off: identity remains, and nothing else about the page degrades.
+  const bare = qmiContent({ ...h, ...P, promo: '', cardBadge: '', promoCtaLabel: '', promoCtaLink: '' });
+  assert(bare.includes('data-promo-id="recP1"'), 'IDENTITY IS NOT A SURFACE on the detail header either');
+  assert(!bare.includes('data-promo-surface'), 'no surface node, empty or otherwise, survives an all-off record');
+  assert(bare.includes('5131 Carambola Ln') && bare.includes('$236,990') && bare.includes('Available Now')
+    && bare.includes('Calculate Monthly Payment') && bare.includes('id="overview"'),
+    'the header and page survive an all-off record (address, price, availability, calc CTA, sections)');
+  assert(!qmiContent({ ...h, ...P, promotionId: '' }).includes('data-promo-id'), 'no winner -> no identity attribute');
+  // The rate-promo savings line is driven by the HEADLINE, so it must vanish with it.
+  const rate = qmiContent({ ...h, ...P, promo: '4.99% 30 Year Fixed Rate*', promoStyle: 'green' });
+  assert(rate.includes('id="calculator-promo-saving"') && !hlOff.includes('id="calculator-promo-saving"'),
+    'rate savings line follows the gated headline');
+  // The slots hydrate-live.js inserts into. They must exist even with NO promotion, because
+  // that is exactly the page that gains a surface later; without them the island has no
+  // honest anchor and silently no-ops. Asserted here so the renderer owns its half of the
+  // contract rather than relying on the island's fixture to notice.
+  for (const [label, s] of [['with a promotion', full], ['with no promotion at all', out]]) {
+    for (const slot of ['header', 'headline', 'cta']) {
+      assert(s.includes(`data-promo-slot="${slot}"`), `${slot} slot baked ${label}`);
+      assert((s.match(new RegExp(`data-promo-slot="${slot}"`, 'g')) || []).length === 1, `exactly one ${slot} slot ${label}`);
+    }
+  }
+  assert(!out.includes('data-promo-id') && !out.includes('data-promo-surface') && !out.includes('overlay-promo'),
+    'the slots carry no copy: a promotion-free page still renders no promo content');
   console.log('render-qmi.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

@@ -19,6 +19,7 @@ import { ensureCommunityHomesLive, ensureCommunityCopyLive } from './rewrite.mjs
 import { classifyDetail } from './build.mjs';
 import { generateBlogs } from './generate-blogs.mjs';
 import { bakeSpanish } from './es-bake.mjs';
+import { writeOfferShell, localizeOfferShellEs } from './render-offer.mjs';
 
 const OUT = join(import.meta.dirname, 'public');
 const SHELL_PATH = join(import.meta.dirname, 'templates', 'detail-shell.html');
@@ -363,13 +364,19 @@ export async function generateDetails(data, { skipCommunities, skipFloorplans } 
   // detail pages use, then sweep dead promo ribbons off everything else in public/.
   const lists = regenerateListPages(d, { live: promoCorpus, entitlements: promoEntitlements });
   const islands = refreshIslands();
+  // The ONE promotion-detail shell. Written before bakeSpanish so the walk mirrors it into
+  // /es/, then re-localized after (the region's copy is fixed, not dictionary-derived —
+  // see render-offer.mjs localizeOfferShell). No per-promotion pages are written, so no
+  // prune pass is needed here: retiring an offer is a routing decision, not a build one.
+  const offer = writeOfferShell({ shell });
   // Bake Spanish before pruning so the mirror is refreshed before its stale twins are
   // atomically deleted. The explicit Spanish deletion in pruneStaleQmiPages is the
   // load-bearing safeguard; this ordering is safe because no later step consumes prunedQmi.
   const es = await bakeSpanish().catch(e => { console.error('es-bake:', e.message); return { pages: 0 }; });
+  const offerEs = localizeOfferShellEs();
   const prunedQmi = pruneStaleQmiPages(d.qmis);
-  console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; ${cityPages} city hero copies baked; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; ${es.pages} Spanish pages`);
-  return { qmi: nqmi, prunedQmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, cityPages, hoaUpdated, lists, islands, es: es.pages };
+  console.log(`generate-details: ${nqmi}/${d.qmis.length} qmi (${d.qmis.length - nqmi} un-addressed, skipped) + ${nc}/${d.communities.length} community + ${nf}/${d.floorplans.length} floorplan pages (rest shipped from scrape); ${blogs} blog pages; rehydrated ${rehydrated} scraped community pages; ${cityPages} city hero copies baked; refreshed HOA links on ${hoaUpdated} pages; stripped ${strippedCards} stale /incentives/ home cards; ${lists.pages.length} list pages re-rendered; ${islands.updated}/${islands.checked} islands refreshed; offer shell ${offer.written ? 'written' : 'unchanged'} (es ${offerEs.written ? 'written' : 'unchanged'}); ${es.pages} Spanish pages`);
+  return { qmi: nqmi, prunedQmi, community: nc, floorplan: nf, blogs, strippedCards, rehydrated, cityPages, hoaUpdated, lists, islands, offer, offerEs, es: es.pages };
 }
 
 function pruneCheck() {

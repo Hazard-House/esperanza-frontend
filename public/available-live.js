@@ -2,21 +2,25 @@
  * Replaces O'Neill's frozen oilib cards with data fetched at runtime from our
  * public API, rendered into the scrape's own markup so the design is unchanged.
  * Config is injected by build.mjs as window.__ESPERANZA. */
-(function () {
+var AvailableLive = (function () {
   'use strict';
+  var W = typeof window !== 'undefined' ? window : {};
   // ponytail: bake pass injects window.__ES_I18N on /es/ pages; English pages get {}.
-  var T = window.__ES_I18N || {};
+  var T = W.__ES_I18N || {};
   function t(s) { return T[s] || s; }
   // ponytail: /es/ pages keep island-injected links in-namespace; English pages are a no-op.
   // Mirrors esHref() in es-bake.mjs — same exclusions, so baked and injected links agree.
-  var ES = document.documentElement.lang === 'es';
+  // Set at boot from <html lang>, not at module scope, so the --check fixtures can exercise
+  // BOTH namespaces (a Spanish page that injects English links is a live bug).
+  var ES = false;
+  function setEs(v) { ES = !!v; }
   function u(p) {
     if (!ES || !p || p.charAt(0) !== '/' || p.charAt(1) === '/' || p.indexOf('/es/') === 0 || p === '/es') return p; // charAt(1): protocol-relative //host is external
     if (/^\/(?:api|static|xhr|hfa|fonts|locales)\//.test(p)) return p;
     if (/\.(?:js|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|json|pdf|mp4|xml|txt)(?:[?#]|$)/i.test(p)) return p;
     return '/es' + p;
   }
-  var CFG = window.__ESPERANZA || {};
+  var CFG = W.__ESPERANZA || {};
   var API = CFG.API_BASE, TOKEN = CFG.MAPBOX_TOKEN, STYLE = CFG.MAPBOX_STYLE;
   // API fetch with a timeout so a hung API rejects (into the .catch) instead of
   // leaving the page on its loading state forever.
@@ -50,6 +54,34 @@
     if (style === 'green') return 'green';
     if (style === 'gold') return 'tan';
     return /flex/i.test(text || '') ? 'tan' : 'green';
+  }
+
+  // ── The card surface contract (plan Phase 3.3) ───────────────────────────────────────
+  // This page renders its whole grid at runtime, so there is no baked node to remove — the
+  // contract here is that an emptied value is never RENDERED, and never substituted with
+  // the previous copy or the June-8 harvest. Gating is read once, from the values the
+  // backend already gated; the show_* flags are deliberately not consulted (a second gate
+  // is how the two diverge). `promotion_id` is identity and is stamped whatever the copy
+  // toggles say.
+  var str = function (v) { return String(v == null ? '' : v).trim(); };
+  function surfacesOf(f) {
+    var r = f || {};
+    return {
+      promotionId: str(r.promotion_id),
+      headline: str(r.promo_text),
+      badge: str(r.card_badge_text),
+      ctaLabel: str(r.promo_cta_label),
+      ctaLink: str(r.promo_cta_link),
+      style: str(r.promo_banner_style),
+    };
+  }
+  function hasCardCta(s) { return !!(s && s.ctaLabel && s.ctaLink); }
+  var EXTERNAL_LINK_RE = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
+  function safePromoLink(link) {
+    var s = str(link).replace(/^https:\/\/www\.esperanzahomes\.com/i, '');
+    if (!s) return '';
+    if (!EXTERNAL_LINK_RE.test(s)) return (s.charAt(0) === '/' || s.charAt(0) === '#') ? s : '';
+    return /^(?:https?:|mailto:|tel:|\/\/)/i.test(s) ? s : '';
   }
 
   // qmi-links.json (built from the shipped pages) maps a home to its detail page.
@@ -106,6 +138,9 @@
       moveInDate: f['Move-In Date'],
       promo: f.promo_text,
       promoStyle: f.promo_banner_style,
+      // The raw gated fields, kept together so cardHTML reads them through one surfacesOf()
+      // rather than re-deriving the gate per surface.
+      live: f,
       pdfUrl: f['Dynamic PDF'],
       lat: lat != null ? Number(lat) : null,
       lng: lng != null ? Number(lng) : null,
@@ -155,16 +190,32 @@
     var badge = fact.badge || FACTS.badges[slugify(h.address)];
     // Live, not baked: prefer the API incentive (h.promo = per-home incentive, else
     // resolved promotion) over the frozen June-harvest badge. Color from API style.
-    var promoText = h.promo || (badge ? badge.text : '');
-    var promoColor = promoBannerClass(h.promoStyle, promoText);
+    // The headline keeps that harvest fallback (it predates the contract and covers homes the
+    // API has no promo_text for); the corner badge and CTA are contract-only, so an empty
+    // value is unambiguously "off" and renders nothing.
+    var s = surfacesOf(h.live);
+    if (!s.headline && badge) s.headline = str(badge.text);
+    var promoText = s.headline;
+    var promoColor = promoBannerClass(s.style, promoText);
     var banners = '';
-    if (promoText) banners += '<div class="banner overlay-promo ' + promoColor + '">' + esc(promoText) + '</div>';
+    if (promoText) banners += '<div class="banner overlay-promo ' + promoColor + '" data-promo-surface="headline">' + esc(promoText) + '</div>';
     var availText = (fact.avail && fact.avail.text) || h.availability;
     var availColor = fact.avail ? fact.avail.color : (/available now/i.test(availText || '') ? 'green' : 'gray');
     if (availText) banners += '<div class="banner ' + availColor + '"' + (promoText ? ' style="top:2.5rem"' : '') + '>' + esc(availText) + '</div>';
     if (fact.selfTour) banners += '<div class="banner-self-tour banner"><p>' + t('Self-Touring Available') + '</p></div>';
     var lotTxt = fact.lot || fmtLot(h.lot, h.community);
     if (lotTxt) banners += '<div class="badge lot bg-light-gray overpass light text-secondary">' + t('Lot #') + esc(lotTxt) + '</div>';
+    // Corner badge after the lot chip, the same order sections.qmiCardHtml and
+    // community-homes-live use, so the three card renderers cannot disagree.
+    if (s.badge) banners += '<div class="badge promo bg-light-gray overpass light text-secondary" data-promo-surface="badge">' + esc(s.badge) + '</div>';
+    var promoCta = '';
+    if (hasCardCta(s)) {
+      var ctaLink = safePromoLink(s.ctaLink);
+      if (ctaLink) {
+        promoCta = '<a class="btn btn-outline-primary w-100 mt-2 promo-cta" data-promo-surface="cta" href="' + esc(u(ctaLink)) + '"'
+          + (EXTERNAL_LINK_RE.test(ctaLink) ? ' target="_blank" rel="noopener"' : '') + '>' + esc(s.ctaLabel) + '</a>';
+      }
+    }
     function stat(icon, txt) {
       return '<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="' + icon + '" aria-hidden="true" loading="lazy" width="18">' + txt + '</div>';
     }
@@ -210,7 +261,7 @@
     }
 
     return '' +
-      '<div class="col-12 col-md-6 col-lg-12 mb-3 px-2">' +
+      '<div class="col-12 col-md-6 col-lg-12 mb-3 px-2"' + (s.promotionId ? ' data-promo-id="' + esc(s.promotionId) + '"' : '') + '>' +
       '<div class="card spec-card spec-card-detail oi-map-item mb-0 border border-gray p-2" data-listing-type="spec" data-listing-id="' + esc(h.id) + '" data-latitude="' + (h.lat || '') + '" data-longitude="' + (h.lng || '') + '" data-marker-icon-wh="20,32" data-marker-icon-id="map_pin">' +
       '<div class="row m-0">' +
       '<div class="col-12 col-xl-7 px-0 pe-xl-3 d-flex align-content-stretch flex-wrap">' +
@@ -229,7 +280,7 @@
       '<div class="row"><a href="' + esc(url) + '" target="_blank" rel="noopener"><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">' + esc(h.address) + '</div></a>' +
       '<div class="card-location text-green mb-2">' + esc(h.city) + ', TX' + (h.postal ? ' ' + esc(h.postal) : '') + '</div></div>' +
       '<div class="row h-100">' +
-      '<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">' + money(h.price) + '</div>' + est + '</div></div>' +
+      '<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">' + money(h.price) + '</div>' + est + promoCta + '</div></div>' +
       '<div class="col-auto col-xl-12 stat-group mt-xl-2 stat-flex d-flex flex-column mx-auto">' + stats + '</div>' +
       '</div></div></div>' +
       commRow('d-flex d-xl-none') +
@@ -444,6 +495,151 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  return {
+    surfacesOf: surfacesOf, hasCardCta: hasCardCta, safePromoLink: safePromoLink,
+    promoBannerClass: promoBannerClass, cardHTML: cardHTML, normalizeHome: normalizeHome,
+    setEs: setEs, u: u, boot: boot,
+    // Test seam: the fixtures need to prove the harvested June-8 badge is a FALLBACK for a
+    // home with no live promo_text — never an override of one. Without a way to populate
+    // FACTS, that ordering is untestable and a regression to harvest-first would be silent.
+    setFactsForTest: function (f) { FACTS = f || { rate: null, taxMult: {}, badges: {}, cardFacts: {} }; },
+  };
 })();
+
+if (typeof window === 'undefined') {
+  if (process.argv.includes('--check')) availableLiveDemo();
+} else {
+  AvailableLive.setEs(document.documentElement.lang === 'es');
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', AvailableLive.boot);
+  else AvailableLive.boot();
+}
+
+/* ponytail self-check. /new-homes/available/ renders its whole grid at runtime, so this
+ * file's promotion contract is what it does and does NOT render: an emptied value must
+ * produce no node, never the previous copy and never the June-8 harvest, while identity is
+ * stamped whatever the copy toggles say. Run against the test-dom shim so the assertions are
+ * about real parsed markup, and pinned to the modules that own the duplicated rules. */
+async function availableLiveDemo() {
+  var assert = function (c, m) { if (!c) throw new Error('assertion failed: ' + m); };
+  var dom = await import('../test-dom.mjs');
+  var sections = await import('../sections.mjs');
+  var identity = await import('../promo-identity.mjs');
+  var makeDocument = dom.makeDocument;
+  var A = AvailableLive;
+
+  // --- this file agrees with the modules it duplicates --------------------------------
+  var live = { promotion_id: 'recP1', promo_text: 'Head', card_badge_text: 'B', promo_cta_label: 'L', promo_cta_link: '/x/', promo_banner_style: 'green' };
+  assert(JSON.stringify(A.surfacesOf(live)) === JSON.stringify(identity.qmiCardPromo(live)),
+    'surface reading agrees with promo-identity.qmiCardPromo (the field-name contract)');
+  for (var i = 0; i < 4; i++) {
+    var pair = [['green', 'x'], ['gold', 'x'], ['', 'Unlock Your $15K Flex Discount Now!'], ['', '4.99% Rate']][i];
+    assert(A.promoBannerClass(pair[0], pair[1]) === sections.promoBannerClass(pair[0], pair[1]), 'banner colour agrees with sections');
+  }
+  for (var j = 0; j < 6; j++) {
+    var lk = ['/incentives/offer/recP1/', '#visit', 'https://partner.test/a', 'javascript:alert(1)', 'incentives/x/', ''][j];
+    assert(A.safePromoLink(lk) === sections.safePromoLink(lk), 'link safety agrees with sections.safePromoLink for ' + JSON.stringify(lk));
+  }
+
+  // normalizeHome must carry the gated fields through to cardHTML. Before Phase 1 wiring it
+  // kept only promo_text, which is why a badge or CTA could never reach this page.
+  var apiHome = { id: 'recH', fields: { address: '1806 E Bella St', Community: 'Villas at La Sienna', City: 'Edinburg', slug: '1806-e-bella-st', Price: 229990, bedroom_count: 2, 'Floor Plan': 'Lunelli', housenumber: '7', availability_text: 'Available SEP/OCT 2026', promotion_id: 'recP1', promo_text: 'Unlock Your $15K Flex Discount Now!', card_badge_text: 'CORNER', promo_cta_label: 'See Offer', promo_cta_link: '/incentives/offer/recP1/', promo_banner_style: 'gold' } };
+  var norm = A.normalizeHome(apiHome);
+  assert(JSON.stringify(A.surfacesOf(norm.live)) === JSON.stringify(identity.qmiCardPromo(apiHome.fields)),
+    'normalizeHome carries every gated field through (badge + CTA + identity, not just promo_text)');
+
+  var mk = function (over) {
+    var f = Object.assign({}, apiHome.fields, over || {});
+    return makeDocument(A.cardHTML(A.normalizeHome({ id: 'recH', fields: f })));
+  };
+  var surfaces = function (doc) {
+    var out = [];
+    var els = doc.querySelectorAll('[data-promo-surface]');
+    for (var k = 0; k < els.length; k++) out.push(els[k].getAttribute('data-promo-surface'));
+    return out.sort();
+  };
+  var col = function (doc) { return doc.querySelector('[data-listing-type="spec"]').closest('.col-12'); };
+
+  // --- all three surfaces ------------------------------------------------------------
+  var all = mk();
+  assert(JSON.stringify(surfaces(all)) === '["badge","cta","headline"]', 'all three surfaces render when all three values arrive');
+  assert(col(all).getAttribute('data-promo-id') === 'recP1', 'the list card stamps identity');
+  assert(all.querySelector('[data-promo-surface="headline"]').classList.contains('tan'), 'headline colour from promo_banner_style=gold');
+  assert(all.querySelector('[data-promo-surface="cta"]').getAttribute('href') === '/incentives/offer/recP1/', 'CTA link');
+  assert(all.body.innerHTML.indexOf('CORNER') !== -1 && all.body.innerHTML.indexOf('See Offer') !== -1, 'badge + CTA copy');
+  // Corner badge directly after the lot chip, matching the other two card renderers.
+  var kids = all.querySelector('.oi-aspect').children;
+  assert(kids.indexOf(all.querySelector('[data-promo-surface="badge"]')) === kids.indexOf(all.querySelector('.badge.lot')) + 1,
+    'the corner badge sits directly after the lot chip, like sections.qmiCardHtml');
+
+  // --- independent toggles -----------------------------------------------------------
+  var hlOff = mk({ promo_text: '' });
+  assert(JSON.stringify(surfaces(hlOff)) === '["badge","cta"]', 'headline off leaves badge + CTA');
+  assert(col(hlOff).getAttribute('data-promo-id') === 'recP1', 'identity survives headline off');
+  assert(hlOff.body.innerHTML.indexOf('Unlock Your $15K') === -1, 'and the copy is not rendered from any fallback');
+  var badgeOff = mk({ card_badge_text: '' });
+  assert(JSON.stringify(surfaces(badgeOff)) === '["cta","headline"]', 'badge off leaves headline + CTA');
+  assert(badgeOff.body.innerHTML.indexOf('CORNER') === -1 && badgeOff.body.innerHTML.indexOf('Lot #7') !== -1,
+    'the corner badge is gone, the LOT chip is not (it is not a promo surface)');
+  var ctaOff = mk({ promo_cta_label: '', promo_cta_link: '' });
+  assert(JSON.stringify(surfaces(ctaOff)) === '["badge","headline"]', 'CTA off leaves badge + headline');
+  assert(ctaOff.body.innerHTML.indexOf('promo-cta') === -1, 'the anchor is not rendered');
+  assert(mk({ promo_cta_link: '' }).body.innerHTML.indexOf('promo-cta') === -1
+    && mk({ promo_cta_label: '' }).body.innerHTML.indexOf('promo-cta') === -1, 'half a CTA renders nothing');
+
+  // --- everything off: identity remains, the card does not degrade -------------------
+  var bare = mk({ promo_text: '', card_badge_text: '', promo_cta_label: '', promo_cta_link: '' });
+  assert(surfaces(bare).length === 0 && bare.body.innerHTML.indexOf('data-promo-surface') === -1, 'no surface node at all');
+  assert(col(bare).getAttribute('data-promo-id') === 'recP1', 'IDENTITY IS NOT A SURFACE');
+  assert(bare.body.innerHTML.indexOf('1806 E Bella St') !== -1 && bare.body.innerHTML.indexOf('$229,990') !== -1
+    && bare.body.innerHTML.indexOf('Lot #7') !== -1 && bare.body.innerHTML.indexOf('Available SEP/OCT 2026') !== -1
+    && bare.body.innerHTML.indexOf('REQUEST A TOUR') !== -1 && bare.body.innerHTML.indexOf('2 Bedrooms') !== -1
+    && bare.body.innerHTML.indexOf('data-marker-icon-id="map_pin"') !== -1,
+    'the whole card survives (address, price, lot, availability, CTAs, stats, map marker)');
+  assert(mk({ promotion_id: '', promo_text: '', card_badge_text: '', promo_cta_label: '', promo_cta_link: '' })
+    .body.innerHTML.indexOf('data-promo-id') === -1, 'no winner -> NO identity attribute');
+
+  // --- hostile + unsafe --------------------------------------------------------------
+  var hostile = mk({ promo_text: '<script>alert(1)</script>', promo_cta_link: 'javascript:alert(1)' });
+  var hEl = hostile.querySelector('[data-promo-surface="headline"]');
+  assert(hEl.innerHTML === '&lt;script&gt;alert(1)&lt;/script&gt;' && hEl.children.length === 0, 'hostile copy is escaped');
+  assert(hostile.body.innerHTML.indexOf('promo-cta') === -1, 'a javascript: CTA renders nothing');
+  var ext = mk({ promo_cta_link: 'https://partner.test/apply' }).querySelector('[data-promo-surface="cta"]');
+  assert(ext.getAttribute('target') === '_blank' && ext.getAttribute('rel') === 'noopener', 'an external CTA opens in a new tab');
+
+  // --- /es/ parity -------------------------------------------------------------------
+  A.setEs(true);
+  try {
+    assert(mk().querySelector('[data-promo-surface="cta"]').getAttribute('href') === '/es/incentives/offer/recP1/',
+      'a CTA on the Spanish page links into /es/, not out of it');
+    assert(mk({ promo_cta_link: 'https://partner.test/apply' }).querySelector('[data-promo-surface="cta"]').getAttribute('href') === 'https://partner.test/apply',
+      'external CTA links are left alone on /es/');
+  } finally {
+    A.setEs(false);
+  }
+  assert(mk().querySelector('[data-promo-surface="cta"]').getAttribute('href') === '/incentives/offer/recP1/', 'English is unaffected');
+
+  // --- the harvested badge is a FALLBACK, never an override ---------------------------
+  // The June-8 snapshot exists for homes the API has no promo_text for. If it ever wins over
+  // a live value, a promotion edited in admin would keep showing last month's copy — and if
+  // it were consulted for the corner badge or the CTA, a retired surface would come back.
+  A.setFactsForTest({ rate: null, taxMult: {}, cardFacts: {}, badges: { '1806-e-bella-st': { text: 'JUNE HARVEST RIBBON', color: 'green' } } });
+  try {
+    var withLive = mk();
+    assert(withLive.querySelector('[data-promo-surface="headline"]').textContent === 'Unlock Your $15K Flex Discount Now!',
+      'the LIVE headline wins over the harvested badge');
+    assert(withLive.body.innerHTML.indexOf('JUNE HARVEST RIBBON') === -1, 'and the harvested copy is nowhere in the card');
+    var noLive = mk({ promo_text: '' });
+    assert(noLive.querySelector('[data-promo-surface="headline"]').textContent === 'JUNE HARVEST RIBBON',
+      'with no live promo_text the harvested badge fills in (that is what it is for)');
+    var noLiveNoBadge = mk({ promo_text: '', card_badge_text: '' });
+    assert(noLiveNoBadge.body.innerHTML.indexOf('data-promo-surface="badge"') === -1,
+      'the harvest never supplies the CORNER badge: that surface is contract-only, so empty means off');
+    assert(mk({ promo_cta_label: '', promo_cta_link: '', promo_text: '' }).body.innerHTML.indexOf('promo-cta') === -1,
+      'and it never supplies a CTA either');
+  } finally {
+    A.setFactsForTest(null);
+  }
+  assert(mk({ promo_text: '' }).body.innerHTML.indexOf('JUNE HARVEST RIBBON') === -1, 'fixture cleanup: harvest cleared');
+
+  console.log('available-live.js demo() passed');
+}

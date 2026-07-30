@@ -54,10 +54,11 @@ Branch `cursor/full-spanish-site-7576` (still exists, HEAD `1192f6e4`) contains:
    pages exist; add a language toggle in the header (plain link EN↔ES, no cookies, no
    Accept-Language sniffing — that's what caused #105).
 5. **Live islands** (`community-homes-live.js`, `qmi-detail-live.js`, `available-live.js`,
-   `incentive-live.js`): they inject English card banners/labels from the API. Minimal
+   `promotions-live.js`): they inject English card banners/labels from the API. Minimal
    viable: islands read `document.documentElement.lang` and map their handful of UI
    strings through a tiny inline dictionary. Data values (addresses, prices, promo
-   banner text) stay as-authored.
+   banner text) stay as-authored. (`incentive-live.js` is retired — the legacy
+   `/incentives/<slug>/` pages it served now 301 to `/incentives/offer/<id>/`.)
 6. **Scraped legacy pages** (`hydrate-scraped.mjs` rehydrates them): Phase 1 may skip
    these — generate `/es/` only for generator-owned pages (community/plan/QMI/blog/
    index) and let unmatched `/es/` paths fall back to the English page (200, `lang="en"`)
