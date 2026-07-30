@@ -103,19 +103,41 @@ jobs:
         if: steps.probe.outputs.exit_code == '1' || steps.probe.outputs.exit_code == '2'
         env:
           GH_TOKEN: ${{ github.token }}
-          TITLE: "Site freshness: the public grid does not match the live API"
+          TITLE: "Site freshness: the public site does not match the live API"
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           BODY="$RUNNER_TEMP/freshness-body.md"
           {
-            echo "The public QMI grid does not match the live API: $RUN_URL"
+            echo "The public site does not match the live API: $RUN_URL"
+            echo
+            echo "TWO SURFACES are checked and EITHER can open this incident. Read the"
+            echo "\`site-freshness attempt\` line first to see which one drifted:"
+            echo "\`api_published=/grid_baked=\` is the QMI grid;"
+            echo "\`blog api=/indexed=\` is the blog search index."
             echo
             echo "Read the run log's \`site-freshness attempt\` lines:"
             echo
             echo "- \`published but NOT on grid\` -> a published home never got baked."
             echo "- \`on grid but NOT published\` -> an unpublished/Draft home is still"
             echo "  advertised. This is the 3926 Peggy Dr incident (2026-07-29)."
+            echo "- \`published but NOT in the blog search index\` -> a live post is"
+            echo "  unfindable by site search. Its URL still works, so nobody reports it."
+            echo "  Cause to check first: \`scripts/gen-blog-index.mjs\` stopped running in"
+            echo "  \`deploy.yml\` (see #125 — it was missing from CI entirely)."
+            echo "- \`in the blog search index but NOT published\` -> search offers a post"
+            echo "  the CMS says is unpublished. It may still serve 200, because nothing"
+            echo "  prunes blog directories."
+            echo "- \`duplicated in the blog search index\` -> the same post appears twice"
+            echo "  in search results. Regenerate the index."
+            echo "- \`malformed blog search index entries\` -> a record that is not a"
+            echo "  canonical \`/blog/<slug>/\`: a root/external/nested/wrong-prefix href, a"
+            echo "  query or fragment suffix, or a blank one. These are never probed or"
+            echo "  compared, so they are reported by shape and index position. Regenerate"
+            echo "  the index and check \`scripts/gen-blog-index.mjs\`'s href construction."
+            echo "- \`in the blog search index but NOT serving 200\` -> a dead search hit:"
+            echo "  a result that bounces the reader. Retired posts keep their baked dir"
+            echo "  and gain a redirect, so they must be excluded from the index."
             echo "- \`PARSER ERROR\` (exit 2) -> the API payload shape changed and this"
             echo "  check can no longer read slugs. The site is probably fine; the check"
             echo "  is not. Fix the parser, do not chase the site."
@@ -158,14 +180,14 @@ jobs:
         if: steps.probe.outputs.exit_code == '0'
         env:
           GH_TOKEN: ${{ github.token }}
-          TITLE: "Site freshness: the public grid does not match the live API"
+          TITLE: "Site freshness: the public site does not match the live API"
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           NUM="$(gh issue list --state open --limit 100 --json number,title \
                    --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')"
           if [ -n "$NUM" ]; then
-            gh issue close "$NUM" --comment "Grid matches the live API again — verified by $RUN_URL. Closing automatically."
+            gh issue close "$NUM" --comment "The public grid and the blog search index both match the live API again — verified by $RUN_URL. Closing automatically."
             echo "Closed incident #$NUM after convergence"
           else
             echo "No open freshness incident; nothing to close."
