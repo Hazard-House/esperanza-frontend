@@ -53,7 +53,6 @@ export const LEGACY_INCENTIVE_SLUGS = [
   '499-rate-up-to-5000-in-closing-costs',
   'receive-up-to-25000-off-on-your-dream-home-with-esperanza-flex-cash',
 ];
-
 /** Detail slugs the CURRENTLY LIVE legacy hub links, which the replacement does not
  *  serve. Verified 2026-07-30: `www.esperanzahomes.com/incentives/` links only these
  *  two, both 200 on legacy and 404 on the replacement, while the three scrape-era slugs
@@ -71,6 +70,51 @@ export function isLegacyIncentiveSlug(slug) {
   return LEGACY_INCENTIVE_SLUGS.includes(s) || LEGACY_HUB_LINKED_SLUGS.includes(s);
 }
 
+/**
+ * Legacy detail slug → the promotion id it advertised, so an inbound link reaches the
+ * canonical ID-backed route instead of a frozen June-8 page (or a 404).
+ *
+ * THIS IS COMPATIBILITY DATA, NOT IDENTITY — the same kind of hand-curated inbound table
+ * as redirects.mjs. It is deliberately NOT derived from titles: title matching is exactly
+ * the mechanism this lane removes, and it cannot separate the four Flex tiers
+ * ($10K/$15K/$20K/$25K) whose copy differs only by amount.
+ *
+ * Verified against /api/public/promotions on 2026-07-30 (7 promotions):
+ *   499-arm, 499-interest-rates            -> adm5387b23e59a442  "4.99% ARM*"           (hub-published)
+ *   receive-…-25000-…-flex-cash            -> adm077fd9d9ee7844  "$25K Flex Discount"   (hub-published)
+ *   receive-…-20000-…-flex-cash            -> recyBSi11zNL5CLFi  "$20K Flex Discount"   (showIncentivePage FALSE)
+ *   499-rate-up-to-5000-in-closing-costs   -> (no live promotion)
+ *
+ * The last two are why an alias must NOT assume its target resolves: `$20K` is a live
+ * promotion that is not hub-published, and the closing-costs offer no longer exists at
+ * all. Both must degrade to a deliberate destination, never a contentless 200.
+ */
+export const LEGACY_ALIAS_PROMO_IDS = {
+  '499-arm': 'adm5387b23e59a442',
+  '499-interest-rates': 'adm5387b23e59a442',
+  'receive-up-to-25000-off-on-your-dream-home-with-esperanza-flex-cash': 'adm077fd9d9ee7844',
+  'receive-up-to-20000-off-on-your-dream-home-with-esperanza-flex-cash': 'recyBSi11zNL5CLFi',
+  '499-rate-up-to-5000-in-closing-costs': '',
+};
+
+/** The legacy incentive slug in a bare (locale-stripped) path, or '' if not one. */
+export function legacyAliasFromPath(pathname) {
+  const m = String(pathname || '').replace(/\/index\.html$/, '/').match(/^\/incentives\/([^/]+)\/?$/);
+  return m && isLegacyIncentiveSlug(m[1]) ? m[1] : '';
+}
+
+/** Is this bare path inside the offer namespace AT ALL, valid id or not?
+ *
+ *  The route needs this to tell two different failures apart: a path that is not ours
+ *  (fall through to the rest of the site) versus one of our URLs carrying an id we refuse
+ *  or cannot resolve (retire it deliberately). Without the distinction an id with a bad
+ *  character would fall through to the static-asset fetch and ship the raw committed
+ *  shell — a contentless 200, the exact outcome the plan forbids. */
+export function isOfferNamespacePath(pathname) {
+  const s = String(pathname || '').replace(/\/index\.html$/, '/');
+  return s === OFFER_PREFIX.slice(0, -1) || s.startsWith(OFFER_PREFIX);
+}
+
 /** Publication gate for hub inclusion and for the canonical detail route.
  *  `active && showIncentivePage` ONLY — location targeting must never decide whether
  *  the offer itself is published (plan Phase 3.4). */
@@ -79,11 +123,16 @@ export function isHubPromo(p) {
 }
 
 /** Resolve a promotion by exact id from a payload, applying the hub gate. Returns null
- *  for unknown, inactive, or hub-disabled ids — the three cases the route retires. */
+ *  for unknown, inactive, or hub-disabled ids — the three cases the route retires.
+ *
+ *  The RESOLVED record's own id is re-validated, not just the id we were asked for. The
+ *  two are equal by construction here, but this function's result is what gets stamped
+ *  into `data-promo-id` and the canonical URL, so the guarantee that reaches the page must
+ *  come from the value being rendered rather than from a caller's earlier check. */
 export function findHubPromoById(promos, id) {
   if (!isValidPromoId(id)) return null;
   for (const p of promos || []) {
-    if (p && p.id === id) return isHubPromo(p) ? p : null;
+    if (p && p.id === id) return isHubPromo(p) && isValidPromoId(p.id) ? p : null;
   }
   return null;
 }

@@ -90,6 +90,45 @@ export function scrubTemplateHome(html, { canonical } = {}) {
 }
 
 /**
+ * Normalize whitespace git's `diff --check` rejects, at the two places it appears.
+ *
+ * The scrape template is HTTrack output and carries both defects: 614 lines with
+ * end-of-line whitespace, and one line indented with spaces followed by a tab (the
+ * `osc-form-label` div). Every one of the 1860 already-committed pages inherits both, but
+ * they are unchanged files so git never re-checks them — a NEW generated page is checked,
+ * and `git diff --check` is part of the release gate. So the generator emits clean bytes;
+ * hand-cleaning the artifact would be undone by the next build.
+ *
+ * SAFETY: sound only because nothing in this document treats either as content.
+ * `assertNoPreservedWhitespace()` enforces that, so if the template ever gains a <pre> or
+ * a pre-filled <textarea> this pass fails loudly instead of silently eating characters a
+ * visitor would see. Indentation is normalized only in the LEADING run of whitespace, so
+ * a space-then-tab sequence inside text or an attribute value is left alone.
+ */
+export function stripEolWhitespace(html) {
+  return html
+    .replace(/[ \t]+$/gm, '')
+    // Leading indent only (^[ \t]*), and only when it mixes a space before a tab. Tabs
+    // become the single space the surrounding HTML indents with; the browser collapses
+    // either identically outside a whitespace-preserving element.
+    .replace(/^[ \t]*\t[ \t]*/gm, m => (/ /.test(m) ? m.replace(/\t/g, ' ') : m));
+}
+
+/** Elements where whitespace is significant per the HTML spec. `<pre>`/`<textarea>` are
+ *  the two that render it; a JS template literal inside `<script>` would also preserve it,
+ *  so a backtick in a script block is treated as unsafe too. */
+export function assertNoPreservedWhitespace(html) {
+  assert(!/<pre\b/i.test(html), 'stripEolWhitespace is unsafe: the template now contains <pre>');
+  for (const m of html.matchAll(/<textarea\b[^>]*>([\s\S]*?)<\/textarea>/gi)) {
+    assert(m[1] === '', 'stripEolWhitespace is unsafe: a <textarea> now has pre-filled content');
+  }
+  for (const m of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) {
+    assert(!m[1].includes('`'), 'stripEolWhitespace is unsafe: a script now contains a template literal');
+  }
+  return html;
+}
+
+/**
  * The scrape template's own URL path, read from the og:url it still carries. Every
  * relative nav ref in the chrome was emitted by the live site FOR THAT PATH, so this is
  * the only base against which they resolve to what a visitor actually got.
@@ -159,7 +198,8 @@ export function renderOfferShell(shell) {
   // template's only depth-0 relative ref is that canonical's `./`, which would otherwise
   // resolve to the template home's own path.
   const scrubbed = ensureOfferNoindex(scrubTemplateHome(setOfferHead(html, meta), { canonical: meta.canonical }));
-  return absolutizeNavRefs(scrubbed, templateBasePath(shell));
+  assertNoPreservedWhitespace(shell);
+  return stripEolWhitespace(absolutizeNavRefs(scrubbed, templateBasePath(shell)));
 }
 
 /**
@@ -172,7 +212,7 @@ export function renderOfferShell(shell) {
  * so /es/ parity does not depend on which strings happen to be in es.json.
  */
 export function localizeOfferShell(html) {
-  return ensureOfferNoindex(bakeOfferShell(html, null, { esPrefix: ES_PREFIX }));
+  return stripEolWhitespace(ensureOfferNoindex(bakeOfferShell(html, null, { esPrefix: ES_PREFIX })));
 }
 
 function pagePath(outDir, urlPath) {
@@ -283,6 +323,38 @@ function demo() {
   // A different base must not move already-absolute refs — this is what makes the pass
   // safe to run after the bake, and what proves the two URL shapes agree.
   assert(absolutizeNavRefs(html, OFFER_PREFIX) === html, 'an absolutized page is base-independent');
+
+  // --- generated output is committable ------------------------------------------------
+  // `git diff --check` is part of the release gate, and the scrape template carries BOTH
+  // defects git rejects: 614 trailing-whitespace lines and one space-before-tab indent.
+  // The GENERATOR has to emit clean bytes — hand-cleaning the artifact would be undone by
+  // the next build.
+  const eolWs = /[ \t]+$/m;
+  const spaceBeforeTab = /^[ \t]* \t/m;
+  assert(eolWs.test(shell), 'the raw template does carry trailing whitespace (else this pass is vacuous)');
+  assert(spaceBeforeTab.test(shell), 'the raw template does carry a space-before-tab indent (else this pass is vacuous)');
+  assert(!eolWs.test(html), 'the generated page has no trailing whitespace');
+  assert(!spaceBeforeTab.test(html), 'the generated page has no space-before-tab indentation');
+  const esWs = localizeOfferShell(html);
+  assert(!eolWs.test(esWs) && !spaceBeforeTab.test(esWs), 'the Spanish twin is clean on both counts too');
+  assert(stripEolWhitespace(html) === html, 'whitespace normalization is idempotent');
+  // Normalization must not eat a tab that is real content or sits inside an attribute —
+  // only a LEADING indent run that mixes a space before a tab is touched.
+  assert(stripEolWhitespace('<p>a \tb</p>') === '<p>a \tb</p>', 'a space-tab inside text is left alone');
+  assert(stripEolWhitespace('<i title="a \tb">x</i>') === '<i title="a \tb">x</i>', 'a space-tab in an attribute is left alone');
+  assert(stripEolWhitespace('\t\t<div>x</div>') === '\t\t<div>x</div>', 'pure-tab indentation is not rewritten');
+  assert(stripEolWhitespace('  \t<div>x</div>') === '   <div>x</div>', 'a mixed indent becomes all spaces');
+  // The one real occurrence, kept as a fixture so a template change is visible.
+  assert(html.includes('<div class="fs-3 bodoni ls-sm" id="osc-form-label">'),
+    'the osc-form-label div survives indentation normalization');
+  // The strip is only safe while nothing here preserves whitespace; if the template gains
+  // a <pre> or a filled <textarea>, this must fail rather than eat visible characters.
+  assertNoPreservedWhitespace(shell);
+  let unsafeCaught = 0;
+  for (const bad of ['<pre>  keep  \n</pre>', '<textarea>hello  </textarea>', '<script>var a=`x  `;</script>']) {
+    try { assertNoPreservedWhitespace(bad); } catch { unsafeCaught++; }
+  }
+  assert(unsafeCaught === 3, 'whitespace-significant markup is detected, not silently stripped');
 
   // --- head --------------------------------------------------------------------------
   assert(html.includes('<title>Current Offer | Esperanza Homes</title>'), 'template title');
