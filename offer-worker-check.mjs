@@ -162,6 +162,63 @@ const loc = (res) => (res.headers.get('location') ? new URL(res.headers.get('loc
   assert.equal(seen.size, 4, 'four offers, four distinct URLs');
 }
 
+// --- 1c. a NOVEL offer, matching no legacy pattern, renders every field ----------------
+// Sol's mandatory fixture list. This is the case the old title-derived route could not
+// serve at all: no flex/rate/closing keyword, so it fell through to a slugify fallback into
+// a directory that does not exist -> 404. Marketing inventing a new offer name is normal,
+// so an offer must render on nothing but its id, with every populated field reaching the
+// page and every empty one leaving no dead affordance behind.
+{
+  const NOVEL = {
+    id: 'admBuilderBonus01',
+    title: 'Bring Your Own Builder Bonus',
+    description: '<p>Get up to <strong>$7,500</strong> toward closing when you bring your own lender.</p>',
+    rate: 5.25,
+    ctaLabel: 'Talk To A Sales Counselor',
+    ctaLink: '/contact/',
+    pdf: 'https://img.hazardhouse.ai/offers/builder-bonus.pdf',
+    terms: 'Offer subject to change without notice. See counselor for details.',
+    image: '//img.hazardhouse.ai/offers/bonus.jpg',
+    expirationDate: '2026-11-30',
+    active: true,
+    showIncentivePage: true,
+  };
+  const realApi = api;
+  api = async () => Response.json({ promotions: [NOVEL] });
+
+  const res = await GET(offerPath(NOVEL.id));
+  assert.equal(res.status, 200, 'a novel offer name is not a routing problem: it resolves on its id alone');
+  const html = await res.text();
+  assert.match(html, /data-offer="title">Bring Your Own Builder Bonus</, 'title');
+  assert.match(html, /Get up to <strong>\$7,500<\/strong> toward closing/, 'description keeps its authored rich text');
+  assert.match(html, /data-offer="rate"[^>]*>5\.25% rate available on qualifying homes</, 'rate comes from the FIELD, not parsed from copy');
+  assert.match(html, /data-offer="expiry"[^>]*>Offer ends November 30, 2026</, 'expiry as a calendar day');
+  assert.match(html, /data-offer="cta" href="\/contact\/"[^>]*>Talk To A Sales Counselor</, 'CTA label + link');
+  assert.match(html, /data-offer="pdf" href="https:\/\/img\.hazardhouse\.ai\/offers\/builder-bonus\.pdf"/, 'PDF button');
+  assert.match(html, /data-offer="terms"[^>]*>Offer subject to change/, 'fine print');
+  assert.match(html, /data-offer="image"[^>]*src="\/\/img\.hazardhouse\.ai\/offers\/bonus\.jpg"/, 'hero image');
+  assert.match(html, /data-promo-id="admBuilderBonus01"/, 'identity');
+  assert.match(html, /<link rel="canonical" href="\/incentives\/offer\/admBuilderBonus01\/">/, 'canonical');
+  // No surface is hidden when it has a value — a `hidden` attribute on a populated hook
+  // would mean the bake filled the text but never revealed it.
+  for (const hook of ['rate', 'expiry', 'cta', 'pdf', 'terms', 'image']) {
+    assert.doesNotMatch(html, new RegExp(`data-offer="${hook}"[^>]*hidden`), `${hook} is visible when populated`);
+  }
+  // The same offer stripped to the bare minimum: every empty field must leave NO dead
+  // affordance (a button with no destination, a "Offer ends" with no date).
+  api = async () => Response.json({ promotions: [{ id: NOVEL.id, title: 'Bare Bonus', active: true, showIncentivePage: true }] });
+  const bare = await (await GET(offerPath(NOVEL.id))).text();
+  assert.match(bare, /data-offer="title">Bare Bonus</, 'a title-only offer still renders');
+  for (const hook of ['rate', 'expiry', 'cta', 'pdf', 'terms', 'image']) {
+    assert.match(bare, new RegExp(`data-offer="${hook}"[^>]*hidden`), `an empty ${hook} is hidden, not a dead affordance`);
+  }
+  assert.doesNotMatch(bare, /Offer ends/, 'no expiry line at all rather than a bogus date');
+  assert.doesNotMatch(bare, /rate available on qualifying homes/, 'and no rate line');
+  assert.match(bare, /data-promo-id="admBuilderBonus01"/, 'identity is present even with every optional field empty');
+
+  api = realApi;
+}
+
 // --- 2. canonical ES id: /es/ parity, in Spanish, canonicalized into /es/ -------------
 {
   const res = await GET('/es' + offerPath(FLEX25.id));
