@@ -81,11 +81,14 @@ var PromotionsLive = (function () {
   }
 
   /** Centered ticker text. cardBadgeText canonical, bannerText the documented temporary
-   *  fallback, title the last resort so a banner-enabled promotion is never an empty slide.
+   *  fallback. THOSE TWO FIELDS AND NOTHING ELSE — `title` is the offer's NAME, not banner
+   *  copy, so falling through to it would put unreviewed text in the site-wide ticker after
+   *  an editor deliberately emptied both banner fields to take the slide down. Empty means
+   *  no banner copy, and no banner copy means no slide.
    *  Mirrors bannerCenterText in promo-identity.mjs (asserted equal in --check). */
   function bannerCenterText(p) {
     if (!p) return '';
-    return str(p.cardBadgeText) || str(p.bannerText) || str(p.title);
+    return str(p.cardBadgeText) || str(p.bannerText);
   }
 
   /** The hub card's destination: the canonical ID-backed route, never a title-derived slug.
@@ -174,16 +177,35 @@ var PromotionsLive = (function () {
     return slides.length;
   }
 
+  /** Refresh the ticker and (on the hub) the cards from the live payload.
+   *
+   *  FAILURE IS A NO-OP, AND "FAILURE" INCLUDES A PAYLOAD WE CANNOT TRUST. `res.json()`
+   *  only rejects on a transport error or unparseable body; a non-2xx page (a Cloudflare
+   *  error page, an auth redirect) or a well-formed-but-wrong shape like `{}` or
+   *  `{promotions:"none"}` would otherwise sail through as "zero promotions" and CLEAR the
+   *  baked hub and ticker — deleting live UI because of an outage. So the shape is gated
+   *  before anything is written: `response.ok` AND `Array.isArray(promotions)`.
+   *
+   *  A VALID `{ promotions: [] }` still clears, because that is the API honestly saying
+   *  nothing is published, and leaving retired offers on screen is the bug this lane exists
+   *  to fix. The distinction between the two is the whole point.
+   *
+   *  Returns the counts on success, or null on any untrusted response — in which case the
+   *  DOM has not been touched. Retiring a DELETED offer is the worker's job (the canonical
+   *  route 302s it), never something to infer from a broken payload. */
   function boot(win, doc) {
     var path = barePath(win.location.pathname).replace(/\/index\.html$/, '/');
-    return fetchT(API + '/promotions').then(function (r) { return r.json(); }).then(function (res) {
-      var promos = (res && res.promotions) || [];
+    return fetchT(API + '/promotions').then(function (r) {
+      // A non-2xx body is an error page, not a promotions payload. Refuse it before it can
+      // be read as "no promotions".
+      if (!r || r.ok === false) return null;
+      return r.json().then(function (body) { return body; }, function () { return null; });
+    }).then(function (res) {
+      if (!res || !Array.isArray(res.promotions)) return null; // missing or non-array -> untrusted
+      var promos = res.promotions;
       var out = { banner: refreshBanner(doc, promos), hub: -1 };
       if (path === '/incentives/') out.hub = refreshIncentivesIndex(doc, promos);
       return out;
-      // A failed fetch leaves the baked ticker and hub alone: stale beats blank when we
-      // cannot tell what is live. The retirement of a DELETED offer is the worker's job
-      // (the canonical route 302s it), not something to guess at from a broken payload.
     }).catch(function () { return null; });
   }
 
@@ -233,21 +255,44 @@ async function promotionsLiveDemo() {
     assert(P.safeLink(lk) === sections.safePromoLink(lk), 'link safety agrees with sections.safePromoLink for ' + JSON.stringify(lk));
   }
 
-  // The four live-shaped promotions, deliberately including the two collisions the old
-  // title regexes could not separate.
-  var FLEX25 = { id: 'adm077fd9d9ee7844', title: 'Receive up to $25,000 off on Your Dream Home with Esperanza Flex Cash!', cardBadgeText: 'Unlock Your $25K Flex Discount Now!', active: true, showIncentivePage: true, sortOrder: 2, image: 'https://img.hazardhouse.ai/a.jpg', ctaLabel: 'See Details', communityNames: ['Wolf Creek', 'El Eden'] };
-  var FLEX20 = { id: 'recyBSi11zNL5CLFi', title: 'Receive up to $20,000 off on Your Dream Home with Esperanza Flex Cash!', cardBadgeText: 'Unlock Your $20K Flex Discount Now!', active: true, showIncentivePage: true, sortOrder: 3 };
-  var ARM = { id: 'adm5387b23e59a442', title: '4.99% ARM*', cardBadgeText: '', active: true, showIncentivePage: true, showSiteBanner: true, sortOrder: 1, ctaLink: 'https://www.esperanzahomes.com/new-homes/available/', ctaLabel: 'See Homes' };
-  var BANNER_ONLY = { id: 'adm-3-new-floor-plans', title: '3 New Floor Plans', cardBadgeText: '', bannerText: '3 NEW Floor Plans Just Released!', active: true, showIncentivePage: false, showSiteBanner: true, sortOrder: 4 };
+  // THE LIVE PAYLOAD, verified field-by-field against /api/public/promotions on 2026-07-30
+  // (7 records). Four are hub-published — ARM, FLEX25, FLEX15, FLEX10 — and $10K/$15K/$25K
+  // are the collision that killed title matching: their titles and badges differ only by an
+  // amount, and FLEX10's bannerText is a differently-cased copy of its own badge. The three
+  // non-hub records are here because each is a different reason NOT to be a card.
+  var FLEX25 = { id: 'adm077fd9d9ee7844', title: 'Unlock Your $25K Flex Discount Now!', cardBadgeText: 'Unlock Your $25K Flex Discount Now!', bannerText: 'Unlock Your $25K Flex Discount Now!', active: true, showIncentivePage: true, showSiteBanner: false, sortOrder: 2, image: 'https://img.hazardhouse.ai/a.jpg', ctaLabel: 'See Details', communityNames: ['Wolf Creek', 'El Eden'] };
+  var FLEX15 = { id: 'admb3d6d726a56543', title: 'Unlock Your $15K Flex Discount Now!', cardBadgeText: 'Unlock Your $15K Flex Discount Now!', bannerText: 'Unlock Your $15K Flex Discount Now!', active: true, showIncentivePage: true, showSiteBanner: false, sortOrder: 3 };
+  var FLEX10 = { id: 'recLS31iR3INg5THb', title: 'Unlock Your $10K Flex Discount', cardBadgeText: 'Unlock Your $10K Flex Discount Now!', bannerText: 'UNLOCK YOUR 10K FLEX DISCOUNT NOW!', active: true, showIncentivePage: true, showSiteBanner: false, sortOrder: 4 };
+  // ARM ships BOTH banner fields empty and showSiteBanner false — so under the corrected
+  // contract (no title fallback) it has no banner copy and gets no slide, which is exactly
+  // what the live site shows. An earlier revision of this fixture marked it banner-enabled
+  // and only passed because `title` was being used as a third source.
+  var ARM = { id: 'adm5387b23e59a442', title: '4.99% ARM*', cardBadgeText: '', bannerText: '', active: true, showIncentivePage: true, showSiteBanner: false, sortOrder: 1, ctaLink: 'https://www.esperanzahomes.com/new-homes/available/', ctaLabel: 'See Homes' };
+  // Banner-enabled, hub-disabled: the record the bannerText fallback exists for.
+  var BANNER_ONLY = { id: 'adm-3-new-floor-plans', title: '3 New Floor Plans', cardBadgeText: '', bannerText: '3 NEW Floor Plans Just Released!', active: true, showIncentivePage: false, showSiteBanner: true, sortOrder: 5 };
+  // Active, hub-disabled, not banner-enabled: entitles homes but is not published anywhere.
+  var FLEX20_NOT_HUB = { id: 'recyBSi11zNL5CLFi', title: 'Unlock Your $20K Flex Discount', cardBadgeText: 'Unlock Your $20K Flex Discount Now!', bannerText: 'Unlock Your $20K Flex Discount Now!', active: true, showIncentivePage: false, showSiteBanner: false, sortOrder: 6 };
+  var LOS_PRADOS = { id: 'recRLG147EJgKpidi', title: 'Los Prados Homebuyer Advantage Program', cardBadgeText: 'Eligible for Homebuyer Advantage Program', bannerText: 'Eligible for Homebuyer Advantage Program', active: true, showIncentivePage: false, showSiteBanner: false, sortOrder: 7 };
   var INACTIVE = { id: 'recDead', title: 'Retired Offer', cardBadgeText: 'RETIRED', active: false, showIncentivePage: true, showSiteBanner: true, sortOrder: 0 };
-  var ALL = [INACTIVE, ARM, FLEX25, FLEX20, BANNER_ONLY];
+  // The four hub offers, in sortOrder, and the whole payload.
+  var HUB_FOUR = [ARM, FLEX25, FLEX15, FLEX10];
+  var ALL = [INACTIVE, ARM, FLEX25, FLEX15, FLEX10, BANNER_ONLY, FLEX20_NOT_HUB, LOS_PRADOS];
+  // HUB_FOUR must BE the hub-published subset of the payload, not a hand-kept list beside
+  // it: otherwise dropping an entry here would quietly narrow every loop below while the
+  // count assertions still passed. Derived and compared, so the ledger cannot shrink.
+  var derivedHub = ALL.filter(P.isHubPromo).sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+  assert(derivedHub.length === 4, 'the payload has exactly four hub-published offers');
+  assert(JSON.stringify(derivedHub.map(function (p) { return p.id; })) === JSON.stringify(HUB_FOUR.map(function (p) { return p.id; })),
+    'HUB_FOUR is exactly the hub-published subset of the payload, in sortOrder');
 
   // --- 1. THE COLLISION. Two Flex tiers differ only by amount -------------------------
   // /flex/i matched both, so the old code sent them to ONE legacy page and the first one
   // sorted won. Exact ids give two distinct URLs.
   assert(P.cardHref(FLEX25) === '/incentives/offer/adm077fd9d9ee7844/', '$25K links to its own id');
-  assert(P.cardHref(FLEX20) === '/incentives/offer/recyBSi11zNL5CLFi/', '$20K links to its own id');
-  assert(P.cardHref(FLEX25) !== P.cardHref(FLEX20), 'THE TWO FLEX TIERS NO LONGER COLLIDE ON ONE PAGE');
+  assert(P.cardHref(FLEX15) === '/incentives/offer/admb3d6d726a56543/', '$15K links to its own id');
+  assert(P.cardHref(FLEX10) === '/incentives/offer/recLS31iR3INg5THb/', '$10K links to its own id');
+  var flexPaths = [FLEX25, FLEX15, FLEX10, FLEX20_NOT_HUB].map(P.cardHref);
+  assert(new Set(flexPaths).size === 4, 'ALL FOUR FLEX TIERS GET DISTINCT URLS — the collision is gone');
   // Nothing in the href comes from the title. Change the copy, keep the URL.
   var retitled = Object.assign({}, FLEX25, { title: 'Something Marketing Invented Today', cardBadgeText: '' });
   assert(P.cardHref(retitled) === P.cardHref(FLEX25), 'the destination is the id, so re-titling an offer cannot move or break its page');
@@ -258,17 +303,53 @@ async function promotionsLiveDemo() {
   assert(P.cardHref({ id: 'a/b', title: 'x' }) === '' && P.cardHref({ title: 'x' }) === '',
     'an unusable id yields no href at all rather than a guessed slug');
 
-  // --- 2. the hub grid ---------------------------------------------------------------
+  // --- 2. the hub grid: ALL FOUR currently-live hub offers, each on its own URL --------
+  // Rendered-markup fixture, not a helper-parity loop: the property under review is that
+  // the EMITTED cards carry four distinct ids and four distinct hrefs, because "two offers
+  // collapsed onto one page" was visible only in the markup.
   var hubDoc = makeDocument('<section id="incentives"><div class="row"><div class="col-md-6 col-xl-4 mb-4">FROZEN JUNE CARD</div></div></section>');
   var n = P.refreshIncentivesIndex(hubDoc, ALL);
-  assert(n === 3, 'exactly the three hub-published promotions render (inactive and banner-only excluded)');
+  assert(n === 4, 'exactly the FOUR hub-published promotions render');
   assert(hubDoc.body.innerHTML.indexOf('FROZEN JUNE CARD') === -1, 'the baked June-8 grid is replaced');
   assert(hubDoc.body.innerHTML.indexOf('Retired Offer') === -1, 'an INACTIVE promotion is not advertised');
   assert(hubDoc.body.innerHTML.indexOf('3 New Floor Plans') === -1, 'a banner-only promotion is not a hub card');
+  assert(hubDoc.body.innerHTML.indexOf('$20K') === -1, 'an active but hub-disabled promotion is not a card either');
+  assert(hubDoc.body.innerHTML.indexOf('Homebuyer Advantage') === -1, 'nor is a location-targeted, unpublished one');
   var cards = hubDoc.querySelectorAll('[data-promo-id]');
-  assert(cards.length === 3, 'every card carries identity');
-  assert(cards[0].getAttribute('data-promo-id') === ARM.id && cards[1].getAttribute('data-promo-id') === FLEX25.id
-    && cards[2].getAttribute('data-promo-id') === FLEX20.id, 'cards are ordered by sortOrder');
+  assert(cards.length === 4, 'four cards, every one carrying identity');
+  // Ordered by sortOrder, and each card is the offer it claims to be.
+  for (var c = 0; c < HUB_FOUR.length; c++) {
+    var card = cards[c];
+    var want = HUB_FOUR[c];
+    assert(card.getAttribute('data-promo-id') === want.id,
+      'card ' + c + ' is ' + want.id + ' (sortOrder order)');
+    // Its own path, on every link in the card.
+    var own = P.offerPath(want.id);
+    var links = card.querySelectorAll('a[href]');
+    assert(links.length >= 3, want.id + ' card links image, title and both buttons');
+    for (var l = 0; l < links.length; l++) {
+      var href = links[l].getAttribute('href');
+      assert(href === own || href === own + '#available',
+        want.id + ' link points at its OWN offer path, got ' + href);
+    }
+    // ...and NOT at any sibling. This is the collision assertion on emitted markup.
+    for (var o = 0; o < HUB_FOUR.length; o++) {
+      if (HUB_FOUR[o].id === want.id) continue;
+      assert(card.outerHTML.indexOf(HUB_FOUR[o].id) === -1,
+        want.id + ' card carries NO trace of sibling ' + HUB_FOUR[o].id);
+      assert(card.getAttribute('data-promo-id') !== HUB_FOUR[o].id, 'and does not claim its identity');
+    }
+    assert(card.outerHTML.indexOf(want.title) !== -1, want.id + ' card shows its own title');
+  }
+  // Four cards, four distinct ids, four distinct hrefs — stated as a set, so a duplicate
+  // cannot hide behind a passing per-card loop.
+  var seenIds = [], seenHrefs = [];
+  for (var q = 0; q < cards.length; q++) {
+    seenIds.push(cards[q].getAttribute('data-promo-id'));
+    seenHrefs.push(cards[q].querySelector('a[href]').getAttribute('href'));
+  }
+  assert(new Set(seenIds).size === 4, 'FOUR DISTINCT IDS in the rendered hub');
+  assert(new Set(seenHrefs).size === 4, 'FOUR DISTINCT URLS in the rendered hub');
   var hrefs = hubDoc.querySelectorAll('a[href]');
   for (var h = 0; h < hrefs.length; h++) {
     assert(hrefs[h].getAttribute('href').indexOf('/incentives/offer/') === 0,
@@ -297,20 +378,41 @@ async function promotionsLiveDemo() {
   assert(P.bannerCenterText({ cardBadgeText: 'CANON', bannerText: 'legacy', title: 'ttl' }) === 'CANON',
     'cardBadgeText WINS when both are present');
   assert(P.bannerCenterText({ cardBadgeText: '   ', bannerText: 'legacy' }) === 'legacy', 'whitespace-only badge is empty');
-  assert(P.bannerCenterText({ title: 'Only A Title' }) === 'Only A Title', 'title is the last resort, never an empty slide');
+  // TITLE IS NOT A BANNER SOURCE. It is the offer's name; using it would put unreviewed
+  // copy in the site-wide ticker exactly when an editor emptied both banner fields to take
+  // the slide DOWN. Both implementations must agree on that refusal.
+  assert(P.bannerCenterText({ title: 'Only A Title' }) === '', 'title is NOT a third banner source');
+  assert(identity.bannerCenterText({ title: 'Only A Title' }) === '', 'and promo-identity agrees');
+  assert(P.bannerCenterText({ cardBadgeText: '', bannerText: '', title: 'Taken Down' }) === '',
+    'emptying BOTH banner fields takes the slide down, whatever the title says');
+  assert(P.bannerSlides([{ id: 'x', title: 'Taken Down', active: true, showSiteBanner: true }]).length === 0,
+    'and no slide is rendered for it');
   assert(P.bannerCenterText({}) === '' && P.bannerCenterText(null) === '', 'no text at all -> no slide');
 
   var bakedTicker = '<div class="alert-banner"><div class="swiper-alert-banner swiper"><div class="swiper-wrapper">'
     + '<div class="swiper-slide"><p>FROZEN JUNE SLIDE</p></div></div></div></div>';
+  // The LIVE payload has exactly ONE banner-enabled record, and its cardBadgeText is empty —
+  // which is the entire reason the bannerText fallback still exists.
   var tickDoc = makeDocument(bakedTicker);
   var slides = P.refreshBanner(tickDoc, ALL);
-  assert(slides === 2, 'two banner-enabled promotions produce two slides (the inactive one does not)');
+  assert(slides === 1, 'the live payload has exactly one banner-enabled promotion');
   assert(tickDoc.body.innerHTML.indexOf('FROZEN JUNE SLIDE') === -1, 'the frozen slide is replaced');
   assert(tickDoc.body.innerHTML.indexOf('RETIRED') === -1, 'an inactive promotion never reaches the ticker');
+  assert(tickDoc.body.innerHTML.indexOf('4.99% ARM') === -1,
+    'a promotion with BOTH banner fields empty gets no slide — its title is not banner copy');
   var slideEls = tickDoc.querySelectorAll('.swiper-slide');
-  assert(slideEls[0].getAttribute('data-promo-id') === ARM.id && slideEls[1].getAttribute('data-promo-id') === BANNER_ONLY.id,
-    'slides are ordered by sortOrder and carry identity');
-  assert(slideEls[1].querySelector('p').textContent === '3 NEW Floor Plans Just Released!', 'the live fallback text renders');
+  assert(slideEls.length === 1 && slideEls[0].getAttribute('data-promo-id') === BANNER_ONLY.id, 'the slide carries identity');
+  assert(slideEls[0].querySelector('p').textContent === '3 NEW Floor Plans Just Released!', 'the live fallback text renders');
+  // Ordering + the canonical field, with a second banner-enabled record whose cardBadgeText
+  // IS populated (what every record should look like once the backfill lands).
+  var BANNER_CANON = { id: 'admCanonBanner', cardBadgeText: 'CANONICAL SLIDE', bannerText: 'stale legacy copy', active: true, showSiteBanner: true, sortOrder: 1 };
+  var twoDoc = makeDocument(bakedTicker);
+  assert(P.refreshBanner(twoDoc, [BANNER_ONLY, BANNER_CANON]) === 2, 'two banner-enabled records, two slides');
+  var two = twoDoc.querySelectorAll('.swiper-slide');
+  assert(two[0].getAttribute('data-promo-id') === BANNER_CANON.id && two[1].getAttribute('data-promo-id') === BANNER_ONLY.id,
+    'slides are ordered by sortOrder');
+  assert(two[0].querySelector('p').textContent === 'CANONICAL SLIDE', 'cardBadgeText wins over bannerText in emitted markup');
+  assert(twoDoc.body.innerHTML.indexOf('stale legacy copy') === -1, 'and the legacy field is not rendered when the canonical one is set');
   assert(P.refreshBanner(makeDocument('<div>no ticker</div>'), ALL) === -1, 'a page with no ticker is untouched');
   // Nothing banner-enabled: empty the ticker rather than keep showing June's events.
   var noneDoc = makeDocument(bakedTicker);
@@ -319,23 +421,27 @@ async function promotionsLiveDemo() {
 
   // --- 4. showBannerButton is INDEPENDENT of the banner text --------------------------
   // Coupling them is how "hide the button" silently blanked a whole slide.
-  var withBtn = makeDocument(P.slideHtml(ARM));
+  // A banner-enabled record with real banner copy AND an admin ctaLink. (ARM is not usable
+  // here: both its banner fields are empty, so under the corrected contract it has no slide
+  // at all — which is the bug the title fallback was hiding.)
+  var TICKER = { id: 'admTickerCta', cardBadgeText: 'LIMITED TIME OFFER', active: true, showSiteBanner: true, sortOrder: 1, ctaLink: 'https://www.esperanzahomes.com/new-homes/available/', ctaLabel: 'See Homes' };
+  var withBtn = makeDocument(P.slideHtml(TICKER));
   assert(withBtn.querySelector('[data-promo-surface="banner-cta"]') !== null, 'a banner promotion gets its button by default');
   assert(withBtn.querySelector('[data-promo-surface="banner-cta"]').getAttribute('href') === '/new-homes/available/',
     'the button uses the admin ctaLink (own-host prefix stripped)');
-  var noBtn = makeDocument(P.slideHtml(Object.assign({}, ARM, { showBannerButton: false })));
+  var noBtn = makeDocument(P.slideHtml(Object.assign({}, TICKER, { showBannerButton: false })));
   assert(noBtn.querySelector('[data-promo-surface="banner-cta"]') === null, 'showBannerButton=false REMOVES THE ANCHOR');
-  assert(noBtn.querySelector('p').textContent === '4.99% ARM*', 'and the slide text is untouched — only the anchor went');
-  assert(noBtn.querySelector('.swiper-slide').getAttribute('data-promo-id') === ARM.id, 'identity survives the button going');
+  assert(noBtn.querySelector('p').textContent === 'LIMITED TIME OFFER', 'and the slide text is untouched — only the anchor went');
+  assert(noBtn.querySelector('.swiper-slide').getAttribute('data-promo-id') === TICKER.id, 'identity survives the button going');
   // The other direction: no text, no slide — regardless of the button flag.
   assert(P.bannerSlides([{ id: 'x', active: true, showSiteBanner: true, showBannerButton: true }]).length === 0,
     'a button flag cannot conjure a slide with no text');
   // ...and end to end through refreshBanner, because slideHtml alone cannot see a slide
   // being FILTERED OUT upstream — which is exactly the shape of the old bug.
   var btnOffDoc = makeDocument(bakedTicker);
-  var btnOffCount = P.refreshBanner(btnOffDoc, [Object.assign({}, ARM, { showBannerButton: false })]);
+  var btnOffCount = P.refreshBanner(btnOffDoc, [Object.assign({}, TICKER, { showBannerButton: false })]);
   assert(btnOffCount === 1, 'showBannerButton=false still produces A SLIDE (the promotion is banner-enabled)');
-  assert(btnOffDoc.querySelector('.swiper-slide') !== null && btnOffDoc.querySelector('p').textContent === '4.99% ARM*',
+  assert(btnOffDoc.querySelector('.swiper-slide') !== null && btnOffDoc.querySelector('p').textContent === 'LIMITED TIME OFFER',
     'with its text intact');
   assert(btnOffDoc.querySelector('[data-promo-surface="banner-cta"]') === null, 'and ONLY the anchor removed');
   // A banner promotion with no ctaLink falls back to its own offer page, not to nothing.
@@ -343,8 +449,8 @@ async function promotionsLiveDemo() {
   assert(fallbackBtn.querySelector('[data-promo-surface="banner-cta"]').getAttribute('href') === '/incentives/offer/adm-3-new-floor-plans/',
     'with no ctaLink the button points at the offer page');
   // ...and an unsafe ctaLink is refused, falling back the same way.
-  var unsafeBtn = makeDocument(P.slideHtml(Object.assign({}, ARM, { ctaLink: 'javascript:alert(1)' })));
-  assert(unsafeBtn.querySelector('[data-promo-surface="banner-cta"]').getAttribute('href') === '/incentives/offer/adm5387b23e59a442/',
+  var unsafeBtn = makeDocument(P.slideHtml(Object.assign({}, TICKER, { ctaLink: 'javascript:alert(1)' })));
+  assert(unsafeBtn.querySelector('[data-promo-surface="banner-cta"]').getAttribute('href') === '/incentives/offer/admTickerCta/',
     'an unsafe ctaLink is refused and the offer page used instead');
   // A promotion with neither a safe link nor a usable id has no button at all.
   var noHref = makeDocument(P.slideHtml({ id: 'a/b', cardBadgeText: 'TEXT', active: true, showSiteBanner: true }));
@@ -378,35 +484,77 @@ async function promotionsLiveDemo() {
   var enSlide = makeDocument(P.slideHtml(ARM));
   assert(enSlide.querySelector('[data-promo-surface="banner-cta"]').getAttribute('href') === '/new-homes/available/', 'English is unaffected');
 
-  // --- 7. boot(): the whole path, and what a failure must NOT do ----------------------
-  var bootDoc = makeDocument('<section id="incentives"><div class="row"><div>FROZEN</div></div></section>' + bakedTicker);
-  var bootWin = {
-    location: { pathname: '/incentives/' },
-    fetch: async function () { return { json: async function () { return { promotions: ALL }; } }; },
-  };
+  // --- 7. boot(): the whole path, and what an UNTRUSTED payload must NOT do -----------
+  var BAKED = '<section id="incentives"><div class="row"><div>FROZEN</div></div></section>';
+  var mkBoot = function () { return makeDocument(BAKED + bakedTicker); };
+  var ok = function (body) { return async function () { return { ok: true, json: async function () { return body; } }; }; };
   var savedFetch = globalThis.fetch;
-  globalThis.fetch = bootWin.fetch;
   try {
-    var out = await P.boot(bootWin, bootDoc);
-    assert(out && out.hub === 3 && out.banner === 2, 'boot refreshes both the hub and the ticker');
+    // The happy path, on the hub.
+    var bootDoc = mkBoot();
+    globalThis.fetch = ok({ promotions: ALL });
+    var out = await P.boot({ location: { pathname: '/incentives/' } }, bootDoc);
+    assert(out && out.hub === 4 && out.banner === 1, 'boot refreshes both the hub (4 cards) and the ticker (1 slide)');
     assert(bootDoc.body.innerHTML.indexOf('FROZEN') === -1, 'and replaces the baked markup');
     // Not the hub page: the ticker still refreshes (it is site-wide), the hub does not.
-    var otherDoc = makeDocument('<section id="incentives"><div class="row"><div>FROZEN</div></div></section>' + bakedTicker);
+    var otherDoc = mkBoot();
     out = await P.boot({ location: { pathname: '/new-homes/available/' } }, otherDoc);
-    assert(out.banner === 2 && out.hub === -1, 'off the hub page only the site-wide ticker refreshes');
-    assert(otherDoc.body.innerHTML.indexOf('FROZEN') !== -1, 'a stray #incentives grid elsewhere is left alone');
+    assert(out.banner === 1 && out.hub === -1, 'off the hub page only the site-wide ticker refreshes');
+    assert(otherDoc.body.innerHTML.indexOf('FROZEN<') !== -1, 'a stray #incentives grid elsewhere is left alone');
     // /es/ hub: the path gate must see through the namespace.
-    var esDoc = makeDocument('<section id="incentives"><div class="row"></div></section>' + bakedTicker);
+    var esDoc = mkBoot();
     out = await P.boot({ location: { pathname: '/es/incentives/' } }, esDoc);
-    assert(out.hub === 3, 'the /es/ hub is refreshed too (barePath strips the namespace)');
-    // A failed fetch must leave the bake ALONE: stale beats blank when we cannot tell what
-    // is live. Retiring a deleted offer is the worker's job, not a guess from a dead payload.
-    var failDoc = makeDocument('<section id="incentives"><div class="row"><div>FROZEN</div></div></section>' + bakedTicker);
-    globalThis.fetch = async function () { throw new TypeError('network'); };
-    out = await P.boot({ location: { pathname: '/incentives/' } }, failDoc);
-    assert(out === null, 'a failed promotions fetch reports failure');
-    assert(failDoc.body.innerHTML.indexOf('FROZEN') !== -1 && failDoc.body.innerHTML.indexOf('FROZEN JUNE SLIDE') !== -1,
-      'and changes NOTHING: an island fault must not blank the site banner or the hub');
+    assert(out.hub === 4, 'the /es/ hub is refreshed too (barePath strips the namespace)');
+
+    // --- UNTRUSTED PAYLOADS MUST BE A NO-OP -------------------------------------------
+    // Only a thrown fetch used to preserve the bake. Everything below is a shape that
+    // res.json() resolves happily — a Cloudflare error page, an auth redirect body, a
+    // renamed field — and each would have been read as "zero promotions" and DELETED the
+    // live hub and ticker. An outage must never look like a withdrawal.
+    var untrusted = [
+      ['a transport error', async function () { throw new TypeError('network'); }],
+      ['a 500 with a JSON body', async function () { return { ok: false, status: 500, json: async function () { return { promotions: [] }; } }; }],
+      ['a 502 error PAGE', async function () { return { ok: false, status: 502, json: async function () { throw new SyntaxError('<html>'); } }; }],
+      ['a 401 auth redirect body', async function () { return { ok: false, status: 401, json: async function () { return { error: 'unauthorized' }; } }; }],
+      ['unparseable JSON on a 200', async function () { return { ok: true, json: async function () { throw new SyntaxError('Unexpected token <'); } }; }],
+      ['an empty object {}', ok({})],
+      ['a null body', ok(null)],
+      ['promotions renamed/absent', ok({ items: [] })],
+      ['promotions as a string', ok({ promotions: 'none' })],
+      ['promotions as an object', ok({ promotions: { 0: ARM } })],
+      ['promotions null', ok({ promotions: null })],
+    ];
+    for (var u = 0; u < untrusted.length; u++) {
+      var why = untrusted[u][0];
+      var failDoc = mkBoot();
+      var before = failDoc.body.innerHTML;
+      globalThis.fetch = untrusted[u][1];
+      out = await P.boot({ location: { pathname: '/incentives/' } }, failDoc);
+      assert(out === null, why + ' reports failure');
+      assert(failDoc.body.innerHTML === before,
+        why + ' changes NOTHING — the baked hub and ticker are byte-identical');
+      assert(failDoc.body.innerHTML.indexOf('FROZEN<') !== -1 && failDoc.body.innerHTML.indexOf('FROZEN JUNE SLIDE') !== -1,
+        why + ' must not blank the site banner or the hub');
+    }
+
+    // --- A VALID EMPTY PAYLOAD IS NOT A FAILURE ---------------------------------------
+    // This is the API honestly saying nothing is published. It MUST clear, or a retired
+    // offer stays on screen — the bug this lane exists to fix. The only difference from the
+    // cases above is that the response is trustworthy.
+    var emptyDoc = mkBoot();
+    globalThis.fetch = ok({ promotions: [] });
+    out = await P.boot({ location: { pathname: '/incentives/' } }, emptyDoc);
+    assert(out && out.hub === 0 && out.banner === 0, 'a VALID empty payload succeeds with zero cards and zero slides');
+    assert(emptyDoc.body.innerHTML.indexOf('FROZEN') === -1, 'and CLEARS the stale hub grid');
+    assert(emptyDoc.body.innerHTML.indexOf('FROZEN JUNE SLIDE') === -1, 'and the stale ticker slide');
+    assert(emptyDoc.querySelector('#incentives .row').innerHTML === '' && emptyDoc.querySelector('.swiper-wrapper').innerHTML === '',
+      'both containers survive as empty shells rather than being removed');
+    // A payload of only-unpublished records is the same case: trustworthy, and it clears.
+    var noneDoc = mkBoot();
+    globalThis.fetch = ok({ promotions: [INACTIVE, FLEX20_NOT_HUB, LOS_PRADOS] });
+    out = await P.boot({ location: { pathname: '/incentives/' } }, noneDoc);
+    assert(out && out.hub === 0 && out.banner === 0, 'nothing published -> zero cards, zero slides');
+    assert(noneDoc.body.innerHTML.indexOf('FROZEN') === -1, 'and the stale bake is cleared, not preserved');
   } finally {
     globalThis.fetch = savedFetch;
   }

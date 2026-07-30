@@ -144,13 +144,17 @@ export function findHubPromoById(promos, id) {
  *  compatibility fallback — the one currently banner-enabled promotion
  *  (`adm-3-new-floor-plans`) has `cardBadgeText: ""` and `bannerText` populated, so
  *  dropping the fallback now would blank the live ticker. Once that record is
- *  backfilled, delete the fallback and this comment. `title` is the last resort so a
- *  banner-enabled promotion never renders an empty slide. */
+ *  backfilled, delete the fallback and this comment.
+ *
+ *  THOSE TWO FIELDS AND NOTHING ELSE. An earlier revision fell through to `title`, which
+ *  invented a third source the contract does not have: `title` is the offer's NAME, not
+ *  banner copy, so it could put unreviewed text in the site-wide ticker after an editor
+ *  had deliberately emptied both banner fields to take the slide down. Empty means the
+ *  promotion has no banner copy, and a promotion with no banner copy gets no slide. */
 export function bannerCenterText(p) {
   if (!p) return '';
   return String(p.cardBadgeText || '').trim()
-    || String(p.bannerText || '').trim()
-    || String(p.title || '').trim();
+    || String(p.bannerText || '').trim();
 }
 
 /** Banner-enabled promotions whose `cardBadgeText` is empty, i.e. the records still
@@ -323,8 +327,12 @@ export function offerIdentityDemo(assert) {
     'bannerText fallback preserves the current adm-3-new-floor-plans ticker');
   assert(bannerCenterText({ cardBadgeText: '   ', bannerText: 'Headline' }) === 'Headline',
     'whitespace-only badge falls back');
-  assert(bannerCenterText({ cardBadgeText: '', bannerText: '', title: 'Title Last Resort' }) === 'Title Last Resort',
-    'title is the last resort so a banner slide is never empty');
+  // TITLE IS NOT A THIRD SOURCE. It is the offer's NAME; falling through to it would put
+  // unreviewed copy in the site-wide ticker precisely when an editor emptied both banner
+  // fields to take the slide down.
+  assert(bannerCenterText({ cardBadgeText: '', bannerText: '', title: 'Taken Down' }) === '',
+    'emptying BOTH banner fields yields no banner text, whatever the title says');
+  assert(bannerCenterText({ title: 'Only A Title' }) === '', 'title alone is not banner copy');
   assert(bannerCenterText(null) === '' && bannerCenterText({}) === '', 'no text without data');
   // The backfill signal, so the temporary fallback cannot become permanently invisible.
   const fallbackNeeded = bannerFallbackPromos(promos);
