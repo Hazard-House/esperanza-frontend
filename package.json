@@ -9,7 +9,7 @@
     "build": "node build.mjs",
     "generate": "node generate-details.mjs",
     "check": "node build.mjs --check && npm run check:render",
-    "check:render": "node resolve-qmi-hero.mjs --check && node data.mjs --check && node paths.mjs --check && node promo-utils.mjs --check && node sections.mjs --check && node hydrate-scraped.mjs --check && node render-qmi.mjs --check && node render-community.mjs --check && node render-floorplan.mjs --check && node render-lists.mjs --check && node generate-blogs.mjs --check && node generate-details.mjs --check && node worker-prune-check.mjs && node site-freshness-check.mjs --check && node islands/detail-extras.js --check && node islands/community-copy-live.js --check && node scripts/gen-blog-index.mjs --check && node locale.mjs --check && node es-bake.mjs --check"
+    "check:render": "node resolve-qmi-hero.mjs --check && node data.mjs --check && node paths.mjs --check && node promo-identity.mjs --check && node promo-utils.mjs --check && node offer-shell.mjs --check && node render-offer.mjs --check && node sections.mjs --check && node hydrate-scraped.mjs --check && node render-qmi.mjs --check && node render-community.mjs --check && node render-floorplan.mjs --check && node render-lists.mjs --check && node generate-blogs.mjs --check && node generate-details.mjs --check && node worker-prune-check.mjs && node site-freshness-check.mjs --check && node islands/detail-extras.js --check && node islands/community-copy-live.js --check && node scripts/gen-blog-index.mjs --check && node locale.mjs --check && node es-bake.mjs --check"
   },
   "devDependencies": {
     "@vitalets/google-translate-api": "^9.2.1"

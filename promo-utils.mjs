@@ -3,6 +3,7 @@
 
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
+import { offerIdentityDemo } from './promo-identity.mjs';
 
 /** Compare promo copy case/punctuation-insensitively — the June-8 harvest and the API
  *  disagree on casing, trailing asterisks AND thousands separators for the SAME
@@ -189,6 +190,19 @@ function normKey(s) {
   return String(s == null ? '' : s).toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9/]+/g, '-')
     .replace(/^-|-$/g, '').replace(/-?\/-?/g, '/');
 }
+
+// ── Canonical promotion detail identity ────────────────────────────────────────
+// Moved to promo-identity.mjs so worker.js can import the SAME helpers: the Workers
+// runtime has no `node:` builtins, and this file imports node:assert/node:url. Re-exported
+// here so every existing build-time importer keeps working unchanged.
+export {
+  OFFER_PREFIX, isValidPromoId, offerPath, offerIdFromPath,
+  LEGACY_INCENTIVE_SLUGS, LEGACY_HUB_LINKED_SLUGS, isLegacyIncentiveSlug,
+  isHubPromo, findHubPromoById,
+  bannerCenterText, bannerFallbackPromos,
+  homeWinsPromo, membershipState, homesForPromo,
+  qmiCardPromo, recordCardPromo, hasCardCta,
+} from './promo-identity.mjs';
 
 /** Percent rate from promo text (e.g. "4.99% Rate + …" → 4.99). */
 export function parsePromoRate(text) {
@@ -386,6 +400,10 @@ function demo() {
   assert(parsePromoRate('4.99% Rate + up to $5,000') === 4.99, 'parsePromoRate');
   assert(isRatePromo('4.99% ARM*', 6.35) && !isRatePromo('Flex Cash', 6.35), 'isRatePromo');
   assert(savingsOverTerm(2000, 1800, 30).startsWith('$72,000.00 Savings Over 30 Years'), 'savingsOverTerm');
+  // Identity/membership/surface assertions live with their code in promo-identity.mjs,
+  // and run here too so `node promo-utils.mjs --check` covers the whole contract.
+  offerIdentityDemo(assert);
   console.log('promo-utils.mjs demo() passed');
 }
+
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
