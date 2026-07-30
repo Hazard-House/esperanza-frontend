@@ -61,6 +61,92 @@ export function promoBannerClass(style, text) {
   return /flex/i.test(text || '') ? 'tan' : 'green';
 }
 
+// ---------------------------------------------------------------------------
+// Gated card surfaces (Phase 1 contract → Phase 3.3 wiring)
+// ---------------------------------------------------------------------------
+// The backend resolves ONE winning promotion per record and applies the Builder's surface
+// toggles before serialization: show_card_badge empties the headline and badge strings,
+// show_card_cta empties the CTA label and link, and the two toggles are independent. So
+// the renderer's whole job is to emit exactly what arrived and emit NOTHING where a value
+// is empty. It must not re-derive gating from the flags (that would be a second, divergent
+// gate) and must not substitute the harvested June-8 copy for a value the API cleared —
+// that substitution is precisely how a deleted incentive's ribbon outlived its D1 row.
+//
+// IDENTITY IS NOT A SURFACE. `promotionId` is stamped whenever the record carries one,
+// even with every copy surface off, because it is what links a card to its offer page and
+// what the acceptance probes read. A home with a badge toggled off is still entitled.
+const surfaceStr = v => String(v == null ? '' : v).trim();
+
+/** The gated card surfaces of a QMI/community/floor-plan record as normalized by data.mjs.
+ *  `headline` keeps the harvested-badge fallback (still corpus- and entitlement-gated) ONLY
+ *  for the legacy `promo` field, because that fallback predates the contract and covers
+ *  homes the API has no promo_text for. `badge` and the CTA pair have no fallback at all:
+ *  they exist only in the new contract, so empty unambiguously means "off". */
+export function cardSurfaces(rec, { headlineFallback = '' } = {}) {
+  const r = rec || {};
+  const headline = surfaceStr(r.promo) || surfaceStr(headlineFallback);
+  return {
+    promotionId: surfaceStr(r.promotionId),
+    headline,
+    badge: surfaceStr(r.cardBadge),
+    ctaLabel: surfaceStr(r.promoCtaLabel),
+    ctaLink: surfaceStr(r.promoCtaLink),
+    style: surfaceStr(r.promoStyle),
+    color: promoBannerClass(surfaceStr(r.promoStyle), headline),
+  };
+}
+
+/** A CTA needs BOTH halves: a button with no destination and a link with no words are
+ *  both broken markup, not a surface. Mirrors promo-identity.hasCardCta. */
+export function hasCardCta(s) { return !!(s && s.ctaLabel && s.ctaLink); }
+
+// Admin-entered CTA links reach an href, so the same scheme guard the offer shell applies
+// is applied here. A bare relative path (no leading / or #) is refused rather than resolved
+// against whatever URL depth the card happens to be rendered at.
+const EXTERNAL_LINK_RE = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
+export function safePromoLink(link) {
+  const s = surfaceStr(link).replace(/^https:\/\/www\.esperanzahomes\.com/i, '');
+  if (!s) return '';
+  if (!EXTERNAL_LINK_RE.test(s)) return (s.startsWith('/') || s.startsWith('#')) ? s : '';
+  return /^(?:https?:|mailto:|tel:|\/\/)/i.test(s) ? s : '';
+}
+
+/** The gated corner badge. Marked with data-promo-surface so the live-refresh islands and
+ *  the sweep can find and REMOVE exactly this node when the toggle goes off, without
+ *  guessing at the theme's own `.badge.lot` / availability chips. */
+export function promoBadgeHtml(s) {
+  if (!s || !s.badge) return '';
+  return `<div class="badge promo bg-light-gray overpass light text-secondary" data-promo-surface="badge">${esc(s.badge)}</div>`;
+}
+
+/** The gated card CTA. */
+export function promoCtaHtml(s) {
+  if (!hasCardCta(s)) return '';
+  const link = safePromoLink(s.ctaLink);
+  if (!link) return '';
+  const ext = EXTERNAL_LINK_RE.test(link) ? ' target="_blank" rel="noopener"' : '';
+  return `<a class="btn btn-outline-primary w-100 mt-2 promo-cta" data-promo-surface="cta" href="${esc(link)}"${ext}>${esc(s.ctaLabel)}</a>`;
+}
+
+/** The gated headline ribbon, in the theme's two shapes: `card` is the overlay ribbon in a
+ *  card's image aspect box, `detail` the inline status banner in a page header. The detail
+ *  shape keeps `data-live="promo"` (hydrate-live.js's hook) and both carry
+ *  data-promo-surface="headline" so a live refresh can delete exactly this node. */
+export function promoHeadlineHtml(s, { kind = 'card' } = {}) {
+  if (!s || !s.headline) return '';
+  return kind === 'detail'
+    ? `<div class="status-banner overlay-promo mt-2 align-top ${s.color}" data-live="promo" data-promo-surface="headline">${esc(s.headline)}</div>`
+    : `<div class="banner overlay-promo ${s.color}" data-promo-surface="headline">${esc(s.headline)}</div>`;
+}
+
+/** Identity attribute — ungated, so a record with every copy surface off still declares
+ *  which offer it won. Empty when no winner: an empty data-promo-id would read as
+ *  "entitled to nothing", which is a different claim from "not entitled". */
+export function promoIdAttr(s) {
+  return s && s.promotionId ? ` data-promo-id="${esc(s.promotionId)}"` : '';
+}
+
+
 // Full per-home card facts as the live original renders them (badge, availability
 // text/color, verbatim lot, stories, self-tour, exact monthlies). Address slug
 // first; "<community>/<housenumber>" absorbs street-suffix slug differences.
@@ -154,12 +240,16 @@ export function descHtml(raw, useUl = false) {
   return `<div class="wysiwyg pt-2 pt-lg-4">${out}</div>`;
 }
 
+/** A detail-page header's status banners. `promo` may be a plain string (the legacy
+ *  call shape) or an already-computed cardSurfaces object; the object form is what
+ *  carries the API's own banner style, so the color stops being hardcoded `tan`. */
 export function bannerHtml(availability, promo) {
-  let s = '';
-  if (promo) s += `<div class="status-banner overlay-promo mt-2 align-top tan" data-live="promo">${esc(promo)}</div>`;
-  if (availability) s += `<div class="status-banner gray mt-2 align-top" data-live="availability">${esc(availability)}</div>`;
-  return s;
+  const s = (promo && typeof promo === 'object') ? promo : cardSurfaces({ promo });
+  let out = promoHeadlineHtml(s, { kind: 'detail' });
+  if (availability) out += `<div class="status-banner gray mt-2 align-top" data-live="availability">${esc(availability)}</div>`;
+  return out;
 }
+
 
 export function galleryHtml(gallery, heroUrl, address) {
   const all = (gallery && gallery.length) ? gallery : [];
@@ -549,10 +639,12 @@ export function qmiCardHtml(h, { list = false } = {}) {
   // fallback only, and only while its copy is still live (see harvestBadge).
   const fact = factOf(h);
   const badge = harvestBadge(h);
-  const promoText = h.promo || (badge ? badge.text : '');
-  const promoColor = promoBannerClass(h.promoStyle, promoText);
-  let banners = '';
-  if (promoText) banners += `<div class="banner overlay-promo ${promoColor}">${esc(promoText)}</div>`;
+  // Gated surfaces from the live contract. The headline keeps the harvested fallback (it
+  // predates the contract and covers homes with no promo_text); the corner badge and the
+  // CTA are contract-only, so empty means the toggle is off and NOTHING is emitted.
+  const s = cardSurfaces(h, { headlineFallback: badge ? badge.text : '' });
+  const promoText = s.headline;
+  let banners = promoHeadlineHtml(s);
   // API-first (Snowflake-derived availability_text); the frozen June harvest is only a
   // fallback for a home the API has no availability for. Harvest-first froze move-in
   // windows a month off (e.g. 14009 Sugarberry) — see parity audit 2026-07-21.
@@ -560,6 +652,7 @@ export function qmiCardHtml(h, { list = false } = {}) {
   const availColor = /available now/i.test(availText || '') ? 'green' : 'gray';
   if (availText) banners += `<div class="banner ${availColor}"${promoText ? ' style="top:2.5rem"' : ''}>${esc(availText)}</div>`;
   if (fact.selfTour) banners += `<div class="banner-self-tour banner"><p>Self-Touring Available</p></div>`;
+  banners += promoBadgeHtml(s);
   const lotTxt = fact.lot || fmtLot(h.lot, h.community);
   if (lotTxt) banners += `<div class="badge lot bg-light-gray overpass light text-secondary">Lot #${esc(lotTxt)}</div>`;
   const stat = (icon, txt) => `<div class="item col-12 d-flex align-items-center mb-1"><img class="me-2" src="${icon}" aria-hidden="true" loading="lazy" width="18">${txt}</div>`;
@@ -605,9 +698,12 @@ export function qmiCardHtml(h, { list = false } = {}) {
   }
   // Variant deltas (everything else is shared).
   const tgt = list ? ' target="_blank" rel="noopener"' : '';
+  // Identity, always stamped when the record carries one — independent of every copy
+  // surface. This is the link between a card and its offer page.
+  const pid = promoIdAttr(s);
   const col = list
-    ? `<div class="col-12 col-md-6 col-lg-12 mb-3 px-2" data-qmi-slug="${esc(h.slug || '')}">`
-    : `<div class="col-12 col-md-6 mb-2" data-qmi-slug="${esc(h.slug || '')}">`;
+    ? `<div class="col-12 col-md-6 col-lg-12 mb-3 px-2" data-qmi-slug="${esc(h.slug || '')}"${pid}>`
+    : `<div class="col-12 col-md-6 mb-2" data-qmi-slug="${esc(h.slug || '')}"${pid}>`;
   const card = list
     ? `<div class="card spec-card spec-card-detail oi-map-item mb-0 border border-gray p-2" data-listing-type="spec" data-listing-id="${esc(h.id || '')}" data-latitude="${h.lat != null ? esc(h.lat) : ''}" data-longitude="${h.lng != null ? esc(h.lng) : ''}" data-marker-icon-wh="20,32" data-marker-icon-id="map_pin">`
     : `<div class="card spec-card spec-card-detail mb-0 border border-gray p-2 h-100">`;
@@ -630,7 +726,7 @@ export function qmiCardHtml(h, { list = false } = {}) {
     + `<div class="row"><a href="${esc(url)}"${tgt}><div class="card-title lh-1 mb-1 d-flex justify-content-between align-items-center">${esc(h.address)}</div></a>`
     + `<div class="card-location text-green mb-2">${esc(h.city)}, TX${h.postalCode ? ' ' + esc(h.postalCode) : ''}</div></div>`
     + `<div class="row h-100">`
-    + `<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">${money(h.price)}</div>${est}</div></div>`
+    + `<div class="col-6 col-xl-12 d-flex align-content-xl-around flex-wrap"><div class="w-100"><div class="spec-price lh-1 mt-2 mb-3">${money(h.price)}</div>${est}${promoCtaHtml(s)}</div></div>`
     + `<div class="col-auto col-xl-12 stat-group mt-xl-2 stat-flex d-flex flex-column mx-auto">${stats}</div>`
     + `</div></div></div>`
     + commRow('d-flex d-xl-none')
@@ -656,7 +752,11 @@ export function planCardHtml(fp, communityName) {
   // fp.startingPrice is the dev-wide MIN and is only a fallback for a plan not priced in
   // this community — printing it in-community is the long-standing "cards too low" bug.
   const price = (communityName && fp.communityPrices && fp.communityPrices[communityName] != null) ? fp.communityPrices[communityName] : fp.startingPrice;
-  return `<div class="col-12 col-md-6 col-lg-4 mb-3"><div class="card plan-card border border-gray p-2">${fp.image ? `<a href="${esc(url)}"><div class="oi-aspect three-two"><img src="${esc(fp.image)}" class="oi-aspect-img" loading="lazy" alt="${esc(fp.name)}"></div></a>` : ''}<div class="card-body"><a href="${esc(url)}"><div class="card-title mt-2"><span class="fs-4">${esc(fp.name)}</span></div></a>${fp.collection ? `<div class="text-brown fs-9">${esc(fp.collection)} Collection</div>` : ''}${price ? `<div class="price-title">From</div><div class="price">${money(price)}</div>` : ''}<div class="fs-9 text-gray mt-1">${specs}</div><a href="${esc(url)}" class="btn btn-green mt-2 d-inline-block">View Details</a></div></div></div>`;
+  // Plan caveat 1: the floor-plan payload carries a gated headline, badge and CTA, and this
+  // card dropped all three. No harvest fallback here — the June-8 snapshot has no
+  // per-plan promo copy, so anything rendered comes from the live contract or not at all.
+  const s = cardSurfaces(fp);
+  return `<div class="col-12 col-md-6 col-lg-4 mb-3"${promoIdAttr(s)}><div class="card plan-card border border-gray p-2">${fp.image ? `<a href="${esc(url)}"><div class="oi-aspect three-two">${promoHeadlineHtml(s)}${promoBadgeHtml(s)}<img src="${esc(fp.image)}" class="oi-aspect-img" loading="lazy" alt="${esc(fp.name)}"></div></a>` : ''}<div class="card-body"><a href="${esc(url)}"><div class="card-title mt-2"><span class="fs-4">${esc(fp.name)}</span></div></a>${fp.collection ? `<div class="text-brown fs-9">${esc(fp.collection)} Collection</div>` : ''}${price ? `<div class="price-title">From</div><div class="price">${money(price)}</div>` : ''}<div class="fs-9 text-gray mt-1">${specs}</div><a href="${esc(url)}" class="btn btn-green mt-2 d-inline-block">View Details</a>${promoCtaHtml(s)}</div></div></div>`;
 }
 
 export function setHead(html, m) {
@@ -861,6 +961,121 @@ function demo() {
   assert(nav.includes('class="col on-scroll active"') && nav.includes('class="col on-scroll">Contact</a>'), 'subnav on-scroll + active');
   assert(!nav.includes('bg-white border-bottom sticky-top') && !nav.includes('col-auto'), 'subnav no fabricated classes');
 
+  surfaceContractDemo();
   console.log('sections.mjs demo() passed');
+}
+
+// ---------------------------------------------------------------------------
+// The card surface contract (plan Phase 3.3, Sol's final-pass spec)
+// ---------------------------------------------------------------------------
+// Three properties, asserted on real emitted markup rather than helper return values:
+//   1. IDENTITY IS NOT A SURFACE — data-promo-id survives every copy toggle, including
+//      all of them off at once.
+//   2. THE TOGGLES ARE INDEPENDENT — badge/headline off with CTA on, and CTA off with
+//      badge/headline on, each remove only their own node.
+//   3. AN EMPTY GATED VALUE EMITS NOTHING — no data-promo-surface node at all, while the
+//      card and every non-promo affordance (lot chip, availability, price, stats) survive.
+// Every promo node is marked data-promo-surface so a live refresh can delete exactly it.
+function surfaceContractDemo() {
+  // Neutralize the harvested-badge fallback: these fixtures are about the live contract,
+  // and an accidental harvest hit would make an "off" assertion pass for the wrong reason.
+  const savedCorpus = getLivePromoTexts();
+  const savedEnt = getHomePromoEntitlements();
+  setLivePromoTexts(new Set(['no-such-promotion-copy-anywhere']));
+  try {
+    const surfaces = html => [...String(html).matchAll(/data-promo-surface="([^"]+)"/g)].map(m => m[1]).sort();
+
+    // --- cardSurfaces itself: gate semantics, no re-derivation from show_* flags -------
+    const full = { promotionId: 'recP1', promo: 'Unlock Your $15K Flex Discount Now!', cardBadge: 'BADGE', promoCtaLabel: 'See Details', promoCtaLink: '/incentives/offer/recP1/', promoStyle: 'gold' };
+    const s = cardSurfaces(full);
+    assert(s.promotionId === 'recP1' && s.badge === 'BADGE' && s.color === 'tan', 'cardSurfaces reads the contract + API style');
+    assert(hasCardCta(s), 'both CTA halves present -> a CTA');
+    assert(!hasCardCta(cardSurfaces({ ...full, promoCtaLink: '' })) && !hasCardCta(cardSurfaces({ ...full, promoCtaLabel: '' })),
+      'half a CTA is not a CTA');
+    // A show_* flag arriving alongside an emptied value must NOT resurrect the value: the
+    // backend already applied the gate, and a second gate here is how the two diverge.
+    assert(cardSurfaces({ ...full, cardBadge: '', show_card_badge: true }).badge === '',
+      'an empty badge stays empty even with the flag on (renderers never re-derive gating)');
+    assert(cardSurfaces({ promotionId: '  recP1  ', cardBadge: '   ' }).badge === '' && cardSurfaces({ promotionId: '  recP1  ' }).promotionId === 'recP1',
+      'whitespace-only gated value is empty; identity is trimmed');
+    // safePromoLink: admin-entered links reach an href.
+    assert(safePromoLink('https://www.esperanzahomes.com/incentives/x/') === '/incentives/x/', 'own-host link is relativized');
+    assert(safePromoLink('https://partner.test/apply') === 'https://partner.test/apply' && safePromoLink('#visit') === '#visit', 'external + fragment kept');
+    for (const bad of ['javascript:alert(1)', 'data:text/html,x', 'incentives/x/', '']) {
+      assert(safePromoLink(bad) === '', `unsafe or ambiguous link refused: ${JSON.stringify(bad)}`);
+    }
+
+    // --- QMI card: initial render ------------------------------------------------------
+    const home = { id: 'h1', address: '1806 E Bella St', community: 'Villas at La Sienna', city: 'Edinburg', slug: '1806-e-bella-st', price: 229990, beds: 2, floorPlan: 'Lunelli', image: '/h.jpg', lot: '007', availability: 'Available SEP/OCT 2026', ...full };
+    const all = qmiCardHtml(home);
+    assert(all.includes('data-promo-id="recP1"'), 'card stamps identity');
+    assert.deepEqual(surfaces(all), ['badge', 'cta', 'headline'], 'all three surfaces render when all three values arrive');
+    assert(all.includes('>BADGE<') && all.includes('See Details') && all.includes('href="/incentives/offer/recP1/"'), 'badge text + CTA label/link');
+    assert(all.includes('banner overlay-promo tan'), 'headline color from promo_banner_style=gold');
+
+    // --- independent toggles ----------------------------------------------------------
+    // show_card_badge off empties BOTH card text regions (headline + corner badge); the
+    // CTA and identity are untouched.
+    const badgeOff = qmiCardHtml({ ...home, promo: '', cardBadge: '' });
+    assert.deepEqual(surfaces(badgeOff), ['cta'], 'badge/headline off leaves ONLY the CTA');
+    assert(badgeOff.includes('data-promo-id="recP1"'), 'promotion_id survives badge/headline off');
+    assert(!badgeOff.includes('overlay-promo') && !badgeOff.includes('>BADGE<'), 'no headline ribbon, no corner badge');
+    // show_card_cta off empties label + link only.
+    const ctaOff = qmiCardHtml({ ...home, promoCtaLabel: '', promoCtaLink: '' });
+    assert.deepEqual(surfaces(ctaOff), ['badge', 'headline'], 'CTA off leaves badge + headline');
+    assert(ctaOff.includes('data-promo-id="recP1"'), 'promotion_id survives CTA off');
+    assert(!ctaOff.includes('promo-cta'), 'the CTA anchor is gone');
+    // Half a CTA is treated as off, not as broken markup.
+    assert(!qmiCardHtml({ ...home, promoCtaLink: '' }).includes('promo-cta') && !qmiCardHtml({ ...home, promoCtaLabel: '' }).includes('promo-cta'),
+      'a CTA with only one half renders nothing');
+
+    // --- every surface off: identity remains, the CARD does not degrade ---------------
+    const bare = qmiCardHtml({ ...home, promo: '', cardBadge: '', promoCtaLabel: '', promoCtaLink: '' });
+    assert(bare.includes('data-promo-id="recP1"'), 'IDENTITY IS NOT A SURFACE: id present with every copy toggle off');
+    assert(surfaces(bare).length === 0, 'no data-promo-surface node survives an all-off record');
+    assert(!bare.includes('data-promo-surface'), 'and no empty surface node is left behind either');
+    // The card itself, and every non-promo affordance, is untouched.
+    assert(bare.includes('data-qmi-slug="1806-e-bella-st"') && bare.includes('card spec-card')
+      && bare.includes('Lot #007') && bare.includes('Available SEP/OCT 2026')
+      && bare.includes('$229,990') && bare.includes('2 Bedrooms') && bare.includes('REQUEST A TOUR'),
+      'an all-off record still renders the whole card (slug, lot, availability, price, stats, CTAs)');
+    // The availability banner's top offset exists only to clear a headline ribbon.
+    assert(all.includes('style="top:2.5rem"') && !bare.includes('style="top:2.5rem"'),
+      'availability drops back to the top when no headline ribbon is above it');
+
+    // --- no winner at all: no id attribute, not an empty one --------------------------
+    const noPromo = qmiCardHtml({ ...home, promotionId: '', promo: '', cardBadge: '', promoCtaLabel: '', promoCtaLink: '' });
+    assert(!noPromo.includes('data-promo-id'), 'no winner -> NO identity attribute (an empty one would claim entitlement to nothing)');
+
+    // --- list variant carries the same contract ---------------------------------------
+    const listCard = qmiCardHtml(home, { list: true });
+    assert(listCard.includes('data-promo-id="recP1"') && listCard.includes('oi-map-item'), 'list variant stamps identity');
+    assert.deepEqual(surfaces(listCard), ['badge', 'cta', 'headline'], 'list variant renders all three surfaces');
+    assert(!qmiCardHtml({ ...home, promo: '', cardBadge: '', promoCtaLabel: '', promoCtaLink: '' }, { list: true }).includes('data-promo-surface'),
+      'list variant emits no surface node when every value is off');
+
+    // --- floor-plan card: caveat 1, badge + CTA reached a card at all ------------------
+    const plan = { name: 'Indigo', slug: 'indigo', startingPrice: 215990, communityPrices: {}, bedroomMin: 3, bedroomMax: 3, bathroomMin: 2, bathroomMax: 2, garage: 2, livingSqft: 1400, image: '/p.jpg', promotionId: 'recFP', promo: 'Plan Headline', cardBadge: 'PLAN BADGE', promoCtaLabel: 'Learn More', promoCtaLink: '/incentives/offer/recFP/', promoStyle: 'green' };
+    const pc = planCardHtml(plan);
+    assert(pc.includes('data-promo-id="recFP"'), 'plan card stamps identity');
+    assert.deepEqual(surfaces(pc), ['badge', 'cta', 'headline'], 'plan card renders all three surfaces (previously dropped in data.mjs)');
+    assert(pc.includes('banner overlay-promo green') && pc.includes('PLAN BADGE') && pc.includes('Learn More'), 'plan card surface content');
+    const pcBare = planCardHtml({ ...plan, promo: '', cardBadge: '', promoCtaLabel: '', promoCtaLink: '' });
+    assert(pcBare.includes('data-promo-id="recFP"') && !pcBare.includes('data-promo-surface'), 'plan card: id survives, no surface node');
+    assert(pcBare.includes('card plan-card') && pcBare.includes('$215,990') && pcBare.includes('View Details'), 'plan card body survives an all-off record');
+    assert(!planCardHtml({ ...plan, promotionId: '' }).includes('data-promo-id'), 'plan card with no winner carries no id');
+
+    // --- detail-header banner: color from the API, not a hardcoded tan -----------------
+    const hdr = bannerHtml('Available Now', cardSurfaces({ promo: '4.99% 30 Year Fixed Rate*', promoStyle: 'green' }));
+    assert(hdr.includes('status-banner overlay-promo mt-2 align-top green') && hdr.includes('data-live="promo"') && hdr.includes('data-promo-surface="headline"'),
+      'detail banner: API style + both live and surface hooks');
+    assert(bannerHtml('Available Now', cardSurfaces({ promo: '' })) === '<div class="status-banner gray mt-2 align-top" data-live="availability">Available Now</div>',
+      'an empty headline emits no ribbon at all, availability untouched');
+    assert(bannerHtml('', 'Unlock Your $20K Flex Discount Now!').includes('align-top tan'),
+      'legacy string call shape still works (flex -> tan)');
+  } finally {
+    setLivePromoTexts(savedCorpus);
+    setHomePromoEntitlements(savedEnt);
+  }
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();

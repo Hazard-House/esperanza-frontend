@@ -1,7 +1,7 @@
 // render-community.mjs — full community detail page.
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { esc, money, galleryHtml, mapSalesHtml, formSlotHtml, qmiSectionHtml, planCardHtml, bannerHtml, finalizePage } from './sections.mjs';
+import { esc, money, galleryHtml, mapSalesHtml, formSlotHtml, qmiSectionHtml, planCardHtml, bannerHtml, finalizePage, cardSurfaces, promoCtaHtml, promoIdAttr } from './sections.mjs';
 import { communityPath } from './paths.mjs';
 import { slugify } from './data.mjs';
 
@@ -19,13 +19,20 @@ function communityHeader(c) {
   if (c.lat != null && c.lng != null) {
     lines.push(`<a href="https://maps.google.com/maps?q=${c.lat},${c.lng}" target="_blank" rel="noopener" class="btn btn-gray mt-2 oi-directions-click">GET DIRECTIONS</a>`);
   }
+  // The community's resolved promotion: gated headline (bannerHtml, styled from the API's
+  // own promo_banner_style rather than a hardcoded tan) and an independently gated CTA.
+  // `promoIdAttr` is ungated identity, so a community with both copy surfaces toggled off
+  // still declares which offer it won.
+  const surf = cardSurfaces(c);
   return [
-    '<section class="header text-center bg-tan-white pb-2 py-lg-4">',
+    `<section class="header text-center bg-tan-white pb-2 py-lg-4"${promoIdAttr(surf)}>`,
     '<div class="green-bar-thick mt-2 mt-lg-0 mb-1 mb-lg-3 mx-auto d-none d-lg-block"></div>',
     `<h1 class="bodoni text-gray fs-1 ls-sm">${esc(c.name)}</h1>`,
     `<div class="overpass text-brown fs-6 ls-sm px-1">${lines.join('\n')}</div>`,
+    bannerHtml('', surf),
+    promoCtaHtml(surf),
     '</section>',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 export function communityContent(c) {
@@ -78,6 +85,36 @@ function demo() {
   // Full gallery (>2 images) surfaces from photoGallery, not just hero+secondary.
   assert(out.includes('/g1.jpg') && out.includes('/g2.jpg') && out.includes('/g3.jpg'), 'community gallery from photoGallery');
   assert(!out.includes('<!--CONTENT-->') && !/undefined/.test(out), 'clean');
+
+  // --- promotion surfaces on the COMMUNITY header ------------------------------------
+  // The community record already carried a resolved promotion that this page never
+  // rendered. Contract: identity ungated, headline and CTA independently gated, an empty
+  // value emits nothing while the header survives.
+  const surfaces = s => [...s.matchAll(/data-promo-surface="([^"]+)"/g)].map(m => m[1]).sort();
+  const P = { promotionId: 'recC1', promo: 'Los Prados Homebuyer Advantage', cardBadge: 'COMMUNITY BADGE', promoCtaLabel: 'See Offer', promoCtaLink: '/incentives/offer/recC1/', promoStyle: 'green' };
+  const full = communityContent({ ...c, ...P });
+  assert(full.includes('data-promo-id="recC1"'), 'community header stamps identity');
+  assert.deepEqual(surfaces(full), ['cta', 'headline'], 'community header renders headline + CTA');
+  assert(full.includes('status-banner overlay-promo mt-2 align-top green') && full.includes('data-live="promo"'),
+    'headline uses the API style (not the old hardcoded tan) and keeps its live hook');
+  assert(full.includes('href="/incentives/offer/recC1/"') && full.includes('See Offer'), 'CTA label + link');
+  assert(!full.includes('COMMUNITY BADGE'), 'the corner badge is a card affordance, not a detail-header one');
+  const hlOff = communityContent({ ...c, ...P, promo: '', cardBadge: '' });
+  assert.deepEqual(surfaces(hlOff), ['cta'], 'headline off leaves ONLY the CTA');
+  assert(hlOff.includes('data-promo-id="recC1"') && !hlOff.includes('overlay-promo'), 'promotion_id survives headline off');
+  const ctaOff = communityContent({ ...c, ...P, promoCtaLabel: '', promoCtaLink: '' });
+  assert.deepEqual(surfaces(ctaOff), ['headline'], 'CTA off leaves ONLY the headline');
+  assert(ctaOff.includes('data-promo-id="recC1"') && !ctaOff.includes('promo-cta'), 'promotion_id survives CTA off');
+  const bare = communityContent({ ...c, ...P, promo: '', cardBadge: '', promoCtaLabel: '', promoCtaLink: '' });
+  assert(bare.includes('data-promo-id="recC1"') && !bare.includes('data-promo-surface'),
+    'all off: identity remains, no surface node remains');
+  assert(bare.includes('El Eden') && bare.includes('Starting at $209,990') && bare.includes('GET DIRECTIONS')
+    && bare.includes('id="overview"') && bare.includes('id="specs"'),
+    'the header and page survive an all-off record');
+  assert(!communityContent({ ...c, ...P, promotionId: '' }).includes('data-promo-id'), 'no winner -> no identity attribute');
+  // A community with no promotion at all must look exactly as it did before this pass.
+  assert(!out.includes('data-promo-id') && !out.includes('data-promo-surface') && !out.includes('overlay-promo'),
+    'a promotion-free community renders no promo markup at all');
   console.log('render-community.mjs demo() passed');
 }
 if (process.argv.includes('--check') && process.argv[1] === fileURLToPath(import.meta.url)) demo();
