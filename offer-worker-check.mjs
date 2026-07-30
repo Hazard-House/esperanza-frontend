@@ -185,10 +185,11 @@ const loc = (res) => (res.headers.get('location') ? new URL(res.headers.get('loc
   }
 }
 
-// --- 3b. a hostile id in the PAYLOAD never reaches the rendered page ------------------
-// The route validates the id from the URL, but the id it STAMPS into data-promo-id and the
-// canonical comes from the resolved record. A compromised or buggy API must not be able to
-// inject an attribute or a path through that second channel.
+// --- 3b. the REQUEST-PATH charset gate refuses a hostile id before any fetch ----------
+// Scope of this block, precisely: `offerIdFromPath()` rejects these URLs, so the route
+// retires them WITHOUT fetching or resolving anything. That is all it proves. It is NOT
+// evidence about the resolved record — a payload id can never differ from the requested id
+// (the resolver matches on strict equality), so there is no second channel here to test.
 {
   const hostile = [
     '" onload="alert(1)',
@@ -196,16 +197,18 @@ const loc = (res) => (res.headers.get('location') ? new URL(res.headers.get('loc
     'a/b',
     '<script>alert(1)</script>',
   ];
+  let fetched = 0;
+  const realApi = api;
+  api = async () => { fetched += 1; return Response.json({ promotions: LIVE_PROMOS }); };
   for (const id of hostile) {
-    api = async () => Response.json({ promotions: [{ id, title: 'Injected', active: true, showIncentivePage: true }] });
-    // Reached via the alias path, which is the only way such an id could be requested at
-    // all (the URL gate would already have refused it as a path segment).
     const res = await GET('/incentives/offer/' + encodeURIComponent(id) + '/');
-    assert.equal(res.status, 302, `a payload id that fails the charset gate never renders: ${id}`);
+    assert.equal(res.status, 302, `an id that fails the request-path charset gate never renders: ${id}`);
     assert.equal(res.headers.get('x-offer-state'), 'retired');
-    assert.equal(res.headers.get('content-type'), null, `no page body for a hostile id: ${id}`);
+    assert.equal(res.headers.get('content-type'), null, `no page body for a rejected id: ${id}`);
   }
-  api = async () => Response.json({ promotions: LIVE_PROMOS });
+  // The gate short-circuits: no promotions request is made for a path that cannot hold an id.
+  assert.equal(fetched, 0, 'a path-gate rejection costs zero upstream requests');
+  api = realApi;
 }
 
 // --- 4. unknown / invalid / template ids never return a contentless 200 ---------------

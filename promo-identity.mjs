@@ -125,14 +125,14 @@ export function isHubPromo(p) {
 /** Resolve a promotion by exact id from a payload, applying the hub gate. Returns null
  *  for unknown, inactive, or hub-disabled ids — the three cases the route retires.
  *
- *  The RESOLVED record's own id is re-validated, not just the id we were asked for. The
- *  two are equal by construction here, but this function's result is what gets stamped
- *  into `data-promo-id` and the canonical URL, so the guarantee that reaches the page must
- *  come from the value being rendered rather than from a caller's earlier check. */
+ *  Matching is strict equality on `id`, with no normalization or coercion, so the returned
+ *  record's id IS the validated id that was asked for. Re-validating it would be dead code;
+ *  the charset guarantee for anything stamped into `data-promo-id` or the canonical URL
+ *  comes from the single gate at the top of this function. */
 export function findHubPromoById(promos, id) {
   if (!isValidPromoId(id)) return null;
   for (const p of promos || []) {
-    if (p && p.id === id) return isHubPromo(p) && isValidPromoId(p.id) ? p : null;
+    if (p && p.id === id) return isHubPromo(p) ? p : null;
   }
   return null;
 }
